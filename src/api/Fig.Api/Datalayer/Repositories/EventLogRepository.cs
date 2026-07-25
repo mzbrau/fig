@@ -73,7 +73,19 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         bool onlyUnrestricted,
         UserDataContract requestingUser)
     {
+        return await QueryLogs(startDate, endDate, new EventLogQuery(), onlyUnrestricted, requestingUser);
+    }
+
+    public async Task<IList<EventLogBusinessEntity>> QueryLogs(
+        DateTime startDate,
+        DateTime endDate,
+        EventLogQuery query,
+        bool onlyUnrestricted,
+        UserDataContract requestingUser)
+    {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        ArgumentNullException.ThrowIfNull(query);
+
         var criteria = Session.CreateCriteria<EventLogBusinessEntity>();
         criteria.Add(Restrictions.Ge(nameof(EventLogBusinessEntity.Timestamp), startDate));
         criteria.Add(Restrictions.Le(nameof(EventLogBusinessEntity.Timestamp), endDate));
@@ -81,12 +93,63 @@ public class EventLogRepository : RepositoryBase<EventLogBusinessEntity>, IEvent
         if (onlyUnrestricted)
             criteria.Add(Restrictions.In(nameof(EventLogBusinessEntity.EventType), EventMessage.UnrestrictedEvents));
 
+        var eventTypes = query.EventTypes?
+            .Where(t => !string.IsNullOrWhiteSpace(t))
+            .Select(t => t.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        if (eventTypes is { Length: > 0 })
+            criteria.Add(Restrictions.In(nameof(EventLogBusinessEntity.EventType), eventTypes));
+
+        if (!string.IsNullOrWhiteSpace(query.ClientName))
+        {
+            criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.ClientName), query.ClientName.Trim()));
+            if (!string.IsNullOrWhiteSpace(query.Instance))
+                criteria.Add(Restrictions.Eq(nameof(EventLogBusinessEntity.Instance), query.Instance.Trim()));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.AuthenticatedUser))
+        {
+            criteria.Add(Restrictions.InsensitiveLike(
+                nameof(EventLogBusinessEntity.AuthenticatedUser),
+                query.AuthenticatedUser.Trim(),
+                MatchMode.Exact));
+        }
+
+        if (!string.IsNullOrWhiteSpace(query.SearchText))
+        {
+            var search = query.SearchText.Trim();
+            criteria.Add(Restrictions.Disjunction()
+                .Add(Restrictions.InsensitiveLike(
+                    nameof(EventLogBusinessEntity.Message), search, MatchMode.Anywhere))
+                .Add(Restrictions.InsensitiveLike(
+                    nameof(EventLogBusinessEntity.SettingName), search, MatchMode.Anywhere))
+                .Add(Restrictions.InsensitiveLike(
+                    nameof(EventLogBusinessEntity.ClientName), search, MatchMode.Anywhere))
+                .Add(Restrictions.InsensitiveLike(
+                    nameof(EventLogBusinessEntity.AuthenticatedUser), search, MatchMode.Anywhere))
+                .Add(Restrictions.InsensitiveLike(
+                    nameof(EventLogBusinessEntity.EventType), search, MatchMode.Anywhere)));
+        }
+
         criteria.AddOrder(Order.Desc(nameof(EventLogBusinessEntity.Timestamp)));
+
+        if (query.MaxResults is > 0)
+        {
+            // Fetch a buffer so ACL filtering in memory can still return up to MaxResults.
+            var buffer = Math.Min(query.MaxResults.Value * 10, 5_000);
+            criteria.SetMaxResults(buffer);
+        }
+
         var result = (await criteria.ListAsync<EventLogBusinessEntity>())
-            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser.HasAccess(log.ClientName))
-            .ToList();
-        result.ForEach(c => c.Decrypt(_encryptionService));
-        return result;
+            .Where(log => string.IsNullOrWhiteSpace(log.ClientName) || requestingUser.HasAccess(log.ClientName));
+
+        if (query.MaxResults is > 0)
+            result = result.Take(query.MaxResults.Value);
+
+        var list = result.ToList();
+        list.ForEach(c => c.Decrypt(_encryptionService));
+        return list;
     }
 
     public async Task<DateTime> GetEarliestEntry()

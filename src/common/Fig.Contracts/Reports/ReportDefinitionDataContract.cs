@@ -9,13 +9,15 @@ public class ReportDefinitionDataContract
         string name,
         string category,
         string description,
-        IList<ReportParameterDataContract> parameters)
+        IList<ReportParameterDataContract> parameters,
+        bool supportsAiAnalysis = false)
     {
         Id = id;
         Name = name;
         Category = category;
         Description = description;
         Parameters = parameters;
+        SupportsAiAnalysis = supportsAiAnalysis;
     }
 
     public string Id { get; }
@@ -27,4 +29,6 @@ public class ReportDefinitionDataContract
     public string Description { get; }
 
     public IList<ReportParameterDataContract> Parameters { get; }
+
+    public bool SupportsAiAnalysis { get; }
 }

@@ -10,8 +10,11 @@ public static class AssistantServiceCollectionExtensions
         services.AddScoped<AssistantHistoryCompactor>();
         services.AddScoped<ILlmClient, OpenAiCompatibleLlmClient>();
         services.AddScoped<IAssistantChatService, AssistantChatService>();
+        services.AddScoped<IAssistantBackgroundRunner, AssistantBackgroundRunner>();
         services.AddScoped<IAuthenticatedService>(sp =>
             (IAuthenticatedService)sp.GetRequiredService<IAssistantChatService>());
+        services.AddScoped<IAuthenticatedService>(sp =>
+            (IAuthenticatedService)sp.GetRequiredService<IAssistantBackgroundRunner>());
         services.AddScoped<IAssistantToolRegistry, AssistantToolRegistry>();
 
         services.AddHttpClient("FigAssistantLlm", client =>

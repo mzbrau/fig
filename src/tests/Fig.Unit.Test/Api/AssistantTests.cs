@@ -4,6 +4,7 @@ using Fig.Api.Assistant;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Observability;
 using Fig.Api.Reports;
+using Fig.Api.Reports.Implementations;
 using Fig.Api.Services;
 using Fig.Common;
 using Fig.Contracts.Assistant;
@@ -15,6 +16,7 @@ using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
 using Fig.Web.Services.Assistant;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.JSInterop;
 using Moq;
 using Newtonsoft.Json.Linq;
@@ -129,6 +131,57 @@ public class AssistantHistoryCompactorTests
             Assert.That(result[preceding]["tool_calls"]!.Type, Is.EqualTo(JTokenType.Array));
             Assert.That(((JArray)result[preceding]["tool_calls"]!).Count, Is.GreaterThan(0));
         }
+    }
+
+    [Test]
+    public void Compact_WhenOverLimit_PreservesFirstUserMessage()
+    {
+        var compactor = new AssistantHistoryCompactor();
+        const string prompt = "UNIQUE_PROMPT_most_active_users_please";
+        var messages = new List<JObject>
+        {
+            new() { ["role"] = "system", ["content"] = "You are Fig Assistant composing a report." },
+            new() { ["role"] = "user", ["content"] = prompt }
+        };
+
+        for (var i = 0; i < 40; i++)
+        {
+            messages.Add(new JObject
+            {
+                ["role"] = "assistant",
+                ["content"] = string.Empty,
+                ["tool_calls"] = new JArray
+                {
+                    new JObject
+                    {
+                        ["id"] = $"call_{i}",
+                        ["type"] = "function",
+                        ["function"] = new JObject
+                        {
+                            ["name"] = "get_events",
+                            ["arguments"] = "{}"
+                        }
+                    }
+                }
+            });
+            messages.Add(new JObject
+            {
+                ["role"] = "tool",
+                ["tool_call_id"] = $"call_{i}",
+                ["content"] = new string('e', 3_000)
+            });
+        }
+
+        var result = compactor.Compact(messages);
+
+        Assert.That(result.Count, Is.LessThan(messages.Count));
+        Assert.That(
+            result.Any(a => a["role"]?.Value<string>() == "user" &&
+                            a["content"]?.Value<string>() == prompt),
+            Is.True);
+        Assert.That(result[0]["role"]?.Value<string>(), Is.EqualTo("system"));
+        Assert.That(result.Any(a =>
+            a["content"]?.Value<string>()?.Contains("omitted", StringComparison.OrdinalIgnoreCase) == true));
     }
 }
 
@@ -414,7 +467,7 @@ public class AssistantReportToolTests
     public async Task ListReports_ReturnsCatalogue()
     {
         var reportExecution = new Mock<IReportExecutionService>();
-        reportExecution.Setup(a => a.GetAvailableReports()).Returns([
+        reportExecution.Setup(a => a.GetAvailableReports()).ReturnsAsync([
             new ReportDefinitionDataContract(
                 "client-uptime",
                 "Client Uptime",
@@ -644,9 +697,10 @@ public class AssistantChatTracingTests
         llm.Setup(a => a.StreamChatAsync(
                 It.IsAny<IReadOnlyList<JObject>>(),
                 It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
-                It.IsAny<CancellationToken>()))
-            .Callback<IReadOnlyList<JObject>, IReadOnlyCollection<IAssistantTool>, CancellationToken>(
-                (messages, _, _) => llmMessages = messages.ToList())
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Callback<IReadOnlyList<JObject>, IReadOnlyCollection<IAssistantTool>, CancellationToken, double?>(
+                (messages, _, _, _) => llmMessages = messages.ToList())
             .Returns(StreamText("Hello from the assistant"));
 
         var tool = new Mock<IAssistantTool>();
@@ -728,7 +782,8 @@ public class AssistantChatTracingTests
         llm.Setup(a => a.StreamChatAsync(
                 It.IsAny<IReadOnlyList<JObject>>(),
                 It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
-                It.IsAny<CancellationToken>()))
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
             .Returns(() =>
             {
                 callCount++;
@@ -807,5 +862,559 @@ public class AssistantChatTracingTests
         };
         yield return new LlmStreamChunk { FinishReason = "tool_calls" };
         await Task.CompletedTask;
+    }
+}
+
+[TestFixture]
+public class AiComposedReportToolSelectionTests
+{
+    [Test]
+    public void CuratedToolNames_ExcludesHeavyDumpTools()
+    {
+        Assert.That(AiComposedReport.CuratedToolNames, Does.Contain("get_events"));
+        Assert.That(AiComposedReport.CuratedToolNames, Does.Contain("list_reports"));
+        Assert.That(AiComposedReport.CuratedToolNames, Does.Not.Contain("list_clients"));
+        Assert.That(AiComposedReport.CuratedToolNames, Does.Not.Contain("get_client_settings"));
+        Assert.That(AiComposedReport.CuratedToolNames, Does.Not.Contain("get_lookup_table"));
+        Assert.That(AiComposedReport.CuratedToolNames, Does.Not.Contain("fetch_fig_doc"));
+    }
+
+    [Test]
+    public void ResolveCuratedTools_ReturnsOnlyCuratedTools()
+    {
+        var registry = new Mock<IAssistantToolRegistry>();
+        registry.Setup(a => a.TryGet(It.IsAny<string>(), out It.Ref<IAssistantTool?>.IsAny))
+            .Returns(new TryGetTool((string name, out IAssistantTool? tool) =>
+            {
+                if (!AiComposedReport.CuratedToolNames.Contains(name) &&
+                    name is not ("list_clients" or "get_client_settings"))
+                {
+                    tool = null;
+                    return false;
+                }
+
+                var mock = new Mock<IAssistantTool>();
+                mock.SetupGet(t => t.Name).Returns(name);
+                tool = mock.Object;
+                return true;
+            }));
+
+        var tools = AiComposedReport.ResolveCuratedTools(registry.Object);
+        var names = tools.Select(t => t.Name).ToArray();
+
+        Assert.That(names, Is.EquivalentTo(AiComposedReport.CuratedToolNames));
+        Assert.That(names, Does.Not.Contain("list_clients"));
+        Assert.That(names, Does.Not.Contain("get_client_settings"));
+    }
+
+    private delegate bool TryGetTool(string name, out IAssistantTool? tool);
+}
+
+[TestFixture]
+public class AssistantBackgroundRunnerNudgeTests
+{
+    [Test]
+    public void RunAsync_OnFinalIterations_NudgesSubmitAiReportWhenUnused()
+    {
+        var seenMessages = new List<IReadOnlyList<JObject>>();
+        var llm = new Mock<ILlmClient>();
+        llm.Setup(a => a.StreamChatAsync(
+                It.IsAny<IReadOnlyList<JObject>>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Callback<IReadOnlyList<JObject>, IReadOnlyCollection<IAssistantTool>, CancellationToken, double?>(
+                (messages, _, _, _) => seenMessages.Add(messages.Select(m => (JObject)m.DeepClone()).ToList()))
+            .Returns(() => StreamReadOnlyToolCall());
+
+        var readTool = new Mock<IAssistantTool>();
+        readTool.SetupGet(a => a.Name).Returns("get_events");
+        readTool.SetupGet(a => a.Description).Returns("events");
+        readTool.SetupGet(a => a.ParameterJsonSchema).Returns("""{"type":"object","properties":{}}""");
+        readTool.Setup(a => a.ExecuteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("""{"events":[]}""");
+
+        var submitTool = new Mock<IAssistantTool>();
+        submitTool.SetupGet(a => a.Name).Returns("submit_ai_report");
+        submitTool.SetupGet(a => a.Description).Returns("submit");
+        submitTool.SetupGet(a => a.ParameterJsonSchema).Returns("""{"type":"object","properties":{}}""");
+
+        var encryption = new Mock<IEncryptionService>();
+        encryption.Setup(a => a.Decrypt("encrypted-token", It.IsAny<bool>(), It.IsAny<bool>())).Returns("plain-token");
+
+        var configuration = new Mock<IConfigurationRepository>();
+        configuration.Setup(a => a.GetConfiguration()).ReturnsAsync(new FigConfigurationBusinessEntity
+        {
+            EnableFigAssistant = true,
+            FigAssistantEndpoint = "https://llm.example",
+            FigAssistantModel = "test-model",
+            FigAssistantAccessTokenEncrypted = "encrypted-token",
+            FigAssistantMaxToolIterations = 3,
+            FigAssistantRequestTimeoutSeconds = 30
+        });
+
+        var runner = new AssistantBackgroundRunner(
+            llm.Object,
+            new AssistantHistoryCompactor(),
+            configuration.Object,
+            encryption.Object);
+        runner.SetAuthenticatedUser(new UserDataContract(
+            Guid.NewGuid(),
+            "admin",
+            "Admin",
+            "User",
+            Role.Administrator,
+            ".*",
+            [],
+            false));
+
+        Assert.That(
+            async () => await runner.RunAsync(
+                "ai-composed-report",
+                "system",
+                "user prompt",
+                [readTool.Object, submitTool.Object],
+                CancellationToken.None),
+            Throws.InstanceOf<AssistantToolIterationLimitException>().With.Message.Contain("iteration limit"));
+
+        Assert.That(seenMessages, Has.Count.EqualTo(3));
+        Assert.That(
+            seenMessages[0].Any(m =>
+                m["content"]?.Value<string>()?.Contains("submit_ai_report now", StringComparison.Ordinal) == true),
+            Is.False);
+        Assert.That(
+            seenMessages[1].Any(m =>
+                m["content"]?.Value<string>()?.Contains("submit_ai_report now", StringComparison.Ordinal) == true),
+            Is.True);
+        Assert.That(
+            seenMessages[2].Any(m =>
+                m["content"]?.Value<string>()?.Contains("submit_ai_report now", StringComparison.Ordinal) == true),
+            Is.True);
+    }
+
+    [Test]
+    public async Task RunAsync_WithSubmitTool_TextOnlyReplyContinuesWithNudge()
+    {
+        var seenMessages = new List<IReadOnlyList<JObject>>();
+        var callCount = 0;
+        var llm = new Mock<ILlmClient>();
+        llm.Setup(a => a.StreamChatAsync(
+                It.IsAny<IReadOnlyList<JObject>>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Callback<IReadOnlyList<JObject>, IReadOnlyCollection<IAssistantTool>, CancellationToken, double?>(
+                (messages, _, _, _) => seenMessages.Add(messages.Select(m => (JObject)m.DeepClone()).ToList()))
+            .Returns(() =>
+            {
+                callCount++;
+                return callCount switch
+                {
+                    1 => StreamTextReply("Sorry, I need a different timeframe."),
+                    2 => StreamSubmitToolCall(),
+                    _ => StreamTextReply("Done.")
+                };
+            });
+
+        var submitTool = new Mock<IAssistantTool>();
+        submitTool.SetupGet(a => a.Name).Returns("submit_ai_report");
+        submitTool.SetupGet(a => a.Description).Returns("submit");
+        submitTool.SetupGet(a => a.ParameterJsonSchema).Returns("""{"type":"object","properties":{}}""");
+        submitTool.Setup(a => a.ExecuteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("""{"ok":true,"title":"Report","sectionCount":1}""");
+
+        var runner = CreateRunner(llm.Object, maxIterations: 4);
+        var result = await runner.RunAsync(
+            "ai-composed-report",
+            "system",
+            "user prompt",
+            [submitTool.Object],
+            CancellationToken.None);
+
+        Assert.That(seenMessages, Has.Count.GreaterThanOrEqualTo(2));
+        Assert.That(
+            seenMessages[1].Any(m =>
+                m["role"]?.Value<string>() == "assistant" &&
+                m["content"]?.Value<string>()?.Contains("different timeframe", StringComparison.Ordinal) == true),
+            Is.True);
+        Assert.That(
+            seenMessages[1].Any(m =>
+                m["content"]?.Value<string>()?.Contains("Never reply in prose", StringComparison.Ordinal) == true),
+            Is.True);
+        Assert.That(result.ToolCalls.Any(t => t.Name == "submit_ai_report"), Is.True);
+    }
+
+    [Test]
+    public async Task RunAsync_WithoutSubmitTool_TextOnlyReplyCompletes()
+    {
+        var llm = new Mock<ILlmClient>();
+        llm.Setup(a => a.StreamChatAsync(
+                It.IsAny<IReadOnlyList<JObject>>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Returns(StreamTextReply("Analysis complete."));
+
+        var readTool = new Mock<IAssistantTool>();
+        readTool.SetupGet(a => a.Name).Returns("get_events");
+        readTool.SetupGet(a => a.Description).Returns("events");
+        readTool.SetupGet(a => a.ParameterJsonSchema).Returns("""{"type":"object","properties":{}}""");
+
+        var runner = CreateRunner(llm.Object, maxIterations: 4);
+        var result = await runner.RunAsync(
+            "background-analysis",
+            "system",
+            "user prompt",
+            [readTool.Object],
+            CancellationToken.None);
+
+        Assert.That(result.AssistantText, Is.EqualTo("Analysis complete."));
+        Assert.That(result.ToolCalls, Is.Empty);
+    }
+
+    private static AssistantBackgroundRunner CreateRunner(ILlmClient llm, int maxIterations)
+    {
+        var encryption = new Mock<IEncryptionService>();
+        encryption.Setup(a => a.Decrypt("encrypted-token", It.IsAny<bool>(), It.IsAny<bool>())).Returns("plain-token");
+
+        var configuration = new Mock<IConfigurationRepository>();
+        configuration.Setup(a => a.GetConfiguration()).ReturnsAsync(new FigConfigurationBusinessEntity
+        {
+            EnableFigAssistant = true,
+            FigAssistantEndpoint = "https://llm.example",
+            FigAssistantModel = "test-model",
+            FigAssistantAccessTokenEncrypted = "encrypted-token",
+            FigAssistantMaxToolIterations = maxIterations,
+            FigAssistantRequestTimeoutSeconds = 30
+        });
+
+        var runner = new AssistantBackgroundRunner(
+            llm,
+            new AssistantHistoryCompactor(),
+            configuration.Object,
+            encryption.Object);
+        runner.SetAuthenticatedUser(new UserDataContract(
+            Guid.NewGuid(),
+            "admin",
+            "Admin",
+            "User",
+            Role.Administrator,
+            ".*",
+            [],
+            false));
+        return runner;
+    }
+
+    private static async IAsyncEnumerable<LlmStreamChunk> StreamTextReply(string text)
+    {
+        yield return new LlmStreamChunk { Text = text };
+        yield return new LlmStreamChunk { FinishReason = "stop" };
+        await Task.CompletedTask;
+    }
+
+    private static async IAsyncEnumerable<LlmStreamChunk> StreamSubmitToolCall()
+    {
+        yield return new LlmStreamChunk
+        {
+            ToolCallIndex = 0,
+            ToolCallId = "call_submit",
+            ToolName = "submit_ai_report",
+            ToolArguments = """{"title":"Report","sections":[{"type":"markdown","content":"ok"}]}"""
+        };
+        yield return new LlmStreamChunk { FinishReason = "tool_calls" };
+        await Task.CompletedTask;
+    }
+
+    private static async IAsyncEnumerable<LlmStreamChunk> StreamReadOnlyToolCall()
+    {
+        yield return new LlmStreamChunk
+        {
+            ToolCallIndex = 0,
+            ToolCallId = "call_read",
+            ToolName = "get_events",
+            ToolArguments = "{}"
+        };
+        yield return new LlmStreamChunk { FinishReason = "tool_calls" };
+        await Task.CompletedTask;
+    }
+
+    [Test]
+    public async Task RunAsync_WithSubmitTool_FirstInvalidSubmitInjectsCorrectionNudge()
+    {
+        var seenMessages = new List<IReadOnlyList<JObject>>();
+        var callCount = 0;
+        var llm = new Mock<ILlmClient>();
+        llm.Setup(a => a.StreamChatAsync(
+                It.IsAny<IReadOnlyList<JObject>>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Callback<IReadOnlyList<JObject>, IReadOnlyCollection<IAssistantTool>, CancellationToken, double?>(
+                (messages, _, _, _) => seenMessages.Add(messages.Select(m => (JObject)m.DeepClone()).ToList()))
+            .Returns(() =>
+            {
+                callCount++;
+                return callCount switch
+                {
+                    1 => StreamSubmitToolCall(),
+                    2 => StreamSubmitToolCall(),
+                    _ => StreamTextReply("Done.")
+                };
+            });
+
+        var submitAttempts = 0;
+        var submitTool = new Mock<IAssistantTool>();
+        submitTool.SetupGet(a => a.Name).Returns("submit_ai_report");
+        submitTool.SetupGet(a => a.Description).Returns("submit");
+        submitTool.SetupGet(a => a.ParameterJsonSchema).Returns("""{"type":"object","properties":{}}""");
+        submitTool.Setup(a => a.ExecuteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                submitAttempts++;
+                return submitAttempts == 1
+                    ? """{"error":"chart sections require data: [{\"label\":\"Alice\",\"value\":3}]."}"""
+                    : """{"ok":true,"title":"Report","sectionCount":1}""";
+            });
+
+        var runner = CreateRunner(llm.Object, maxIterations: 4);
+        var result = await runner.RunAsync(
+            "ai-composed-report",
+            "system",
+            "user prompt",
+            [submitTool.Object],
+            CancellationToken.None);
+
+        Assert.That(seenMessages, Has.Count.GreaterThanOrEqualTo(2));
+        Assert.That(
+            seenMessages[1].Any(m =>
+                m["role"]?.Value<string>() == "system" &&
+                m["content"]?.Value<string>()?.Contains("validation failed", StringComparison.Ordinal) == true),
+            Is.True);
+        Assert.That(result.ToolCalls.Count(t => t.Name == "submit_ai_report"), Is.EqualTo(2));
+        Assert.That(result.ToolCalls.Last().Result, Does.Contain("\"ok\":true"));
+    }
+
+    [Test]
+    public async Task RunAsync_WithSubmitTool_SuccessfulSubmitExitsImmediatelyEvenWithWhitespaceOk()
+    {
+        var callCount = 0;
+        var llm = new Mock<ILlmClient>();
+        llm.Setup(a => a.StreamChatAsync(
+                It.IsAny<IReadOnlyList<JObject>>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Returns(() =>
+            {
+                callCount++;
+                return callCount switch
+                {
+                    1 => StreamSubmitToolCall(),
+                    _ => StreamTextReply("should not be called")
+                };
+            });
+
+        var submitTool = new Mock<IAssistantTool>();
+        submitTool.SetupGet(a => a.Name).Returns("submit_ai_report");
+        submitTool.SetupGet(a => a.Description).Returns("submit");
+        submitTool.SetupGet(a => a.ParameterJsonSchema).Returns("""{"type":"object","properties":{}}""");
+        submitTool.Setup(a => a.ExecuteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("""{ "ok": true, "title": "Report", "sectionCount": 1 }""");
+
+        var runner = CreateRunner(llm.Object, maxIterations: 4);
+        var result = await runner.RunAsync(
+            "ai-composed-report",
+            "system",
+            "user prompt",
+            [submitTool.Object],
+            CancellationToken.None);
+
+        Assert.That(callCount, Is.EqualTo(1));
+        Assert.That(result.ToolCalls, Has.Count.EqualTo(1));
+        Assert.That(result.ToolCalls[0].Result, Does.Contain("\"ok\""));
+    }
+
+    [Test]
+    public void RunAsync_WithSubmitTool_SecondInvalidSubmitDoesNotInjectAnotherNudge()
+    {
+        var seenMessages = new List<IReadOnlyList<JObject>>();
+        var callCount = 0;
+        var llm = new Mock<ILlmClient>();
+        llm.Setup(a => a.StreamChatAsync(
+                It.IsAny<IReadOnlyList<JObject>>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Callback<IReadOnlyList<JObject>, IReadOnlyCollection<IAssistantTool>, CancellationToken, double?>(
+                (messages, _, _, _) => seenMessages.Add(messages.Select(m => (JObject)m.DeepClone()).ToList()))
+            .Returns(() =>
+            {
+                callCount++;
+                return callCount switch
+                {
+                    1 => StreamSubmitToolCall(),
+                    2 => StreamSubmitToolCall(),
+                    3 => StreamSubmitToolCall(),
+                    _ => StreamTextReply("Done.")
+                };
+            });
+
+        var submitTool = new Mock<IAssistantTool>();
+        submitTool.SetupGet(a => a.Name).Returns("submit_ai_report");
+        submitTool.SetupGet(a => a.Description).Returns("submit");
+        submitTool.SetupGet(a => a.ParameterJsonSchema).Returns("""{"type":"object","properties":{}}""");
+        submitTool.Setup(a => a.ExecuteAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync("""{"error":"AI report document requires a non-empty title."}""");
+
+        var runner = CreateRunner(llm.Object, maxIterations: 3);
+
+        Assert.That(
+            async () => await runner.RunAsync(
+                "ai-composed-report",
+                "system",
+                "user prompt",
+                [submitTool.Object],
+                CancellationToken.None),
+            Throws.InstanceOf<AssistantToolIterationLimitException>().With.Message.Contain("iteration limit"));
+
+        // The correction nudge is retained across iterations; count only in the final history snapshot.
+        var correctionNudgesInFinalHistory = seenMessages.Last()
+            .Count(m =>
+                m["role"]?.Value<string>() == "system" &&
+                m["content"]?.Value<string>()?.Contains("validation failed", StringComparison.Ordinal) == true);
+        Assert.That(correctionNudgesInFinalHistory, Is.EqualTo(1));
+        Assert.That(
+            seenMessages[0].Any(m =>
+                m["content"]?.Value<string>()?.Contains("validation failed", StringComparison.Ordinal) == true),
+            Is.False);
+        Assert.That(
+            seenMessages[1].Any(m =>
+                m["content"]?.Value<string>()?.Contains("validation failed", StringComparison.Ordinal) == true),
+            Is.True);
+    }
+}
+
+[TestFixture]
+public class AssistantEventLogQueryTests
+{
+    [Test]
+    public void BuildEventLogQuery_ParsesFiltersAndClampsMaxResults()
+    {
+        var args = JObject.Parse("""
+            {
+              "clientName": "MyApp",
+              "instance": "prod",
+              "authenticatedUser": "alice",
+              "eventTypes": ["Login", "Setting value updated", ""],
+              "searchText": "timeout",
+              "maxResults": 999
+            }
+            """);
+
+        var query = AssistantToolRegistry.BuildEventLogQuery(args);
+
+        Assert.That(query.ClientName, Is.EqualTo("MyApp"));
+        Assert.That(query.Instance, Is.EqualTo("prod"));
+        Assert.That(query.AuthenticatedUser, Is.EqualTo("alice"));
+        Assert.That(query.EventTypes, Is.EquivalentTo(new[] { "Login", "Setting value updated" }));
+        Assert.That(query.SearchText, Is.EqualTo("timeout"));
+        Assert.That(query.MaxResults, Is.EqualTo(AssistantToolRegistry.MaxEventMaxResults));
+    }
+
+    [Test]
+    public void BuildEventLogQuery_DefaultsMaxResultsWhenOmitted()
+    {
+        var query = AssistantToolRegistry.BuildEventLogQuery(new JObject());
+
+        Assert.That(query.ClientName, Is.Null);
+        Assert.That(query.EventTypes, Is.Null);
+        Assert.That(query.MaxResults, Is.EqualTo(AssistantToolRegistry.DefaultEventMaxResults));
+    }
+
+    [Test]
+    public void BuildEventLogQuery_AcceptsSingleEventTypeString()
+    {
+        var args = new JObject { ["eventTypes"] = "Login" };
+        var query = AssistantToolRegistry.BuildEventLogQuery(args);
+        Assert.That(query.EventTypes, Is.EquivalentTo(new[] { "Login" }));
+    }
+
+    [Test]
+    public void BuildEventLogQuery_AcceptsFloatMaxResults()
+    {
+        var args = new JObject { ["maxResults"] = 50.0 };
+        var query = AssistantToolRegistry.BuildEventLogQuery(args);
+        Assert.That(query.MaxResults, Is.EqualTo(50));
+    }
+
+    [Test]
+    public void MaskSecrets_RedactsCredentialProperties()
+    {
+        var token = JObject.Parse("""
+            {
+              "Password": "secret",
+              "ClientName": "MyApp",
+              "Setting": { "IsSecret": true, "Value": "top-secret", "Name": "ApiKey" }
+            }
+            """);
+
+        AssistantToolRegistry.MaskSecrets(token);
+
+        Assert.That(token["Password"]!.Value<string>(), Is.EqualTo("[REDACTED]"));
+        Assert.That(token["ClientName"]!.Value<string>(), Is.EqualTo("MyApp"));
+        Assert.That(token["Setting"]!["Value"]!.Value<string>(), Is.EqualTo("[REDACTED]"));
+        Assert.That(token["Setting"]!["Name"]!.Value<string>(), Is.EqualTo("ApiKey"));
+    }
+}
+
+[TestFixture]
+public class AiComposedReportErrorMappingTests
+{
+    [Test]
+    public void ExecuteAsync_MapsIterationLimitToDidNotSubmitError()
+    {
+        var background = new Mock<IAssistantBackgroundRunner>();
+        background.Setup(a => a.RunAsync(
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<string>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .ThrowsAsync(new AssistantToolIterationLimitException(
+                "The assistant reached the configured tool iteration limit."));
+
+        var encryption = new Mock<IEncryptionService>();
+        encryption.Setup(a => a.Decrypt("encrypted-token", It.IsAny<bool>(), It.IsAny<bool>())).Returns("plain-token");
+
+        var configuration = new Mock<IConfigurationRepository>();
+        configuration.Setup(a => a.GetConfiguration()).ReturnsAsync(new FigConfigurationBusinessEntity
+        {
+            EnableFigAssistant = true,
+            FigAssistantEndpoint = "https://llm.example",
+            FigAssistantModel = "test-model",
+            FigAssistantAccessTokenEncrypted = "encrypted-token"
+        });
+
+        var registry = new Mock<IAssistantToolRegistry>();
+        registry.Setup(a => a.TryGet(It.IsAny<string>(), out It.Ref<IAssistantTool?>.IsAny)).Returns(false);
+
+        var services = new ServiceCollection();
+        services.AddSingleton(registry.Object);
+        var provider = services.BuildServiceProvider();
+
+        var report = new AiComposedReport(
+            background.Object,
+            provider,
+            configuration.Object,
+            encryption.Object);
+
+        Assert.That(
+            async () => await report.ExecuteAsync(
+                new AiComposedReportParameters { Prompt = "Who are the most active users?" },
+                CancellationToken.None),
+            Throws.InvalidOperationException
+                .With.Message.Contain("did not submit a valid report")
+                .And.InnerException.Message.Contain("iteration limit"));
     }
 }

@@ -1,0 +1,53 @@
+@namespace Fig.Api.Reports.Rendering.Views
+@using Fig.Api.Reports
+@using Fig.Api.Reports.Rendering
+@using Fig.Api.Reports.Rendering.Components
+@using Microsoft.AspNetCore.Components
+
+@if (Model is not null)
+{
+    @foreach (var section in Model.Sections)
+    {
+        <section class="report-section">
+            @if (section is AiReportSummarySection summary)
+            {
+                <SummaryCards Items="summary.Items" />
+            }
+            else if (section is AiReportMarkdownSection markdown)
+            {
+                <div class="report-markdown">@((MarkupString)ReportMarkdown.ToHtml(markdown.Content))</div>
+            }
+            else if (section is AiReportTableSection table)
+            {
+                @if (!string.IsNullOrWhiteSpace(table.Title))
+                {
+                    <h2>@table.Title</h2>
+                }
+                <ReportTable Columns="ToColumns(table.Columns)" Rows="table.Rows" />
+            }
+            else if (section is AiReportChartSection chart)
+            {
+                <ReportChart Title="@chart.Title"
+                             ChartType="@chart.ChartType"
+                             DatasetLabel="@chart.DatasetLabel"
+                             Slices="chart.Data" />
+            }
+            else if (section is AiReportTimelineSection timeline)
+            {
+                @if (!string.IsNullOrWhiteSpace(timeline.Title))
+                {
+                    <h2>@timeline.Title</h2>
+                }
+                <Timeline Items="timeline.Items" />
+            }
+        </section>
+    }
+}
+
+@code {
+    [Parameter]
+    public AiReportDocument? Model { get; set; }
+
+    private static IReadOnlyList<ReportTableColumn> ToColumns(IReadOnlyList<string> columns) =>
+        columns.Select(c => new ReportTableColumn(c, c)).ToList();
+}

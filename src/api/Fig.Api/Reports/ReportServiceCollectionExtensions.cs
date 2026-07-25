@@ -13,6 +13,9 @@ public static class ReportServiceCollectionExtensions
         services.AddScoped<IReportRegistry, ReportRegistry>();
         services.AddScoped<IReportParameterBinder, ReportParameterBinder>();
         services.AddScoped<IReportExecutionService, ReportExecutionService>();
+        services.AddScoped<IReportAiAnalysisService, ReportAiAnalysisService>();
+        services.AddScoped<IAuthenticatedService>(sp =>
+            (IAuthenticatedService)sp.GetRequiredService<IReportAiAnalysisService>());
         services.AddScoped<IReportRenderer, HtmlReportRenderer>();
         services.AddScoped<HtmlRenderer>();
 
@@ -44,6 +47,7 @@ public static class ReportServiceCollectionExtensions
         services.AddReport<StaleConfigReport>();
         services.AddReport<IncidentCorrelationReport>();
         services.AddReport<FigPlatformReport>();
+        services.AddReport<AiComposedReport>();
 
         return services;
     }

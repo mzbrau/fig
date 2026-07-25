@@ -21,9 +21,16 @@ public class EventsService : AuthenticatedService, IEventsService
         _logger = logger;
     }
 
-    public async Task<EventLogCollectionDataContract> GetEventLogs(DateTime startTime, DateTime endTime)
+    public Task<EventLogCollectionDataContract> GetEventLogs(DateTime startTime, DateTime endTime) =>
+        GetEventLogs(startTime, endTime, new EventLogQuery());
+
+    public async Task<EventLogCollectionDataContract> GetEventLogs(
+        DateTime startTime,
+        DateTime endTime,
+        EventLogQuery query)
     {
         using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        ArgumentNullException.ThrowIfNull(query);
         if (startTime > endTime)
             throw new ArgumentException("Start time cannot be after the end time");
 
@@ -34,7 +41,8 @@ public class EventsService : AuthenticatedService, IEventsService
         _earliestEvent ??= await _eventLogRepository.GetEarliestEntry();
         var user = RequireAuthenticatedUser();
         var onlyUnrestricted = user.Role != Role.Administrator;
-        var events = await _eventLogRepository.GetAllLogs(startTimeUtc, endTimeUtc, onlyUnrestricted, user);
+        var events = await _eventLogRepository.QueryLogs(
+            startTimeUtc, endTimeUtc, query, onlyUnrestricted, user);
 
         var eventsDataContract = events.Select(log => _eventsConverter.Convert(log));
         return new EventLogCollectionDataContract(_earliestEvent.Value, startTime, endTime, eventsDataContract);

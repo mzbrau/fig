@@ -32,7 +32,8 @@ public sealed class OpenAiCompatibleLlmClient : ILlmClient
     public async IAsyncEnumerable<LlmStreamChunk> StreamChatAsync(
         IReadOnlyList<JObject> messages,
         IReadOnlyCollection<IAssistantTool> tools,
-        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
+        [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken,
+        double? temperature = null)
     {
         var configuration = await _configurationRepository.GetConfiguration();
         var token = _encryptionService.Decrypt(
@@ -45,10 +46,15 @@ public sealed class OpenAiCompatibleLlmClient : ILlmClient
         {
             ["model"] = configuration.FigAssistantModel,
             ["messages"] = new JArray(messages),
-            ["stream"] = true,
-            ["tools"] = new JArray(tools.Select(ToToolDefinition)),
-            ["tool_choice"] = "auto"
+            ["stream"] = true
         };
+        if (temperature is not null)
+            requestBody["temperature"] = temperature.Value;
+        if (tools.Count > 0)
+        {
+            requestBody["tools"] = new JArray(tools.Select(ToToolDefinition));
+            requestBody["tool_choice"] = "auto";
+        }
 
         AssistantTrace.TagLlmHttp(configuration.FigAssistantModel, configuration.FigAssistantEndpoint);
 

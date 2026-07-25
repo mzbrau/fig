@@ -28,6 +28,8 @@ internal static class AssistantTrace
         Formatting = Formatting.Indented
     };
 
+    public const string BackgroundActivityName = "Assistant.Background";
+
     public static Activity? StartChat(
         string username,
         AssistantChatRequestDataContract request,
@@ -50,6 +52,18 @@ internal static class AssistantTrace
         AddChunkedEvent(activity, RequestEventName, "fig.assistant.request",
             RedactUsernameInText(payload, username));
 
+        return activity;
+    }
+
+    public static Activity? StartBackground(string activityName, string username, int maxIterations)
+    {
+        var activity = ApiActivitySource.Instance.StartActivity(BackgroundActivityName);
+        if (activity is null)
+            return null;
+
+        activity.SetTag("fig.assistant.background", activityName);
+        activity.SetTag("fig.assistant.username", RedactUsername(username));
+        activity.SetTag("fig.assistant.max_iterations", maxIterations);
         return activity;
     }
 

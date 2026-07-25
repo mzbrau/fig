@@ -9,6 +9,8 @@ namespace Fig.Api.Assistant;
 public sealed class AssistantHistoryCompactor
 {
     private const int MaximumCharacters = 48_000;
+    private const string OmissionNotice =
+        "Earlier conversation messages were omitted to stay within the model context window.";
 
     public List<JObject> Compact(IEnumerable<JObject> source)
     {
@@ -17,15 +19,40 @@ public sealed class AssistantHistoryCompactor
         if (total <= MaximumCharacters)
             return messages;
 
-        var system = messages.FirstOrDefault(a => a["role"]?.Value<string>() == "system");
-        var units = BuildRetentionUnits(messages, system);
+        var leadingSystems = new List<JObject>();
+        for (var index = 0; index < messages.Count; index++)
+        {
+            if (messages[index]["role"]?.Value<string>() != "system")
+                break;
+            leadingSystems.Add(messages[index]);
+        }
+
+        var firstUser = messages.FirstOrDefault(a => a["role"]?.Value<string>() == "user");
+        var pinned = new HashSet<JObject>(ReferenceEqualityComparer.Instance);
+        foreach (var system in leadingSystems)
+            pinned.Add(system);
+        if (firstUser is not null)
+            pinned.Add(firstUser);
+
+        var omission = new JObject
+        {
+            ["role"] = "system",
+            ["content"] = OmissionNotice
+        };
+        var reservedCharacters =
+            leadingSystems.Sum(MessageSize) +
+            (firstUser is null ? 0 : MessageSize(firstUser)) +
+            MessageSize(omission);
+        var availableCharacters = Math.Max(0, MaximumCharacters - reservedCharacters - 4_000);
+
+        var units = BuildRetentionUnits(messages, pinned);
         var retained = new List<JObject>();
         var retainedCharacters = 0;
         for (var index = units.Count - 1; index >= 0; index--)
         {
             var unit = units[index];
-            var size = unit.Sum(a => a.ToString(Formatting.None).Length);
-            if (retainedCharacters + size > MaximumCharacters - 4_000)
+            var size = unit.Sum(MessageSize);
+            if (retainedCharacters + size > availableCharacters)
                 break;
 
             retained.InsertRange(0, unit);
@@ -33,24 +60,23 @@ public sealed class AssistantHistoryCompactor
         }
 
         var result = new List<JObject>();
-        if (system is not null)
-            result.Add(system);
-        result.Add(new JObject
-        {
-            ["role"] = "system",
-            ["content"] = "Earlier conversation messages were omitted to stay within the model context window."
-        });
+        result.AddRange(leadingSystems);
+        result.Add(omission);
+        if (firstUser is not null)
+            result.Add(firstUser);
         result.AddRange(retained);
         return result;
     }
 
-    private static List<List<JObject>> BuildRetentionUnits(List<JObject> messages, JObject? system)
+    private static List<List<JObject>> BuildRetentionUnits(
+        List<JObject> messages,
+        HashSet<JObject> pinned)
     {
         var units = new List<List<JObject>>();
         for (var index = 0; index < messages.Count; index++)
         {
             var message = messages[index];
-            if (ReferenceEquals(message, system))
+            if (pinned.Contains(message))
                 continue;
 
             if (HasToolCalls(message))
@@ -74,6 +100,8 @@ public sealed class AssistantHistoryCompactor
 
         return units;
     }
+
+    private static int MessageSize(JObject message) => message.ToString(Formatting.None).Length;
 
     private static bool HasToolCalls(JObject message) =>
         message["role"]?.Value<string>() == "assistant" &&
@@ -338,6 +366,7 @@ public sealed class AssistantChatService : AuthenticatedService, IAssistantChatS
                 Use searchSettings when the user asks to find settings by criteria; searchQuery supports the same prefixes as the UI search.
                 get_api_status returns running Fig.Api server instances; get_run_sessions returns connected Fig client applications.
                 For reports: call list_reports first, then propose generateReport with reportId and parameters.
+                When ai-report is listed, it accepts a Prompt parameter for a free-form AI-composed report.
                 Infer ClientName/Instance from UI context or the conversation when possible.
                 When a report has From/To and the user did not specify dates, default From to UTC today minus 7 days and To to UTC now.
                 Ask the user for required parameters that cannot be inferred before proposing generateReport.

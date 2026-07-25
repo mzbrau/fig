@@ -17,6 +17,11 @@
 - API Newtonsoft settings must stay consistent with the client and shared contracts (`TypeNameHandling.Objects` + binder), except the documented `GET /clients` FigWebLoad path.
 - For user-provided JSON, use safe JsonSerializerSettings (`TypeNameHandling.None` or whitelisted binders as needed).
 
+## Stryker / report Razor stubs
+- Mutation testing sets `STRYKER_RUNNING=1`. Under that flag, Fig.Api disables Razor compilation (the .NET 10 Razor source generator cannot load in Stryker) and compiles type stubs instead.
+- When adding a report `.razor` view under `src/api/Fig.Api/Reports/Rendering/`, also add a matching stub class in [`src/api/Fig.Api/Reports/StrykerStubs/RazorComponentStubs.cs`](src/api/Fig.Api/Reports/StrykerStubs/RazorComponentStubs.cs) (same name and namespace as the generated component).
+- Smoke-check before pushing report UI changes: `STRYKER_RUNNING=1 dotnet build src/api/Fig.Api/Fig.Api.csproj -c Release`.
+
 ## Testing Strategy
 
 Fig uses a layered testing strategy. Different types of tests exist for different purposes, and they should complement rather than replace one another. When adding tests, think about *why* a test belongs at a particular level instead of adding tests indiscriminately.

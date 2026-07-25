@@ -18,6 +18,7 @@ namespace Fig.Api.Reports.Rendering
 namespace Fig.Api.Reports.Rendering.Views
 {
     public class AccessPrivilegeReportView : ComponentBase;
+    public class AiReportView : ComponentBase;
     public class AnomalyQuietPeriodReportView : ComponentBase;
     public class BlastRadiusReportView : ComponentBase;
     public class ChangeAnalyticsReportView : ComponentBase;
