@@ -33,7 +33,8 @@ public interface ISettingClientFacade
     Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
         SettingClientConfigurationModel client,
         ChangeDetailsModel changeDetails,
-        bool refreshAfterSave = true);
+        bool refreshAfterSave = true,
+        IReadOnlySet<ISetting>? settingsToInclude = null);
 
     /// <summary>
     /// Saves multiple clients with limited PUT parallelism, one post-save refresh, and one timing report.
@@ -41,7 +42,8 @@ public interface ISettingClientFacade
     Task<SaveClientsBatchResult> SaveClientsBatch(
         IReadOnlyList<SettingClientConfigurationModel> clients,
         ChangeDetailsModel changeDetails,
-        bool isSaveAll);
+        bool isSaveAll,
+        IReadOnlySet<ISetting>? settingsToInclude = null);
 
     Task<List<SettingHistoryModel>> GetSettingHistory(SettingClientConfigurationModel client, string name);
 

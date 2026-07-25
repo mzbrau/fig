@@ -517,7 +517,8 @@ public class SettingClientFacade : ISettingClientFacade
     public async Task<SaveClientsBatchResult> SaveClientsBatch(
         IReadOnlyList<SettingClientConfigurationModel> clients,
         ChangeDetailsModel changeDetails,
-        bool isSaveAll)
+        bool isSaveAll,
+        IReadOnlySet<ISetting>? settingsToInclude = null)
     {
         var result = new SaveClientsBatchResult();
         BeginSaveBatch(isSaveAll, clients.Count);
@@ -531,7 +532,7 @@ public class SettingClientFacade : ISettingClientFacade
                 var changedSettings = client.GetChangedSettings();
                 foreach (var (clientWithChanges, changesForClient) in changedSettings)
                 {
-                    var changesList = changesForClient.ToList();
+                    var changesList = FilterChanges(clientWithChanges, changesForClient, settingsToInclude);
                     if (changesList.Count == 0)
                         continue;
 
@@ -601,7 +602,8 @@ public class SettingClientFacade : ISettingClientFacade
     public async Task<Dictionary<SettingClientConfigurationModel, List<string>>> SaveClient(
         SettingClientConfigurationModel client,
         ChangeDetailsModel changeDetails,
-        bool refreshAfterSave = true)
+        bool refreshAfterSave = true,
+        IReadOnlySet<ISetting>? settingsToInclude = null)
     {
         var ownTiming = _pendingSaveTiming is null;
         if (ownTiming)
@@ -620,9 +622,10 @@ public class SettingClientFacade : ISettingClientFacade
             var settingChangeCount = 0;
             var dirtyClientCount = 0;
             var putDurationsMs = new List<long>();
+            var savedChanges = new Dictionary<SettingClientConfigurationModel, List<string>>();
             foreach (var (clientWithChanges, changesForClient) in changedSettings)
             {
-                var changesList = changesForClient.ToList();
+                var changesList = FilterChanges(clientWithChanges, changesForClient, settingsToInclude);
                 if (changesList.Count == 0)
                     continue;
 
@@ -632,6 +635,7 @@ public class SettingClientFacade : ISettingClientFacade
                 putCount++;
                 dirtyClientCount++;
                 settingChangeCount += changesList.Count;
+                savedChanges[clientWithChanges] = changesList.Select(x => x.Name).ToList();
             }
 
             RecordHttpPuts(
@@ -662,15 +666,29 @@ public class SettingClientFacade : ISettingClientFacade
                     await ReportPendingSaveTimingAsync();
             }
 
-            return changedSettings.ToDictionary(
-                a => a.Key,
-                b => b.Value.Select(x => x.Name).ToList());
+            return savedChanges;
         }
         finally
         {
             if (ownTiming)
                 _pendingSaveTiming = null;
         }
+    }
+
+    private static List<SettingDataContract> FilterChanges(
+        SettingClientConfigurationModel client,
+        IEnumerable<SettingDataContract> changes,
+        IReadOnlySet<ISetting>? settingsToInclude)
+    {
+        if (settingsToInclude is null)
+            return changes.ToList();
+
+        var allowedNames = settingsToInclude
+            .Where(s => ReferenceEquals(s.Parent, client))
+            .Select(s => s.Name)
+            .ToHashSet();
+
+        return changes.Where(c => allowedNames.Contains(c.Name)).ToList();
     }
 
     private void BeginSaveBatch(bool isSaveAll, int clientCount)
