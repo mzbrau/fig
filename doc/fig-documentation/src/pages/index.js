@@ -52,6 +52,11 @@ function HomepageHeader() {
             to="/docs/intro">
             Get Started with Fig
           </Link>
+          <Link
+            className={clsx('button button--lg', styles.buttonOutline)}
+            to="/docs/guides/add-with-ai">
+            Add with AI
+          </Link>
         </div>
       </div>
     </header>

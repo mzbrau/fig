@@ -8,6 +8,12 @@ sidebar_position: 1
 
 ## Quick Start
 
+:::tip Add with AI
+
+Prefer to have an AI coding assistant wire Fig into your app? Copy the prompt from [Add Fig with AI](./guides/0-add-with-ai.md) and paste it into Cursor, Copilot, Claude Code, or similar.
+
+:::
+
 The fastest way to get up and running with Fig is to clone the [fig quick start](https://github.com/mzbrau/fig-quick-start) repository. This repository contains an aspire setup with the Fig API and Web as well as a sample application using Fig for configuration.
 
 Instructions below uses docker compose to set up fig as an alternative.
