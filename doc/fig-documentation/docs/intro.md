@@ -10,7 +10,7 @@ sidebar_position: 1
 
 :::tip Add with AI
 
-Prefer to have an AI coding assistant wire Fig into your app? Copy the prompt from [Add Fig with AI](./guides/0-add-with-ai.md) and paste it into Cursor, Copilot, Claude Code, or similar.
+Want an AI coding assistant to wire Fig into your app? Copy the prompt from [Add Fig with AI](./guides/0-add-with-ai.md) and paste it into Cursor, Copilot, Claude Code, or similar.
 
 :::
 

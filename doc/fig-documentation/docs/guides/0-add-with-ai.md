@@ -1,5 +1,6 @@
 ---
 sidebar_position: 0
+slug: /guides/add-with-ai
 ---
 
 # Add Fig with AI
@@ -63,7 +64,7 @@ Guidance:
   - [fig-quick-start](https://github.com/mzbrau/fig-quick-start) (Aspire sample with Fig + a demo app)
   - Docker Compose in the [fig repository](https://github.com/mzbrau/fig)
   - [.NET Aspire Integration](./9-aspire-integration.md) when the app already uses Aspire
-- Local Fig Web (docker defaults): `http://localhost:7148` (user `admin` / password `admin`)
+- Local Fig Web (Docker defaults): `http://localhost:7148` (user `admin` / password `admin`) for isolated local development only. Change the password before exposing Fig Web.
 
 ### Phase 2 — Settings class
 
@@ -154,7 +155,7 @@ Notes:
 
 - `UseFig<T>()` registers Fig host workers (health, restart, custom actions, lookups). Do **not** add obsolete separate `UseFigValidation` / `UseFigRestart` calls.
 - If the client name is not obvious from the project name, **ask** the user what `ClientName` to use.
-- Omit / unset `FIG_API_URI`, or pass `--disable-fig=true`, to run without Fig (useful for some tests).
+- To run **without** the Fig configuration provider (useful for some tests), omit / unset `FIG_API_URI`, or pass `--disable-fig=true`. That fully disables Fig — it is different from `AllowOfflineSettings`, which keeps Fig active and loads previously cached settings when the API is unreachable.
 
 ### Phase 4 — Feature questions (maximize value)
 
@@ -169,7 +170,7 @@ Notes:
 7. **Display scripts** — JavaScript UI rules for advanced conditional UX? (defer unless requested)
 8. **Custom actions** — Ops buttons in Fig Web via `ICustomAction`? (defer unless requested)
 9. **Nested / section override** — Keep nested JSON shape for libraries that bind sections?
-10. **Offline settings** — Keep `AllowOfflineSettings` default (`true`) so the app can start if Fig API is briefly unavailable?
+10. **Offline settings** — Keep `AllowOfflineSettings` default (`true`) so Fig can load cached settings when the API is briefly unavailable? (This is not the same as `--disable-fig=true`, which turns Fig off entirely.)
 11. **Testing** — Add [Fig.Client.Testing](./4-integration-testing.md) helpers / [settings binding verification](./10-settings-binding-verification.md)?
 
 If the user is unsure, enable **secrets + validation + categories + valid values** for anything that clearly fits. Defer display scripts, custom actions, and lookups unless the app already has dynamic lists or operational actions.
