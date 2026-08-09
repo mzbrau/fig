@@ -2,41 +2,55 @@ using Projects;
 
 var builder = DistributedApplication.CreateBuilder(args);
 
+var useKeycloak = bool.TryParse(builder.Configuration["UseKeycloak"], out var parsedUseKeycloak) &&
+                  parsedUseKeycloak;
+
+IResourceBuilder<IResource>? keycloak = null;
 const int keycloakPort = 8085;
 var keycloakHostUrl = $"http://localhost:{keycloakPort}";
-var realmImportPath = Path.GetFullPath(Path.Combine(
-    builder.Environment.ContentRootPath,
-    "..",
-    "..",
-    "..",
-    "resources",
-    "keycloak",
-    "realm-export.json"));
 
-var keycloak = builder.AddKeycloak("keycloak", keycloakPort)
-    .WithRealmImport(realmImportPath)
-    .WithLifetime(ContainerLifetime.Persistent);
+if (useKeycloak)
+{
+    var realmImportPath = Path.GetFullPath(Path.Combine(
+        builder.Environment.ContentRootPath,
+        "..",
+        "..",
+        "..",
+        "resources",
+        "keycloak",
+        "realm-export.json"));
+
+    keycloak = builder.AddKeycloak("keycloak", keycloakPort)
+        .WithRealmImport(realmImportPath)
+        .WithLifetime(ContainerLifetime.Persistent);
+}
 
 var figApi = builder.AddProject<Fig_Api>("fig-api")
-    .WithHttpsEndpoint(7281, name: "fig-api-https")
-    .WithEnvironment("ApiSettings__Authentication__Mode", "Keycloak")
-    .WithEnvironment("ApiSettings__Authentication__Keycloak__Authority", $"{keycloakHostUrl}/realms/fig")
-    .WithEnvironment("ApiSettings__Authentication__Keycloak__Audience", "fig-api")
-    .WithEnvironment("ApiSettings__Authentication__Keycloak__RequireHttpsMetadata", "false")
-    .WaitFor(keycloak);
+    .WithHttpsEndpoint(7281, name: "fig-api-https");
 
-builder.AddProject<Fig_Web>("fig-web")
+if (useKeycloak)
+{
+    figApi = figApi
+        .WithEnvironment("ApiSettings__Authentication__Mode", "Keycloak")
+        .WithEnvironment("ApiSettings__Authentication__Keycloak__Authority", $"{keycloakHostUrl}/realms/fig")
+        .WithEnvironment("ApiSettings__Authentication__Keycloak__Audience", "fig-api")
+        .WithEnvironment("ApiSettings__Authentication__Keycloak__RequireHttpsMetadata", "false")
+        .WaitFor(keycloak!);
+}
+
+var figWeb = builder.AddProject<Fig_Web>("fig-web")
     .WithHttpsEndpoint(7148, name: "fig-web-https")
-    .WithEnvironment("WebSettings__Authentication__Mode", "Keycloak")
-    .WithEnvironment("WebSettings__Authentication__Keycloak__Authority", $"{keycloakHostUrl}/realms/fig")
-    .WithEnvironment("WebSettings__Authentication__Keycloak__ClientId", "fig-web")
-    .WithEnvironment("WebSettings__Authentication__Keycloak__Scopes", "openid profile email roles")
-    .WithEnvironment("WebSettings__Authentication__Keycloak__ApiScope", "")
-    .WithEnvironment("WebSettings__Authentication__Keycloak__ResponseType", "code")
-    .WithEnvironment("WebSettings__Authentication__Keycloak__PostLogoutRedirectUri", "https://localhost:7148/")
-    .WithEnvironment("WebSettings__Authentication__Keycloak__AccountManagementUrl", $"{keycloakHostUrl}/realms/fig/account/")
-    .WaitFor(keycloak)
     .WaitFor(figApi);
+
+if (useKeycloak)
+{
+    // Blazor WASM loads wwwroot/appsettings.{Environment}.json in the browser;
+    // process WebSettings__* env vars do not reach that config.
+    figWeb = figWeb
+        .WithEnvironment("ASPNETCORE_ENVIRONMENT", "Keycloak")
+        .WithEnvironment("DOTNET_ENVIRONMENT", "Keycloak")
+        .WaitFor(keycloak!);
+}
 
 builder.AddProject<Fig_Examples_AspNetApi>("aspnetapi-example")
     .WithEnvironment("FIG_API_URI", "https://localhost:7281")

@@ -259,6 +259,15 @@ Fallback behavior:
 - To roll back, set both API and web mode values to `FigManaged`.
 - Keep API and web modes aligned to avoid login and token propagation mismatches.
 
+### Aspire AppHost (local development)
+
+- By default, `Fig.AppHost` runs with FigManaged authentication and does **not** start a Keycloak container.
+- Set `"UseKeycloak": true` in `Fig.AppHost` `appsettings.json` (or `UseKeycloak=true` via user secrets / environment) to:
+  - start the local Keycloak container with the sample realm import,
+  - configure the API for Keycloak via environment overrides,
+  - set the web environment to `Keycloak` so Blazor WASM loads `wwwroot/appsettings.Keycloak.json`.
+- Leave `UseKeycloak` as `false` (the default) for the normal FigManaged login flow.
+
 ### Troubleshooting mode mismatch
 
 - Web is `Keycloak`, API is `FigManaged`: OIDC login succeeds, but API calls fail authorization.
