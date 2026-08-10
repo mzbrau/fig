@@ -33,6 +33,9 @@ public class SessionTools
         [Description("Optional instance filter (requires clientName)")] string? instance,
         CancellationToken cancellationToken)
     {
+        if (!string.IsNullOrWhiteSpace(instance) && string.IsNullOrWhiteSpace(clientName))
+            throw new ArgumentException("Instance filter requires clientName.", nameof(instance));
+
         IEnumerable<CustomStatusSessionPropertiesDataContract> properties;
         if (string.IsNullOrWhiteSpace(clientName))
             properties = await apiClient.GetCustomStatusPropertiesAsync(cancellationToken);

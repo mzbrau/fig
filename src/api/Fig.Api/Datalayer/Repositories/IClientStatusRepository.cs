@@ -18,9 +18,8 @@ public interface IClientStatusRepository
     Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract requestingUser);
 
     /// <summary>
-    /// Gets client statuses by name. When <paramref name="instance"/> is null, returns all instances
-    /// for that name; otherwise returns only the matching instance.
+    /// Gets all client statuses matching the given name (any instance), filtered by user access.
     /// </summary>
     Task<IList<ClientStatusBusinessEntity>> GetClients(
-        string name, string? instance, UserDataContract requestingUser);
+        string name, UserDataContract requestingUser);
 }

@@ -203,21 +203,29 @@ public class StatusService : AuthenticatedService, IStatusService
     public async Task<List<CustomStatusSessionPropertiesDataContract>> GetCustomProperties(string clientName, string? instance)
     {
         var clients = await _clientStatusRepository.GetClients(
-            clientName, instance, RequireAuthenticatedUser());
-        return ProjectCustomProperties(clients);
+            clientName, RequireAuthenticatedUser());
+        return ProjectCustomProperties(clients, instance);
     }
 
     private static List<CustomStatusSessionPropertiesDataContract> ProjectCustomProperties(
-        IEnumerable<ClientStatusBusinessEntity> clients)
+        IEnumerable<ClientStatusBusinessEntity> clients,
+        string? instanceFilter = null)
     {
         var result = new List<CustomStatusSessionPropertiesDataContract>();
         foreach (var client in clients)
         {
             foreach (var session in client.RunSessions.Where(s => !s.IsExpired()))
             {
+                var effectiveInstance = session.InstanceName ?? client.Instance;
+                if (instanceFilter is not null &&
+                    !string.Equals(effectiveInstance, instanceFilter, StringComparison.Ordinal))
+                {
+                    continue;
+                }
+
                 result.Add(new CustomStatusSessionPropertiesDataContract(
                     client.Name,
-                    session.InstanceName ?? client.Instance,
+                    effectiveInstance,
                     session.RunSessionId,
                     session.LastSeen,
                     session.GetCustomProperties()));

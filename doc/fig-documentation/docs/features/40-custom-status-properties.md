@@ -53,7 +53,7 @@ public class SyncService(IFigStatusProperties<OrderProcessorStatus> status)
     {
         status.Set(x => x.LastSuccessfulSyncUtc, DateTime.UtcNow);
         status.Set(x => x.QueueDepth, depth);
-        // or: status.Update(x => { x.IsDraining = false; x.QueueDepth = depth; });
+        // or: status.Update(x => { x.Usage = "NORMAL"; x.QueueDepth = depth; });
     }
 
     public void OnUsageChanged(string level)

@@ -50,6 +50,12 @@ public class ClientRunSessionModel
         LastSettingLoadUtc = lastSettingLoadUtc;
         Health = health;
         CustomProperties = customProperties;
+        UiCustomProperties = customProperties
+            .Where(p => p.ShowInUi)
+            .OrderBy(p => p.Order)
+            .ThenBy(p => p.Name)
+            .ToList();
+        HighlightedCustomProperties = UiCustomProperties.Where(p => p.Highlight).ToList();
     }
 
     public string Name { get; }
@@ -119,11 +125,9 @@ public class ClientRunSessionModel
 
     public IReadOnlyList<CustomStatusPropertyModel> CustomProperties { get; }
 
-    public IReadOnlyList<CustomStatusPropertyModel> UiCustomProperties =>
-        CustomProperties.Where(p => p.ShowInUi).OrderBy(p => p.Order).ThenBy(p => p.Name).ToList();
+    public IReadOnlyList<CustomStatusPropertyModel> UiCustomProperties { get; }
 
-    public IReadOnlyList<CustomStatusPropertyModel> HighlightedCustomProperties =>
-        UiCustomProperties.Where(p => p.Highlight).ToList();
+    public IReadOnlyList<CustomStatusPropertyModel> HighlightedCustomProperties { get; }
 
     public string CustomPropertiesSummary
     {

@@ -83,6 +83,10 @@ function Get-FigCustomStatusProperties {
         $Uri = Get-FigUri -Uri $Uri
         $headers = @{ "Authorization" = "Bearer $Token" }
 
+        if (-not [string]::IsNullOrWhiteSpace($Instance) -and [string]::IsNullOrWhiteSpace($ClientName)) {
+            throw [System.ArgumentException]::new("Instance filter requires ClientName.")
+        }
+
         if ([string]::IsNullOrWhiteSpace($ClientName)) {
             $requestUri = "$Uri/statuses/properties"
         }
@@ -105,6 +109,10 @@ function Get-FigCustomStatusProperties {
         }
 
         $rows = foreach ($session in $sessions) {
+            if ($null -eq $session.CustomProperties) {
+                continue
+            }
+
             $props = $session.CustomProperties.Properties
             if ($null -eq $props) {
                 continue

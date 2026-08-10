@@ -98,4 +98,11 @@ public class SessionToolsTests
         _apiClient.Verify(x => x.GetCustomStatusPropertiesAsync("ServiceA", "prod", It.IsAny<CancellationToken>()),
             Times.Once);
     }
+
+    [Test]
+    public void GetCustomStatusProperties_WithInstanceButNoClientName_ShouldThrow()
+    {
+        Assert.ThrowsAsync<ArgumentException>(async () =>
+            await SessionTools.GetCustomStatusProperties(_apiClient.Object, null, "prod", CancellationToken.None));
+    }
 }

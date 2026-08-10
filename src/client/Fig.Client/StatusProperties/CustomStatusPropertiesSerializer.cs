@@ -33,7 +33,7 @@ namespace Fig.Client.StatusProperties
             var properties = new List<CustomStatusPropertyDataContract>();
             foreach (var propertyInfo in typeof(T).GetProperties(BindingFlags.Instance | BindingFlags.Public))
             {
-                if (!propertyInfo.CanRead || propertyInfo.GetIndexParameters().Length > 0)
+                if (!propertyInfo.CanRead || !propertyInfo.CanWrite || propertyInfo.GetIndexParameters().Length > 0)
                     continue;
 
                 var clrType = Nullable.GetUnderlyingType(propertyInfo.PropertyType) ?? propertyInfo.PropertyType;
@@ -177,6 +177,20 @@ namespace Fig.Client.StatusProperties
         }
 
         private static bool TryConvertToWireValue(object rawValue, CustomStatusValueType valueType, out object? wireValue)
+        {
+            wireValue = null;
+            try
+            {
+                return TryConvertToWireValueCore(rawValue, valueType, out wireValue);
+            }
+            catch (Exception ex) when (ex is OverflowException or FormatException or InvalidCastException)
+            {
+                wireValue = null;
+                return false;
+            }
+        }
+
+        private static bool TryConvertToWireValueCore(object rawValue, CustomStatusValueType valueType, out object? wireValue)
         {
             wireValue = null;
             switch (valueType)

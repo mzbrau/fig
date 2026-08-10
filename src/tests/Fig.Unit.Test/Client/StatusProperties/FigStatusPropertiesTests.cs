@@ -177,6 +177,34 @@ public class FigStatusPropertiesTests
         Assert.That(usage.Value, Is.EqualTo("HIGH"));
         Assert.That(usage.TextColor, Is.Null);
     }
+
+    [Test]
+    public void Set_WithInvalidTextColor_ShouldThrow()
+    {
+        var store = new FigStatusProperties<SampleStatus>();
+        Assert.That(() => store.Set(x => x.Usage, "HIGH", "red"),
+            Throws.ArgumentException.With.Property("ParamName").EqualTo("textColor"));
+    }
+
+    [Test]
+    public void CreateSnapshot_ShouldSkipUintThatOverflowsInt()
+    {
+        var store = new FigStatusProperties<UintStatus>(NullLogger<FigStatusProperties<UintStatus>>.Instance);
+        store.Set(x => x.SafeCount, 42u);
+        store.Set(x => x.HugeCount, uint.MaxValue);
+
+        var snapshot = store.CreateSnapshot();
+        Assert.That(snapshot, Is.Not.Null);
+        Assert.That(snapshot!.Properties.Any(p => p.Name == nameof(UintStatus.HugeCount)), Is.False);
+        Assert.That(snapshot.Properties.Single(p => p.Name == nameof(UintStatus.SafeCount)).Value, Is.EqualTo(42));
+    }
+
+    private class UintStatus
+    {
+        public uint SafeCount { get; set; }
+
+        public uint HugeCount { get; set; }
+    }
 }
 
 [TestFixture]

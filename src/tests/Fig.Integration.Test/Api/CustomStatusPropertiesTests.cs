@@ -192,6 +192,32 @@ public class CustomStatusPropertiesTests : IntegrationTestBase
         Assert.That(props.Single(p => p.Name == "Amount").Value?.ToString(), Is.EqualTo("123.45"));
     }
 
+    [Test]
+    public async Task ShallFilterCustomPropertiesByEffectiveSessionInstance()
+    {
+        var secret = GetNewSecret();
+        var settings = await RegisterSettings<ThreeSettings>(secret);
+        var runSessionId = Guid.NewGuid();
+        const string instanceName = "prod";
+
+        // Status poll with instance falls back to the no-instance registration and stores InstanceName on the session.
+        var statusRequest = CreateStatusRequest(FiveHundredMillisecondsAgo(), DateTime.UtcNow, 5000, true,
+            runSessionId: runSessionId);
+        statusRequest.CustomProperties = new CustomStatusPropertiesDataContract(
+        [
+            new CustomStatusPropertyDataContract("Region", CustomStatusValueType.String, "eu-west")
+        ]);
+        await GetStatus(settings.ClientName, secret, statusRequest, instance: instanceName);
+
+        var byInstance = (await GetCustomStatusProperties(settings.ClientName, instanceName)).ToList();
+        Assert.That(byInstance, Has.Count.EqualTo(1));
+        Assert.That(byInstance[0].Instance, Is.EqualTo(instanceName));
+        Assert.That(byInstance[0].CustomProperties!.Properties.Single().Value, Is.EqualTo("eu-west"));
+
+        var otherInstance = (await GetCustomStatusProperties(settings.ClientName, "other")).ToList();
+        Assert.That(otherInstance, Is.Empty);
+    }
+
     private async Task<IEnumerable<CustomStatusSessionPropertiesDataContract>> GetCustomStatusProperties(
         string? clientName = null, string? instance = null)
     {

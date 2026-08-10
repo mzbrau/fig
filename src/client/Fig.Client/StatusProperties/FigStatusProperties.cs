@@ -33,6 +33,9 @@ namespace Fig.Client.StatusProperties
 
         public void Set<TValue>(Expression<Func<T, TValue>> property, TValue value, string? textColor = null)
         {
+            if (textColor is not null && !CustomStatusPropertiesValidator.IsValidTextColor(textColor))
+                throw new ArgumentException("TextColor must be a hex color (#RGB or #RRGGBB).", nameof(textColor));
+
             var propertyInfo = GetPropertyInfo(property);
             lock (_gate)
             {
@@ -44,6 +47,9 @@ namespace Fig.Client.StatusProperties
 
         public void SetTextColor<TValue>(Expression<Func<T, TValue>> property, string? textColor)
         {
+            if (textColor is not null && !CustomStatusPropertiesValidator.IsValidTextColor(textColor))
+                throw new ArgumentException("TextColor must be a hex color (#RGB or #RRGGBB).", nameof(textColor));
+
             var propertyInfo = GetPropertyInfo(property);
             lock (_gate)
             {

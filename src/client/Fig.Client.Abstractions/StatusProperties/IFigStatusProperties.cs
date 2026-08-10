@@ -23,6 +23,11 @@ namespace Fig.Client.Abstractions.StatusProperties
         /// </summary>
         void SetTextColor<TValue>(Expression<Func<T, TValue>> property, string? textColor);
 
+        /// <summary>
+        /// Applies an update to the current status properties bag.
+        /// The delegate runs while the internal lock is held, so keep it short and non-blocking
+        /// and avoid acquiring other locks.
+        /// </summary>
         void Update(Action<T> update);
 
         void Clear<TValue>(Expression<Func<T, TValue>> property);

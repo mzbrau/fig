@@ -110,12 +110,7 @@ namespace Fig.Contracts.Status
                             $"Property '{property.Name}' string value exceeds {CustomStatusPropertiesLimits.MaxStringValueLength} characters.");
                     }
 
-                    if (property.ValueType == CustomStatusValueType.Enum &&
-                        string.IsNullOrWhiteSpace(property.EnumTypeName))
-                    {
-                        // EnumTypeName is optional metadata; value must still be string-like.
-                    }
-
+                    // EnumTypeName is optional metadata; the value must still be string-like.
                     break;
 
                 case CustomStatusValueType.Boolean:
