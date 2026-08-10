@@ -56,4 +56,20 @@ public class StatusController : ControllerBase
         var allStatuses = await _statusService.GetAll();
         return Ok(allStatuses);
     }
+
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [HttpGet("properties")]
+    public async Task<IActionResult> GetCustomProperties()
+    {
+        var properties = await _statusService.GetCustomProperties();
+        return Ok(properties);
+    }
+
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [HttpGet("{clientName}/properties")]
+    public async Task<IActionResult> GetCustomPropertiesForClient(string clientName, [FromQuery] string? instance)
+    {
+        var properties = await _statusService.GetCustomProperties(clientName, instance);
+        return Ok(properties);
+    }
 }

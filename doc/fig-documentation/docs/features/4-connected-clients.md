@@ -24,6 +24,10 @@ If a setting is updated on a client that is not marked as supporting live reload
 
 Fig will automatically check the health of all connected clients and report it back to the API. For details, see [Health Checks](./18-health-checks.md).
 
+## Custom Status Properties
+
+Clients can report developer-defined scalar properties (timestamps, queue depth, region, and similar) with each status poll. Highlighted properties appear in the Connected Clients table; expand a row for the full set. See [Custom Status Properties](./40-custom-status-properties.md).
+
 ## Live Reload
 
 By default, all clients are set to live reload. This means when a setting is changed in the web client, it will automatically be offered to the client on their next poll. However this can be disabled on a client by client basis. This allows setting changes to be rolled out to select clients and tested prior to a broader roll out. As soon as live reload is enabled again, the setting update will be offered on the next poll cycle.

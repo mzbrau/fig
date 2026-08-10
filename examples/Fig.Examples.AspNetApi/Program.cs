@@ -47,10 +47,12 @@ builder.Services.AddSingleton<ICustomAction, FailoverAction>();
 builder.Services.AddSingleton<ICustomAction, MigrateDatabaseAction>();
 builder.Services.AddSingleton<ILookupProvider, IssueTypeProvider>();
 builder.Services.AddSingleton<IKeyedLookupProvider, IssuePropertyProvider>();
+builder.Services.AddFigStatusProperties<AspNetApiStatusProperties>();
 
 if (args?.Contains(disableFigArg, StringComparer.Ordinal) != true)
 {
     builder.Services.AddHostedService<CurrentTimeUpdater>();
+    builder.Services.AddHostedService<StatusPropertiesUpdater>();
 }
 
 builder.Services.AddEndpointsApiExplorer();

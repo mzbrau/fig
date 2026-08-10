@@ -10,7 +10,8 @@ namespace Fig.Contracts.Status
             string applicationVersion, bool offlineSettingsEnabled, bool supportsRestart, bool restartRequested,
             bool restartRequiredToApplySettings,
             string runningUser, long memoryUsageBytes,
-            DateTime lastSettingLoadUtc, string? instanceName = null, HealthDataContract? health = null)
+            DateTime lastSettingLoadUtc, string? instanceName = null, HealthDataContract? health = null,
+            CustomStatusPropertiesDataContract? customProperties = null)
         {
             RunSessionId = runSessionId;
             LastSeen = lastSeen;
@@ -30,6 +31,7 @@ namespace Fig.Contracts.Status
             LastSettingLoadUtc = lastSettingLoadUtc;
             InstanceName = instanceName;
             Health = health;
+            CustomProperties = customProperties;
         }
 
         public Guid RunSessionId { get; }
@@ -67,5 +69,7 @@ namespace Fig.Contracts.Status
         public string? InstanceName { get; }
 
         public HealthDataContract? Health { get; set; }
+
+        public CustomStatusPropertiesDataContract? CustomProperties { get; set; }
     }
 }

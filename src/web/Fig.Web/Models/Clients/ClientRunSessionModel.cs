@@ -1,3 +1,4 @@
+using System.Linq;
 using Humanizer;
 
 namespace Fig.Web.Models.Clients;
@@ -24,7 +25,8 @@ public class ClientRunSessionModel
         string runningUser,
         long memoryUsageBytes,
         DateTime lastSettingLoadUtc,
-        RunSessionHealthModel health)
+        RunSessionHealthModel health,
+        IReadOnlyList<CustomStatusPropertyModel> customProperties)
     {
         Name = name;
         Instance = instance;
@@ -47,6 +49,7 @@ public class ClientRunSessionModel
         MemoryUsageBytes = memoryUsageBytes;
         LastSettingLoadUtc = lastSettingLoadUtc;
         Health = health;
+        CustomProperties = customProperties;
     }
 
     public string Name { get; }
@@ -113,4 +116,29 @@ public class ClientRunSessionModel
     public DateTime LastSettingLoadLocal => LastSettingLoadUtc.ToLocalTime();
     
     public RunSessionHealthModel Health { get; }
+
+    public IReadOnlyList<CustomStatusPropertyModel> CustomProperties { get; }
+
+    public IReadOnlyList<CustomStatusPropertyModel> UiCustomProperties =>
+        CustomProperties.Where(p => p.ShowInUi).OrderBy(p => p.Order).ThenBy(p => p.Name).ToList();
+
+    public IReadOnlyList<CustomStatusPropertyModel> HighlightedCustomProperties =>
+        UiCustomProperties.Where(p => p.Highlight).ToList();
+
+    public string CustomPropertiesSummary
+    {
+        get
+        {
+            if (HighlightedCustomProperties.Count > 0)
+                return string.Join(" · ", HighlightedCustomProperties.Select(p => p.Summary));
+
+            if (UiCustomProperties.Count > 0)
+                return $"{UiCustomProperties.Count} properties";
+
+            return "—";
+        }
+    }
+
+    public bool HasExpandableDetails =>
+        Health.Components.Any() || UiCustomProperties.Count > 0;
 }

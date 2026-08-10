@@ -70,6 +70,14 @@ public interface IFigApiClient
     Task<IEnumerable<ClientStatusDataContract>> GetRunSessionsAsync(
         CancellationToken ct = default);
 
+    Task<IEnumerable<CustomStatusSessionPropertiesDataContract>> GetCustomStatusPropertiesAsync(
+        CancellationToken ct = default);
+
+    Task<IEnumerable<CustomStatusSessionPropertiesDataContract>> GetCustomStatusPropertiesAsync(
+        string clientName,
+        string? instance = null,
+        CancellationToken ct = default);
+
     Task SetLiveReloadAsync(
         Guid runSessionId,
         bool enabled,

@@ -1,6 +1,7 @@
 using Fig.Contracts.Health;
 using Fig.Contracts.Status;
 using Fig.Web.Models.Clients;
+using Fig.Web.Utils;
 
 namespace Fig.Web.Converters;
 
@@ -32,13 +33,35 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                 lastSettingLoadUtc: session.LastSettingLoadUtc,
                 health: new RunSessionHealthModel(
                     session.Health?.Status ?? FigHealthStatus.Unknown, 
-                    session.Health?.Components is null ? [] : ConvertComponents(session.Health.Components)));
+                    session.Health?.Components is null ? [] : ConvertComponents(session.Health.Components)),
+                customProperties: ConvertCustomProperties(session.CustomProperties));
     }
 
     private List<ComponentHealthModel> ConvertComponents(List<ComponentHealthDataContract> healthComponents)
     {
         return healthComponents
             .Select(a => new ComponentHealthModel(a.Name, a.Status, a.Message))
+            .ToList();
+    }
+
+    private static IReadOnlyList<CustomStatusPropertyModel> ConvertCustomProperties(
+        CustomStatusPropertiesDataContract? customProperties)
+    {
+        if (customProperties?.Properties is null || customProperties.Properties.Count == 0)
+            return [];
+
+        return customProperties.Properties
+            .Select(p => new CustomStatusPropertyModel(
+                p.Name,
+                p.DisplayName,
+                p.ValueType,
+                p.Value,
+                p.EnumTypeName,
+                p.Highlight,
+                p.ShowInUi,
+                p.Order,
+                CustomStatusPropertyFormatter.Format(p),
+                p.TextColor))
             .ToList();
     }
 }

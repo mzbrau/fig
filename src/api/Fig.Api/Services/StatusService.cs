@@ -194,6 +194,39 @@ public class StatusService : AuthenticatedService, IStatusService
             .ToList();
     }
 
+    public async Task<List<CustomStatusSessionPropertiesDataContract>> GetCustomProperties()
+    {
+        var clients = await _clientStatusRepository.GetAllClients(RequireAuthenticatedUser());
+        return ProjectCustomProperties(clients);
+    }
+
+    public async Task<List<CustomStatusSessionPropertiesDataContract>> GetCustomProperties(string clientName, string? instance)
+    {
+        var clients = await _clientStatusRepository.GetClients(
+            clientName, instance, RequireAuthenticatedUser());
+        return ProjectCustomProperties(clients);
+    }
+
+    private static List<CustomStatusSessionPropertiesDataContract> ProjectCustomProperties(
+        IEnumerable<ClientStatusBusinessEntity> clients)
+    {
+        var result = new List<CustomStatusSessionPropertiesDataContract>();
+        foreach (var client in clients)
+        {
+            foreach (var session in client.RunSessions.Where(s => !s.IsExpired()))
+            {
+                result.Add(new CustomStatusSessionPropertiesDataContract(
+                    client.Name,
+                    session.InstanceName ?? client.Instance,
+                    session.RunSessionId,
+                    session.LastSeen,
+                    session.GetCustomProperties()));
+            }
+        }
+
+        return result;
+    }
+
     public void SetRequesterDetails(string? ipAddress, string? hostname)
     {
         _requestIpAddress = ipAddress;

@@ -1,5 +1,6 @@
 using Fig.Client.Health;
 using Fig.Client.Configuration;
+using Fig.Client.StatusProperties;
 using Fig.Client.Workers;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -21,6 +22,7 @@ public static class FigRegistrationExtensions
             services.AddHostedService<FigRestartWorker<T>>();
             services.AddHostedService<FigHealthWorker<T>>();
             services.AddHostedService<FigCustomActionWorker<T>>();
+            services.AddHostedService<FigStatusPropertiesWorker>();
             
             services.AddHostedService<FigLookupWorker<T>>();
             services.AddSingleton<FigConfigurationHealthCheck<T>>();

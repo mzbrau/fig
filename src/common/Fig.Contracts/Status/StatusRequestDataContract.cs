@@ -46,6 +46,8 @@ namespace Fig.Contracts.Status
         
         public HealthDataContract? Health { get; set; }
 
+        public CustomStatusPropertiesDataContract? CustomProperties { get; set; }
+
         [Obsolete("Removed in Fig 2.0")]
         public bool HasConfigurationError { get; } = false;
 

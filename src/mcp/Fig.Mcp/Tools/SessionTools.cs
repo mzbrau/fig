@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using Fig.Contracts.Status;
 using Fig.Mcp.ApiClient;
 using ModelContextProtocol.Server;
 using Newtonsoft.Json;
@@ -20,5 +21,24 @@ public class SessionTools
     {
         var sessions = await apiClient.GetRunSessionsAsync(cancellationToken);
         return JsonConvert.SerializeObject(sessions, Formatting.Indented);
+    }
+
+    [McpServerTool, Description("Get custom status properties for connected client run sessions. " +
+        "Returns a lightweight payload with client name, instance, run session id, last seen, and developer-defined " +
+        "custom properties (timestamps, booleans, strings, numbers, TimeSpans, etc.) without full session diagnostics. " +
+        "Optionally filter by client name and instance.")]
+    public static async Task<string> GetCustomStatusProperties(
+        IFigApiClient apiClient,
+        [Description("Optional client name filter")] string? clientName,
+        [Description("Optional instance filter (requires clientName)")] string? instance,
+        CancellationToken cancellationToken)
+    {
+        IEnumerable<CustomStatusSessionPropertiesDataContract> properties;
+        if (string.IsNullOrWhiteSpace(clientName))
+            properties = await apiClient.GetCustomStatusPropertiesAsync(cancellationToken);
+        else
+            properties = await apiClient.GetCustomStatusPropertiesAsync(clientName, instance, cancellationToken);
+
+        return JsonConvert.SerializeObject(properties, Formatting.Indented);
     }
 }

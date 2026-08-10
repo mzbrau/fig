@@ -115,6 +115,23 @@ public class FigApiClient : IFigApiClient
         return await GetAsync<IEnumerable<ClientStatusDataContract>>("statuses", ct);
     }
 
+    public async Task<IEnumerable<CustomStatusSessionPropertiesDataContract>> GetCustomStatusPropertiesAsync(
+        CancellationToken ct = default)
+    {
+        return await GetAsync<IEnumerable<CustomStatusSessionPropertiesDataContract>>("statuses/properties", ct);
+    }
+
+    public async Task<IEnumerable<CustomStatusSessionPropertiesDataContract>> GetCustomStatusPropertiesAsync(
+        string clientName,
+        string? instance = null,
+        CancellationToken ct = default)
+    {
+        var url = $"statuses/{Uri.EscapeDataString(clientName)}/properties";
+        if (!string.IsNullOrWhiteSpace(instance))
+            url += $"?instance={Uri.EscapeDataString(instance)}";
+        return await GetAsync<IEnumerable<CustomStatusSessionPropertiesDataContract>>(url, ct);
+    }
+
     public async Task SetLiveReloadAsync(Guid runSessionId, bool enabled,
         CancellationToken ct = default)
     {
