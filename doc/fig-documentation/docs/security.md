@@ -242,6 +242,49 @@ Fallback behavior:
 - If `fig_allowed_classifications` is missing for `Administrator`, Fig grants all classifications.
 - If `fig_allowed_classifications` is missing for non-admin users, access is denied.
 
+### Brokered identity providers (e.g. Entra ID)
+
+Fig always authenticates against Keycloak. External providers such as Microsoft Entra ID are configured in **Keycloak Admin** as identity providers (OIDC/SAML broker). Fig never talks to Entra directly.
+
+To send users straight to a brokered IdP (skipping the Keycloak username/password page), set optional web settings:
+
+```json
+{
+  "WebSettings": {
+    "Authentication": {
+      "Mode": "Keycloak",
+      "Keycloak": {
+        "Authority": "https://keycloak.example.com/realms/fig",
+        "ClientId": "fig-web",
+        "IdentityProviderHint": "entra-id",
+        "EnableIdentityProviderHint": true,
+        "LoginPrompt": "",
+        "PostLogoutLoginPrompt": "select_account"
+      }
+    }
+  }
+}
+```
+
+| Setting | Purpose |
+|---|---|
+| `IdentityProviderHint` | Keycloak IdP alias sent as OIDC `kc_idp_hint` (must match the alias in Keycloak) |
+| `EnableIdentityProviderHint` | Set to `false` to stop sending `kc_idp_hint` without removing the hint value |
+| `LoginPrompt` | Optional OIDC `prompt` on normal logins; leave empty for seamless IdP SSO |
+| `PostLogoutLoginPrompt` | OIDC `prompt` on the first login after logout (default `select_account`) so another account can be chosen |
+
+**Near-seamless Windows / Entra SSO** (open Fig and land logged in with little or no prompt) depends on browser and directory setup outside Fig, for example:
+
+- Microsoft Edge with Enterprise SSO / device Primary Refresh Token
+- Entra Connect Seamless SSO (Kerberos) on domain-joined machines
+- An existing Entra session cookie in that browser
+
+Fig cannot guarantee zero-prompt login. True silent Windows PRT/WAM SSO requires the client to talk directly to Entra; that path is not supported for Blazor WASM through Keycloak.
+
+**Logout and alternate accounts:** after logout, the next login uses `PostLogoutLoginPrompt` (default `select_account`). With `IdentityProviderHint` enabled, account selection happens at the brokered IdP (e.g. another Entra account). To allow Keycloak local users instead, set `EnableIdentityProviderHint` to `false`.
+
+**Turning IdP redirect off:** set `EnableIdentityProviderHint` to `false`, clear `IdentityProviderHint`, or switch both API and web back to `FigManaged`.
+
 ### Endpoint behavior in Keycloak mode
 
 - `POST /users/authenticate` returns `404`.

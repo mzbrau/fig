@@ -57,6 +57,8 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
 
             if (!string.IsNullOrWhiteSpace(webSettings.Authentication.Keycloak.PostLogoutRedirectUri))
                 options.ProviderOptions.PostLogoutRedirectUri = webSettings.Authentication.Keycloak.PostLogoutRedirectUri;
+
+            OidcProviderOptionsConfigurator.Apply(options.ProviderOptions, webSettings.Authentication.Keycloak);
         });
     }
 

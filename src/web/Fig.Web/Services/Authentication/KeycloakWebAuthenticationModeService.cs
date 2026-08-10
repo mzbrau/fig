@@ -71,8 +71,7 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
     public Task Login(LoginModel model)
     {
         var returnUrl = GetReturnUrl();
-        _navigationManager.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(returnUrl)}", true);
-        return Task.CompletedTask;
+        return BeginLoginAsync(returnUrl);
     }
 
     public async Task Logout()
@@ -82,7 +81,33 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
 
+        await _localStorageService.SetItem(WebAuthenticationConstants.PostLogoutLoginStorageKey, true);
         _navigationManager.NavigateToLogout("authentication/logout");
+    }
+
+    private async Task BeginLoginAsync(string returnUrl)
+    {
+        var postLogoutLogin = await _localStorageService.GetItem<bool?>(WebAuthenticationConstants.PostLogoutLoginStorageKey) == true;
+        if (postLogoutLogin)
+            await _localStorageService.RemoveItem(WebAuthenticationConstants.PostLogoutLoginStorageKey);
+
+        if (postLogoutLogin && !string.IsNullOrWhiteSpace(_keycloakSettings.PostLogoutLoginPrompt))
+        {
+            var absoluteReturnUrl = _navigationManager.ToAbsoluteUri(returnUrl).AbsoluteUri;
+            var requestOptions = new InteractiveRequestOptions
+            {
+                Interaction = InteractionType.SignIn,
+                ReturnUrl = absoluteReturnUrl
+            };
+            requestOptions.TryAddAdditionalParameter(
+                OidcProviderOptionsConfigurator.PromptParameterName,
+                _keycloakSettings.PostLogoutLoginPrompt.Trim());
+
+            _navigationManager.NavigateToLogin("authentication/login", requestOptions);
+            return;
+        }
+
+        _navigationManager.NavigateTo($"authentication/login?returnUrl={Uri.EscapeDataString(returnUrl)}", true);
     }
 
     public Task<Guid> Register(RegisterUserRequestDataContract model)

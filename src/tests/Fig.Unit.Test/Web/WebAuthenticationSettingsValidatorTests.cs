@@ -60,6 +60,28 @@ public class WebAuthenticationSettingsValidatorTests
         Assert.DoesNotThrow(() => WebAuthenticationSettingsValidator.Validate(settings));
     }
 
+    [Test]
+    public void Validate_ShouldAllowIdentityProviderHintSettingsWithoutThrowing()
+    {
+        var settings = CreateKeycloakSettings();
+        settings.Authentication.Keycloak.IdentityProviderHint = "entra-id";
+        settings.Authentication.Keycloak.EnableIdentityProviderHint = true;
+        settings.Authentication.Keycloak.LoginPrompt = "login";
+        settings.Authentication.Keycloak.PostLogoutLoginPrompt = "select_account";
+
+        Assert.DoesNotThrow(() => WebAuthenticationSettingsValidator.Validate(settings));
+    }
+
+    [Test]
+    public void Validate_ShouldAllowWhitespaceIdentityProviderHintWithoutThrowing()
+    {
+        var settings = CreateKeycloakSettings();
+        settings.Authentication.Keycloak.EnableIdentityProviderHint = true;
+        settings.Authentication.Keycloak.IdentityProviderHint = "  ";
+
+        Assert.DoesNotThrow(() => WebAuthenticationSettingsValidator.Validate(settings));
+    }
+
     private static WebSettings CreateKeycloakSettings()
     {
         return new WebSettings

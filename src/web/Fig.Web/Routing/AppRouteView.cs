@@ -33,11 +33,8 @@ public class AppRouteView : RouteView
         if (authorize && AccountService?.AuthenticatedUser == null && NavigationManager != null)
         {
             var returnUrl = WebUtility.UrlEncode(new Uri(NavigationManager.Uri).PathAndQuery);
-            if (AccountService?.AuthenticationMode == WebAuthMode.Keycloak)
-                NavigationManager.NavigateTo($"authentication/login?returnUrl={returnUrl}");
-            else
-                NavigationManager.NavigateTo($"account/login?returnUrl={returnUrl}");
-
+            // Route through account/login so Keycloak mode can apply post-logout prompt handling.
+            NavigationManager.NavigateTo($"account/login?returnUrl={returnUrl}");
             return;
         }
         

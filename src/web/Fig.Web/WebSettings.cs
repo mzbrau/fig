@@ -50,6 +50,27 @@ public class WebKeycloakAuthenticationSettings
 
     public string? AccountManagementUrl { get; set; }
 
+    /// <summary>
+    /// Keycloak identity provider alias sent as OIDC <c>kc_idp_hint</c> (e.g. <c>entra-id</c>).
+    /// When set and <see cref="EnableIdentityProviderHint"/> is true, Keycloak skips its login page and brokers to that IdP.
+    /// </summary>
+    public string? IdentityProviderHint { get; set; }
+
+    /// <summary>
+    /// When false, <see cref="IdentityProviderHint"/> is not sent even if configured.
+    /// </summary>
+    public bool EnableIdentityProviderHint { get; set; } = true;
+
+    /// <summary>
+    /// Optional OIDC <c>prompt</c> for normal logins (usually empty for seamless IdP SSO).
+    /// </summary>
+    public string? LoginPrompt { get; set; }
+
+    /// <summary>
+    /// OIDC <c>prompt</c> applied on the first login after logout so the user can pick another account.
+    /// </summary>
+    public string? PostLogoutLoginPrompt { get; set; } = "select_account";
+
     public string UsernameClaim { get; set; } = "preferred_username";
 
     public string FirstNameClaim { get; set; } = "given_name";
