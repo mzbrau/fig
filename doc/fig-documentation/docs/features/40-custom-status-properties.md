@@ -122,6 +122,9 @@ Oversized payloads are rejected by the API (`400`). The client omits an oversize
 
 ## Viewing in Fig.Web
 
+![custom properties](./img/custom-properties.png)  
+*Custom properties are displayed both as a column in the table and in the expanded section*
+
 On **Connected Clients**:
 
 - The **Custom Properties** column shows highlighted (`Highlight = true`) properties, one per line, with bold labels.
