@@ -15,6 +15,7 @@ using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Fig.Web.Services.Assistant;
 using Fig.Web.Services.Authentication;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
@@ -60,6 +61,12 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
 
             OidcProviderOptionsConfigurator.Apply(options.ProviderOptions, webSettings.Authentication.Keycloak);
         });
+
+        builder.Services.AddScoped<KeycloakWebAuthenticationModeService>();
+    }
+    else
+    {
+        builder.Services.AddScoped<AuthenticationStateProvider, FigManagedAuthenticationStateProvider>();
     }
 
     builder.Services.AddHttpClient(HttpClientNames.FigApi, c =>
@@ -76,7 +83,6 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddRadzenComponents();
     
     builder.Services.AddScoped<FigManagedWebAuthenticationModeService>();
-    builder.Services.AddScoped<KeycloakWebAuthenticationModeService>();
     builder.Services.AddScoped<IWebAuthenticationModeService, WebAuthenticationModeService>();
     builder.Services.AddScoped<IFigApiAccessTokenProvider, FigApiAccessTokenProvider>();
     builder.Services.AddScoped<IAccountService, AccountService>();
