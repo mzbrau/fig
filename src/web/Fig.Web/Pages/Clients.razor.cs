@@ -170,6 +170,7 @@ public partial class Clients : IDisposable
             "Running User",
             "Memory Usage",
             "Last Setting Reload",
+            "Custom Properties",
             "Live Reload",
             "Restart Supported",
             "Restart Requested",
@@ -201,6 +202,7 @@ public partial class Clients : IDisposable
                 session.RunningUser.EscapeAndQuote(),
                 session.MemoryUsage.EscapeAndQuote(),
                 FormatDateTime(session.LastSettingLoadLocal).EscapeAndQuote(),
+                string.Join("; ", session.UiCustomProperties.Select(p => p.Summary)).EscapeAndQuote(),
                 session.LiveReload.ToString().EscapeAndQuote(),
                 session.SupportsRestart.ToString().EscapeAndQuote(),
                 session.RestartRequested.ToString().EscapeAndQuote(),
@@ -218,6 +220,6 @@ public partial class Clients : IDisposable
      
     private void RowRender(RowRenderEventArgs<ClientRunSessionModel> args)
     {
-        args.Expandable = args.Data?.Health?.Components?.Any() == true;
+        args.Expandable = args.Data?.HasExpandableDetails == true;
     }
 }

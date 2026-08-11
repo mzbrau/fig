@@ -16,4 +16,10 @@ public interface IClientStatusRepository
     Task UpdateClientStatus(ClientStatusBusinessEntity clientStatus);
 
     Task<IList<ClientStatusBusinessEntity>> GetAllClients(UserDataContract requestingUser);
+
+    /// <summary>
+    /// Gets all client statuses matching the given name (any instance), filtered by user access.
+    /// </summary>
+    Task<IList<ClientStatusBusinessEntity>> GetClients(
+        string name, UserDataContract requestingUser);
 }

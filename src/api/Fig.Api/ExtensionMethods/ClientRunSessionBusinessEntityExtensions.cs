@@ -39,6 +39,14 @@ public static class ClientRunSessionBusinessEntityExtensions
         {
             statusRequest.Health = null;
         }
+
+        if (statusRequest.CustomProperties is not null)
+        {
+            CustomStatusPropertiesValidator.ValidateOrThrow(statusRequest.CustomProperties);
+            runSession.CustomPropertiesJson = JsonConvert.SerializeObject(
+                statusRequest.CustomProperties,
+                JsonSettings.CustomStatusProperties);
+        }
         
         if (configuration.PollIntervalOverride.HasValue)
             runSession.PollIntervalMs = configuration.PollIntervalOverride.Value;
@@ -52,5 +60,16 @@ public static class ClientRunSessionBusinessEntityExtensions
         var expiryTime = session.LastSeen + TimeSpan.FromMilliseconds(gracePeriodMs);
         var result = expiryTime < DateTime.UtcNow;
         return result;
+    }
+
+    public static CustomStatusPropertiesDataContract? GetCustomProperties(
+        this ClientRunSessionBusinessEntity session)
+    {
+        if (string.IsNullOrWhiteSpace(session.CustomPropertiesJson))
+            return null;
+
+        return JsonConvert.DeserializeObject<CustomStatusPropertiesDataContract>(
+            session.CustomPropertiesJson,
+            JsonSettings.CustomStatusProperties);
     }
 }

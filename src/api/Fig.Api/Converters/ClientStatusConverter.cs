@@ -37,6 +37,8 @@ public class ClientStatusConverter : IClientStatusConverter
         {
             health = JsonConvert.DeserializeObject<HealthDataContract>(session.HealthReportJson, JsonSettings.FigDefault);
         }
+
+        var customProperties = session.GetCustomProperties();
         
         return new ClientRunSessionDataContract(session.RunSessionId,
             session.LastSeen,
@@ -55,6 +57,7 @@ public class ClientStatusConverter : IClientStatusConverter
             session.MemoryUsageBytes,
             session.LastSettingLoadUtc,
             session.InstanceName,
-            health);
+            health,
+            customProperties);
     }
 }

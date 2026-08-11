@@ -14,6 +14,10 @@ public interface IStatusService : IAuthenticatedService
 
     Task<List<ClientStatusDataContract>> GetAll();
 
+    Task<List<CustomStatusSessionPropertiesDataContract>> GetCustomProperties();
+
+    Task<List<CustomStatusSessionPropertiesDataContract>> GetCustomProperties(string clientName, string? instance);
+
     void SetRequesterDetails(string? ipAddress, string? hostname);
     
     Task RequestRestart(Guid runSessionId);

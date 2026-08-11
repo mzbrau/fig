@@ -188,6 +188,7 @@ public class SettingClientFacadeRunSessionTests
             runningUser: "test",
             memoryUsageBytes: 0,
             lastSettingLoadUtc: DateTime.UtcNow,
-            health: new RunSessionHealthModel(FigHealthStatus.Healthy, new List<ComponentHealthModel>()));
+            health: new RunSessionHealthModel(FigHealthStatus.Healthy, new List<ComponentHealthModel>()),
+            customProperties: Array.Empty<CustomStatusPropertyModel>());
     }
 }

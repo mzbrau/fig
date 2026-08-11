@@ -42,6 +42,119 @@ function Submit-FigValueOnlyImport {
     }
 }
 
+function Get-FigCustomStatusProperties {
+    <#
+    .SYNOPSIS
+        Queries Fig for custom status properties on connected client run sessions.
+
+    .DESCRIPTION
+        Calls GET /statuses/properties or GET /statuses/{clientName}/properties and flattens
+        each property into a row. Optionally filter by client, instance, and property name.
+
+    .PARAMETER Token
+        Bearer token from Get-FigAuthToken.
+
+    .PARAMETER Uri
+        Fig API base URI. Defaults to $env:FIG_API_URI.
+
+    .PARAMETER ClientName
+        When set, queries only that client's sessions.
+
+    .PARAMETER Instance
+        Optional instance filter (requires ClientName for the client-scoped endpoint).
+
+    .PARAMETER PropertyName
+        Optional filter matching property Name or DisplayName (case-insensitive).
+    #>
+    param (
+        [Parameter(Mandatory = $true)]
+        [string]$Token,
+
+        [string]$Uri = $env:FIG_API_URI,
+
+        [string]$ClientName,
+
+        [string]$Instance,
+
+        [string]$PropertyName
+    )
+
+    try {
+        $Uri = Get-FigUri -Uri $Uri
+        $headers = @{ "Authorization" = "Bearer $Token" }
+
+        if (-not [string]::IsNullOrWhiteSpace($Instance) -and [string]::IsNullOrWhiteSpace($ClientName)) {
+            throw [System.ArgumentException]::new("Instance filter requires ClientName.")
+        }
+
+        if ([string]::IsNullOrWhiteSpace($ClientName)) {
+            $requestUri = "$Uri/statuses/properties"
+        }
+        else {
+            $encodedClient = [System.Uri]::EscapeDataString($ClientName)
+            $requestUri = "$Uri/statuses/$encodedClient/properties"
+            if (-not [string]::IsNullOrWhiteSpace($Instance)) {
+                $encodedInstance = [System.Uri]::EscapeDataString($Instance)
+                $requestUri = "$requestUri?instance=$encodedInstance"
+            }
+        }
+
+        $sessions = Invoke-RestMethod -Uri $requestUri -Method Get -Headers $headers -AllowUnencryptedAuthentication
+        if ($null -eq $sessions) {
+            return @()
+        }
+
+        if ($sessions -isnot [System.Array]) {
+            $sessions = @($sessions)
+        }
+
+        $rows = foreach ($session in $sessions) {
+            if ($null -eq $session.CustomProperties) {
+                continue
+            }
+
+            $props = $session.CustomProperties.Properties
+            if ($null -eq $props) {
+                continue
+            }
+
+            if ($props -isnot [System.Array]) {
+                $props = @($props)
+            }
+
+            foreach ($prop in $props) {
+                if (-not [string]::IsNullOrWhiteSpace($PropertyName)) {
+                    $nameMatch = $prop.Name -and ($prop.Name -ieq $PropertyName)
+                    $displayMatch = $prop.DisplayName -and ($prop.DisplayName -ieq $PropertyName)
+                    if (-not ($nameMatch -or $displayMatch)) {
+                        continue
+                    }
+                }
+
+                [pscustomobject]@{
+                    ClientName   = $session.ClientName
+                    Instance     = $session.Instance
+                    RunSessionId = $session.RunSessionId
+                    LastSeen     = $session.LastSeen
+                    Name         = $prop.Name
+                    DisplayName  = $prop.DisplayName
+                    ValueType    = $prop.ValueType
+                    Value        = $prop.Value
+                    TextColor    = $prop.TextColor
+                    Highlight    = $prop.Highlight
+                    ShowInUi     = $prop.ShowInUi
+                    Order        = $prop.Order
+                }
+            }
+        }
+
+        return @($rows)
+    }
+    catch {
+        throw "Failed to get custom status properties: $_"
+    }
+}
+
 function Get-FigUri {
     param (
         [Parameter(Mandatory = $true)]
@@ -55,4 +168,4 @@ function Get-FigUri {
 
 Export-ModuleMember Get-FigAuthToken
 Export-ModuleMember Submit-FigValueOnlyImport
-
+Export-ModuleMember Get-FigCustomStatusProperties

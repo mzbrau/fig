@@ -10,6 +10,7 @@ using Fig.Client.Contracts;
 using Fig.Client.Events;
 using Fig.Client.Health;
 using Fig.Client.Versions;
+using Fig.Client.StatusProperties;
 using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Diag;
 using Fig.Common.NetStandard.IpAddress;
@@ -216,6 +217,10 @@ internal class SettingStatusMonitor : ISettingStatusMonitor
             _diagnostics.GetRunningUser(),
             _diagnostics.GetMemoryUsageBytes(),
             healthReport);
+
+        var getCustomProperties = CustomStatusPropertiesBridge.GetSnapshot;
+        if (getCustomProperties is not null)
+            request.CustomProperties = getCustomProperties();
         
         var uri = $"/statuses/{Uri.EscapeDataString(_config.ClientName)}";
         if (_config.Instance != null)

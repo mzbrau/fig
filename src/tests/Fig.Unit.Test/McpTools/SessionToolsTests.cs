@@ -64,4 +64,45 @@ public class SessionToolsTests
 
         Assert.DoesNotThrow(() => JsonConvert.DeserializeObject(result));
     }
+
+    [Test]
+    public async Task GetCustomStatusProperties_ShouldCallApi_AndReturnSerializedJson()
+    {
+        var properties = new List<CustomStatusSessionPropertiesDataContract>
+        {
+            new("ServiceA", null, Guid.NewGuid(), DateTime.UtcNow,
+                new CustomStatusPropertiesDataContract(
+                [
+                    new CustomStatusPropertyDataContract("QueueDepth", CustomStatusValueType.Long, 5L)
+                ]))
+        };
+        _apiClient.Setup(x => x.GetCustomStatusPropertiesAsync(It.IsAny<CancellationToken>()))
+            .ReturnsAsync(properties);
+
+        var result = await SessionTools.GetCustomStatusProperties(_apiClient.Object, null, null, CancellationToken.None);
+
+        _apiClient.Verify(x => x.GetCustomStatusPropertiesAsync(It.IsAny<CancellationToken>()), Times.Once);
+        var deserialized = JsonConvert.DeserializeObject<List<CustomStatusSessionPropertiesDataContract>>(result);
+        Assert.That(deserialized, Has.Count.EqualTo(1));
+        Assert.That(deserialized![0].ClientName, Is.EqualTo("ServiceA"));
+    }
+
+    [Test]
+    public async Task GetCustomStatusProperties_WithClientName_ShouldCallFilteredApi()
+    {
+        _apiClient.Setup(x => x.GetCustomStatusPropertiesAsync("ServiceA", "prod", It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Enumerable.Empty<CustomStatusSessionPropertiesDataContract>());
+
+        await SessionTools.GetCustomStatusProperties(_apiClient.Object, "ServiceA", "prod", CancellationToken.None);
+
+        _apiClient.Verify(x => x.GetCustomStatusPropertiesAsync("ServiceA", "prod", It.IsAny<CancellationToken>()),
+            Times.Once);
+    }
+
+    [Test]
+    public void GetCustomStatusProperties_WithInstanceButNoClientName_ShouldThrow()
+    {
+        Assert.ThrowsAsync<ArgumentException>(async () =>
+            await SessionTools.GetCustomStatusProperties(_apiClient.Object, null, "prod", CancellationToken.None));
+    }
 }

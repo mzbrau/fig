@@ -80,35 +80,62 @@
         <RadzenDataGrid @ref="_clientsGrid" AllowFiltering="true" AllowColumnResize="true" FilterMode="FilterMode.SimpleWithMenu" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive" AllowSorting="true" PageSize="50" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
                         Data="@ClientRunSessions" TItem="ClientRunSessionModel" AllowColumnPicking="true" RowRender="@RowRender" ExpandMode="DataGridExpandMode.Multiple" >
             <Template Context="runSession">
-                <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowColumnResize="true" AllowSorting="true" Data="@runSession.Health.Components">
-                    <Columns>
-                        <RadzenDataGridColumn Property="Name" Title="Component Name" Width="300px" />
-                        <RadzenDataGridColumn Title="Health Status" Width="200px">
-                            <Template Context="component">
-                                <span style="display: flex; align-items: center;">
-                                    @if (component.Status == FigHealthStatus.Healthy)
+                @if (runSession.Health.Components.Any())
+                {
+                    <h5 class="mt-2 mb-2">Health Components</h5>
+                    <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowColumnResize="true" AllowSorting="true" Data="@runSession.Health.Components">
+                        <Columns>
+                            <RadzenDataGridColumn Property="Name" Title="Component Name" Width="300px" />
+                            <RadzenDataGridColumn Title="Health Status" Width="200px">
+                                <Template Context="component">
+                                    <span style="display: flex; align-items: center;">
+                                        @if (component.Status == FigHealthStatus.Healthy)
+                                        {
+                                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green" />
+                                        }
+                                        else if (component.Status == FigHealthStatus.Unhealthy)
+                                        {
+                                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: red" />
+                                        }
+                                        else if (component.Status == FigHealthStatus.Degraded)
+                                        {
+                                            <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: orange" />
+                                        }
+                                        <span style="margin-left: 0.5rem;">@component.Status.ToString()</span>
+                                    </span>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn Title="Message">
+                                <Template Context="component">
+                                    <p style="white-space: pre-wrap; word-wrap: break-word">@component.Message</p>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                @if (runSession.UiCustomProperties.Count > 0)
+                {
+                    <h5 class="mt-3 mb-2">Custom Properties</h5>
+                    <RadzenDataGrid AllowFiltering="true" AllowPaging="true" AllowColumnResize="true" AllowSorting="true" Data="@runSession.UiCustomProperties">
+                        <Columns>
+                            <RadzenDataGridColumn Property="Label" Title="Name" Width="220px" />
+                            <RadzenDataGridColumn Property="Name" Title="Property" Width="180px" />
+                            <RadzenDataGridColumn Property="ValueType" Title="Type" Width="140px" />
+                            <RadzenDataGridColumn Property="FormattedValue" Title="Value">
+                                <Template Context="property">
+                                    @if (property.CssTextColor is not null)
                                     {
-                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: green" />
+                                        <span style="color: @property.CssTextColor;">@property.FormattedValue</span>
                                     }
-                                    else if (component.Status == FigHealthStatus.Unhealthy)
+                                    else
                                     {
-                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: red" />
+                                        <span>@property.FormattedValue</span>
                                     }
-                                    else if (component.Status == FigHealthStatus.Degraded)
-                                    {
-                                        <RadzenIcon Icon="ecg_heart" Size="1.5rem" Style="color: orange" />
-                                    }
-                                    <span style="margin-left: 0.5rem;">@component.Status.ToString()</span>
-                                </span>
-                            </Template>
-                        </RadzenDataGridColumn>
-                        <RadzenDataGridColumn Title="Message">
-                            <Template Context="component">
-                                <p style="white-space: pre-wrap; word-wrap: break-word">@component.Message</p>
-                            </Template>
-                        </RadzenDataGridColumn>
-                    </Columns>
-                </RadzenDataGrid>
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
             </Template>
             <Columns>
                 <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="Name" Filterable="true" Title="Name" TextAlign="TextAlign.Left"/>
@@ -131,6 +158,38 @@
                             }
                             <span style="margin-left: 0.5rem;">@runSession.Health.Status.ToString()</span>
                         </span>
+                    </Template>
+                </Radzen.Blazor.RadzenDataGridColumn>
+
+                <Radzen.Blazor.RadzenDataGridColumn TItem="ClientRunSessionModel" Property="CustomPropertiesSummary" Filterable="true" Title="Custom Properties" TextAlign="TextAlign.Left">
+                    <Template Context="runSession">
+                        @if (runSession.HighlightedCustomProperties.Count > 0)
+                        {
+                            <div style="display: flex; flex-direction: column; gap: 0.15rem; white-space: normal;">
+                                @foreach (var property in runSession.HighlightedCustomProperties)
+                                {
+                                    <div>
+                                        <strong>@property.Label: </strong>
+                                        @if (property.CssTextColor is not null)
+                                        {
+                                            <span style="color: @property.CssTextColor;">@property.FormattedValue</span>
+                                        }
+                                        else
+                                        {
+                                            <span>@property.FormattedValue</span>
+                                        }
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else if (runSession.UiCustomProperties.Count > 0)
+                        {
+                            <span>@runSession.UiCustomProperties.Count properties</span>
+                        }
+                        else
+                        {
+                            <span>—</span>
+                        }
                     </Template>
                 </Radzen.Blazor.RadzenDataGridColumn>
                 

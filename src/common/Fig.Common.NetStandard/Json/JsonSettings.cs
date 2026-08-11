@@ -48,4 +48,14 @@ public static class JsonSettings
         Formatting = Formatting.Indented,
         ContractResolver = PropertyOrderResolver
     };
+
+    /// <summary>
+    /// Safe settings for custom status property bags (no $type; user-controlled content).
+    /// </summary>
+    public static JsonSerializerSettings CustomStatusProperties { get; } = new()
+    {
+        TypeNameHandling = TypeNameHandling.None,
+        NullValueHandling = NullValueHandling.Ignore,
+        Culture = CultureInfo.InvariantCulture
+    };
 }

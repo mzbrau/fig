@@ -75,6 +75,19 @@ public class ClientStatusRepository : RepositoryBase<ClientStatusBusinessEntity>
         }
     }
 
+    public async Task<IList<ClientStatusBusinessEntity>> GetClients(
+        string name, UserDataContract requestingUser)
+    {
+        using Activity? activity = ApiActivitySource.Instance.StartActivity();
+        var criteria = Session.CreateCriteria<ClientStatusBusinessEntity>();
+        criteria.Add(Restrictions.Eq(nameof(ClientStatusBusinessEntity.Name), name));
+
+        var clients = await criteria.ListAsync<ClientStatusBusinessEntity>();
+        return clients
+            .Where(client => requestingUser.HasAccess(client.Name))
+            .ToList();
+    }
+
     private void LogSlowGetAllClients(long elapsedMs, int count)
     {
         if (elapsedMs < SlowQueryWarningMs)
