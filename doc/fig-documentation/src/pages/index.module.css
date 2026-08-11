@@ -33,6 +33,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .buttons .button {
@@ -45,6 +47,18 @@
 .buttons .button:hover {
   opacity: 0.9;
   color: var(--fig-background);
+}
+
+.buttons .buttonOutline {
+  background-color: transparent;
+  color: var(--fig-primary);
+  border: 2px solid var(--fig-primary);
+}
+
+.buttons .buttonOutline:hover {
+  background-color: var(--fig-primary);
+  color: var(--fig-background);
+  opacity: 1;
 }
 
 .parallaxContainer {
