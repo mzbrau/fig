@@ -71,7 +71,7 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
             return null;
         }
 
-        var role = ResolveRole(principal, jwt, keycloakSettings);
+        var role = ResolveRole(jwt, keycloakSettings);
         if (role == null)
         {
             _logger.LogWarning("No recognized Fig role found in Keycloak token claims");
@@ -131,18 +131,14 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
         return authHeader["Bearer ".Length..].Trim();
     }
 
-    private static Role? ResolveRole(
-        ClaimsPrincipal principal,
+    /// <summary>
+    /// Resolves the Fig role exclusively from configured claim paths so RoleClaimPaths remain an authorization boundary.
+    /// </summary>
+    internal static Role? ResolveRole(
         JwtSecurityToken token,
         KeycloakAuthenticationSettings settings)
     {
         var roles = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-
-        foreach (var role in principal.Claims.SelectMany(ExtractRoleValues))
-            roles.Add(role);
-
-        foreach (var role in token.Claims.SelectMany(ExtractRoleValues))
-            roles.Add(role);
 
         foreach (var claimPath in GetConfiguredRoleClaimPaths(settings))
         {
@@ -163,90 +159,6 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
             return Role.User;
 
         return null;
-    }
-
-    private static IEnumerable<string> ExtractRoleValues(Claim claim)
-    {
-        if (claim.Type == ClaimTypes.Role || claim.Type == "role")
-            return [claim.Value];
-
-        if (claim.Type == "roles")
-        {
-            var parsed = ParseStringArrayClaim(claim.Value);
-            return parsed.Count > 0 ? parsed : [claim.Value];
-        }
-
-        if (claim.Type == "groups")
-        {
-            var parsed = ParseStringArrayClaim(claim.Value);
-            return parsed.Count > 0 ? parsed : [claim.Value];
-        }
-
-        if (claim.Type == "realm_access")
-            return ParseKeycloakRoleContainer(claim.Value, "roles");
-
-        if (claim.Type == "resource_access")
-            return ParseKeycloakResourceAccessRoles(claim.Value);
-
-        return [];
-    }
-
-    private static List<string> ParseStringArrayClaim(string claimValue)
-    {
-        if (string.IsNullOrWhiteSpace(claimValue) || !claimValue.TrimStart().StartsWith("["))
-            return [];
-
-        try
-        {
-            var token = JToken.Parse(claimValue);
-            return token is JArray array
-                ? array.Values<string?>().Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!).ToList()
-                : [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
-    private static List<string> ParseKeycloakRoleContainer(string claimValue, string propertyName)
-    {
-        if (string.IsNullOrWhiteSpace(claimValue))
-            return [];
-
-        try
-        {
-            var token = JToken.Parse(claimValue);
-            var roles = token[propertyName] as JArray;
-            return roles?.Values<string?>().Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!).ToList() ?? [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
-    private static List<string> ParseKeycloakResourceAccessRoles(string claimValue)
-    {
-        if (string.IsNullOrWhiteSpace(claimValue))
-            return [];
-
-        try
-        {
-            var token = JToken.Parse(claimValue) as JObject;
-            if (token == null)
-                return [];
-
-            return token.Properties()
-                .SelectMany(property => (property.Value["roles"] as JArray)?.Values<string?>() ?? [])
-                .Where(role => !string.IsNullOrWhiteSpace(role))
-                .Select(role => role!)
-                .ToList();
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
     }
 
     private static List<Classification>? ResolveAllowedClassifications(

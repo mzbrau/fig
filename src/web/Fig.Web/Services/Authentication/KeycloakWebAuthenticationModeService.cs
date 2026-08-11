@@ -215,11 +215,12 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         _authenticationStateProvider.AuthenticationStateChanged -= OnAuthenticationStateChanged;
     }
 
-    private static Role? ResolveRole(ClaimsPrincipal principal, WebKeycloakAuthenticationSettings settings)
+    /// <summary>
+    /// Resolves the Fig role exclusively from configured claim paths so RoleClaimPaths remain an authorization boundary.
+    /// </summary>
+    internal static Role? ResolveRole(ClaimsPrincipal principal, WebKeycloakAuthenticationSettings settings)
     {
-        var roleClaims = principal.Claims
-            .SelectMany(ExtractRoleValues)
-            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var roleClaims = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var claimPath in settings.RoleClaimPaths.Where(a => !string.IsNullOrWhiteSpace(a)))
         {
@@ -242,32 +243,6 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         return null;
     }
 
-    private static IEnumerable<string> ExtractRoleValues(Claim claim)
-    {
-        if (claim.Type == ClaimTypes.Role || claim.Type == "role")
-            return [claim.Value];
-
-        if (claim.Type == "roles")
-        {
-            var parsed = ParseStringArrayClaim(claim.Value);
-            return parsed.Count > 0 ? parsed : [claim.Value];
-        }
-
-        if (claim.Type == "groups")
-        {
-            var parsed = ParseStringArrayClaim(claim.Value);
-            return parsed.Count > 0 ? parsed : [claim.Value];
-        }
-
-        if (claim.Type == "realm_access")
-            return ParseKeycloakRoleContainer(claim.Value, "roles");
-
-        if (claim.Type == "resource_access")
-            return ParseKeycloakResourceAccessRoles(claim.Value);
-
-        return [];
-    }
-
     private static List<string> ParseStringArrayClaim(string claimValue)
     {
         if (string.IsNullOrWhiteSpace(claimValue) || !claimValue.TrimStart().StartsWith("["))
@@ -279,46 +254,6 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
             return token is JArray array
                 ? array.Values<string?>().Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!).ToList()
                 : [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
-    private static List<string> ParseKeycloakRoleContainer(string claimValue, string propertyName)
-    {
-        if (string.IsNullOrWhiteSpace(claimValue))
-            return [];
-
-        try
-        {
-            var token = JToken.Parse(claimValue);
-            var roles = token[propertyName] as JArray;
-            return roles?.Values<string?>().Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!).ToList() ?? [];
-        }
-        catch (JsonException)
-        {
-            return [];
-        }
-    }
-
-    private static List<string> ParseKeycloakResourceAccessRoles(string claimValue)
-    {
-        if (string.IsNullOrWhiteSpace(claimValue))
-            return [];
-
-        try
-        {
-            var token = JToken.Parse(claimValue) as JObject;
-            if (token == null)
-                return [];
-
-            return token.Properties()
-                .SelectMany(property => (property.Value["roles"] as JArray)?.Values<string?>() ?? [])
-                .Where(role => !string.IsNullOrWhiteSpace(role))
-                .Select(role => role!)
-                .ToList();
         }
         catch (JsonException)
         {
