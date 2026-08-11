@@ -48,6 +48,7 @@ public class SchedulingTests : IntegrationTestBase
     [Test]
     public async Task ShallAutomaticallyApplyScheduledChanges()
     {
+        SetSchedulingCheckIntervalMs(50);
         await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000));
         var secret = GetNewSecret();
         var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
@@ -273,6 +274,7 @@ public class SchedulingTests : IntegrationTestBase
     [Test]
     public async Task ShallApplyScheduledChangeToSpecificInstanceOnly()
     {
+        SetSchedulingCheckIntervalMs(50);
         await SetConfiguration(CreateConfiguration(pollIntervalOverrideMs: 1000, enableTimeMachine: false));
         var secret = GetNewSecret();
         var (settings, _) = InitializeConfigurationProvider<ThreeSettings>(secret);
@@ -317,6 +319,7 @@ public class SchedulingTests : IntegrationTestBase
     [Test]
     public async Task ShallScheduleChangesWithRevert()
     {
+        SetSchedulingCheckIntervalMs(50);
         // Arrange
         var secret = GetNewSecret();
         var settings = await RegisterSettings<ThreeSettings>(secret);

@@ -90,11 +90,16 @@ public abstract class IntegrationTestBase
         ResetFigAppDataFolder();
 
         _dbFile = $"fig_test_{Guid.NewGuid():N}.db";
+        // Note: Journal Mode=Wal was tried for reader/writer concurrency but crashes
+        // System.Data.SQLite under NHibernate LockMode.Upgrade (encryption migration).
+        // Contention is addressed via Busy Timeout and quieter TimeMachine defaults.
         Settings.DbConnectionString = $"Data Source={_dbFile};Version=3;New=True;Busy Timeout=5000";
         Settings.Secret = "50b93c880cdf4041954da041386d54f9";
         Settings.TokenLifeMinutes = 60;
         Settings.SchedulingCheckIntervalMs = 547;
-        Settings.TimeMachineCheckIntervalMs = 1002;
+        // Off by default — TimeMachineWorker no-ops evaluation when <= 0. Tests that need
+        // checkpoints call EnableTimeMachine(). Keeps SQLite write pressure low under parallel CI.
+        Settings.TimeMachineCheckIntervalMs = 0;
         Settings.EnableGitHubReleaseDiscovery = false;
         Settings.ImportFolderPath = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
@@ -161,21 +166,10 @@ public abstract class IntegrationTestBase
 
         _keycloakRsa?.Dispose();
         
-        // Give SQLite a moment to release file locks
-        Thread.Sleep(100);
-        
-        if (File.Exists(_dbFile))
-        {
-            try
-            {
-                File.Delete(_dbFile);
-            }
-            catch (IOException ex)
-            {
-                // Log the error but don't fail the test - the file will be cleaned up by the next run
-                Console.WriteLine($"Warning: Could not delete {_dbFile}: {ex.Message}");
-            }
-        }
+        // Give SQLite and background workers a moment to release file locks
+        Thread.Sleep(250);
+
+        TryDeleteFile(_dbFile);
 
         if (!string.IsNullOrEmpty(_figAppDataDir) && Directory.Exists(_figAppDataDir))
         {
@@ -191,6 +185,22 @@ public abstract class IntegrationTestBase
 
         Environment.SetEnvironmentVariable("FIG_APP_DATA_DIR", null);
         Environment.SetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM", null);
+    }
+
+    private static void TryDeleteFile(string path)
+    {
+        if (!File.Exists(path))
+            return;
+
+        try
+        {
+            File.Delete(path);
+        }
+        catch (IOException ex)
+        {
+            // Log the error but don't fail the test - the file will be cleaned up by the next run
+            Console.WriteLine($"Warning: Could not delete {path}: {ex.Message}");
+        }
     }
 
     [SetUp]
@@ -216,7 +226,7 @@ public abstract class IntegrationTestBase
         _originalPreviousServerSecret = Settings.PreviousSecret;
         Settings.DisableTransactionMiddleware = false;
         Settings.SchedulingCheckIntervalMs = 547;
-        Settings.TimeMachineCheckIntervalMs = 1002;
+        Settings.TimeMachineCheckIntervalMs = 0;
         ConfigReloader.Reload(Settings);
         await StopConfigProvidersAndDisposeFigClients();
         ResetFigAppDataFolder();
@@ -235,7 +245,7 @@ public abstract class IntegrationTestBase
         Settings.Secret = _originalServerSecret;
         Settings.PreviousSecret = _originalPreviousServerSecret;
         Settings.SchedulingCheckIntervalMs = 547;
-        Settings.TimeMachineCheckIntervalMs = 1002;
+        Settings.TimeMachineCheckIntervalMs = 0;
         Settings.Authentication.Mode = AuthMode.FigManaged;
         Settings.Authentication.Keycloak.Authority = null;
         Settings.Authentication.Keycloak.Audience = null;

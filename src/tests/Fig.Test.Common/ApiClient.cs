@@ -87,9 +87,16 @@ public class ApiClient
         
         if (authenticate)
             httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
-        
-        var result = await httpClient.GetStringAsync(uri);
 
+        using var response = await httpClient.GetAsync(uri);
+        if (!response.IsSuccessStatusCode)
+        {
+            var error = await GetErrorResult(response);
+            Assert.Fail(
+                $"Get to uri {uri} should succeed. {(int)response.StatusCode} {response.StatusCode}: {error}");
+        }
+
+        var result = await response.Content.ReadAsStringAsync();
         Assert.That(result, Is.Not.Null, $"Non null result expected for uri {uri}.");
         
         var settings = IsClientsListUri(uri) ? FigWebLoadJsonSettings.Instance : JsonSettings.FigDefault;

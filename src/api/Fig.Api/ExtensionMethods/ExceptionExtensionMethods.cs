@@ -221,6 +221,9 @@ public static class ExceptionExtensionMethods
                msg.Contains("timeout") || 
                msg.Contains("could not obtain lock") ||
                msg.Contains("lock timeout") ||
-               msg.Contains("resource busy");
+               msg.Contains("resource busy") ||
+               msg.Contains("database is locked") ||
+               msg.Contains("sqlite_busy") ||
+               msg.Contains("sqlite busy");
     }
 }
