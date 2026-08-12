@@ -5,7 +5,7 @@ using Fig.Common.NetStandard.Constants;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Assistant;
 using Fig.Web.Events;
-using Fig.Web.Models.Authentication;
+using Fig.Web.Services.Authentication;
 using Microsoft.AspNetCore.Components.WebAssembly.Http;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -17,7 +17,7 @@ public sealed class AssistantChatClient : IAssistantChatClient, IDisposable
     private const int MaxStoredMessages = 40;
 
     private readonly HttpClient _httpClient;
-    private readonly ILocalStorageService _localStorageService;
+    private readonly IFigApiAccessTokenProvider _accessTokenProvider;
     private readonly IAssistantContextService _contextService;
     private readonly IAssistantActionApplier _actionApplier;
     private readonly IEventDistributor _eventDistributor;
@@ -25,13 +25,13 @@ public sealed class AssistantChatClient : IAssistantChatClient, IDisposable
 
     public AssistantChatClient(
         IHttpClientFactory httpClientFactory,
-        ILocalStorageService localStorageService,
+        IFigApiAccessTokenProvider accessTokenProvider,
         IAssistantContextService contextService,
         IAssistantActionApplier actionApplier,
         IEventDistributor eventDistributor)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
-        _localStorageService = localStorageService;
+        _accessTokenProvider = accessTokenProvider;
         _contextService = contextService;
         _actionApplier = actionApplier;
         _eventDistributor = eventDistributor;
@@ -186,9 +186,9 @@ public sealed class AssistantChatClient : IAssistantChatClient, IDisposable
 
     private async Task AddJwtHeader(HttpRequestMessage request)
     {
-        var user = await _localStorageService.GetItem<AuthenticatedUserModel>("user");
-        if (user?.Token is not null)
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
+        var token = await _accessTokenProvider.GetAccessTokenAsync();
+        if (!string.IsNullOrWhiteSpace(token))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     public void Clear()

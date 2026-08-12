@@ -14,8 +14,11 @@ using Fig.Web.ReleaseHighlights;
 using Fig.Web.Scripting;
 using Fig.Web.Services;
 using Fig.Web.Services.Assistant;
+using Fig.Web.Services.Authentication;
+using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
+using Microsoft.AspNetCore.Components.WebAssembly.Authentication;
 using Radzen;
 using Toolbelt.Blazor.Extensions.DependencyInjection;
 
@@ -30,10 +33,41 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.RootComponents.Add<HeadOutlet>("head::after");
 
     builder.Services.Configure<WebSettings>(config);
-    var figUri = config.Get<WebSettings>()?.ApiUri;
+    var webSettings = config.Get<WebSettings>() ?? new WebSettings();
+    var figUri = webSettings.ApiUri;
+
+    WebAuthenticationSettingsValidator.Validate(webSettings);
 
     if (string.IsNullOrEmpty(figUri))
         throw new ApplicationException("ApiUri must be configured");
+
+    if (webSettings.Authentication.Mode == WebAuthMode.Keycloak)
+    {
+        builder.Services.AddOidcAuthentication(options =>
+        {
+            options.ProviderOptions.Authority = webSettings.Authentication.Keycloak.Authority;
+            options.ProviderOptions.ClientId = webSettings.Authentication.Keycloak.ClientId;
+            options.ProviderOptions.ResponseType = webSettings.Authentication.Keycloak.ResponseType;
+
+            options.ProviderOptions.DefaultScopes.Clear();
+            foreach (var scope in webSettings.Authentication.Keycloak.Scopes.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+                options.ProviderOptions.DefaultScopes.Add(scope);
+
+            if (!string.IsNullOrWhiteSpace(webSettings.Authentication.Keycloak.ApiScope))
+                options.ProviderOptions.DefaultScopes.Add(webSettings.Authentication.Keycloak.ApiScope);
+
+            if (!string.IsNullOrWhiteSpace(webSettings.Authentication.Keycloak.PostLogoutRedirectUri))
+                options.ProviderOptions.PostLogoutRedirectUri = webSettings.Authentication.Keycloak.PostLogoutRedirectUri;
+
+            OidcProviderOptionsConfigurator.Apply(options.ProviderOptions, webSettings.Authentication.Keycloak);
+        });
+
+        builder.Services.AddScoped<KeycloakWebAuthenticationModeService>();
+    }
+    else
+    {
+        builder.Services.AddScoped<AuthenticationStateProvider, FigManagedAuthenticationStateProvider>();
+    }
 
     builder.Services.AddHttpClient(HttpClientNames.FigApi, c =>
     {
@@ -48,6 +82,9 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     
     builder.Services.AddRadzenComponents();
     
+    builder.Services.AddScoped<FigManagedWebAuthenticationModeService>();
+    builder.Services.AddScoped<IWebAuthenticationModeService, WebAuthenticationModeService>();
+    builder.Services.AddScoped<IFigApiAccessTokenProvider, FigApiAccessTokenProvider>();
     builder.Services.AddScoped<IAccountService, AccountService>();
     builder.Services.AddScoped<IHttpService, HttpService>();
     builder.Services.AddScoped<IAssistantContextService, AssistantContextService>();

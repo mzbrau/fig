@@ -98,6 +98,14 @@ When **Fig Assistant** is enabled and configured under Configuration:
 
 AI-assisted generation can take longer than a normal report.
 
+## Keycloak authentication mode
+
+When Fig runs with `Authentication.Mode=Keycloak`, Fig’s user directory is not available:
+
+- User parameters (for example **User Activity**) use a free-text username field instead of a Fig user dropdown.
+- **Access & Privilege** is derived from login events; privilege fields show `N/A (Keycloak)`.
+- **Fig Platform Self-Report** reports users as `External (Keycloak)`.
+
 ## Output format
 
 Version 1 supports **HTML only**. Additional formats (PDF, Excel, CSV) are reserved for future versions; the API already accepts a `format` field defaulting to `Html`.

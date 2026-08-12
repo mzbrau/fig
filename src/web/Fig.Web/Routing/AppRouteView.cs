@@ -33,6 +33,7 @@ public class AppRouteView : RouteView
         if (authorize && AccountService?.AuthenticatedUser == null && NavigationManager != null)
         {
             var returnUrl = WebUtility.UrlEncode(new Uri(NavigationManager.Uri).PathAndQuery);
+            // Route through account/login so Keycloak mode can apply post-logout prompt handling.
             NavigationManager.NavigateTo($"account/login?returnUrl={returnUrl}");
             return;
         }
@@ -40,7 +41,7 @@ public class AppRouteView : RouteView
         // Check for password change requirement (except on manage page)
         if (!isManagePage && AccountService?.AuthenticatedUser?.PasswordChangeRequired == true && NavigationManager != null)
         {
-            NavigationManager.NavigateTo("account/Manage");
+            NavigationManager.NavigateTo("/account/manage");
             return;
         }
         

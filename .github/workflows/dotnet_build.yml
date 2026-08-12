@@ -100,6 +100,9 @@ jobs:
         name: build-outputs
         path: src
 
+    - name: Restore
+      run: dotnet restore ./src
+
     - name: Run Unit Tests
       working-directory: src/tests/Fig.Unit.Test
       run: dotnet test --configuration Release --no-build --no-restore --verbosity detailed --collect:"XPlat Code Coverage" --logger "trx;LogFileName=unit-test-results.trx" --results-directory ./TestResults --settings ../../test.runsettings --blame-hang-timeout 20m Fig.Unit.Test.csproj
@@ -144,6 +147,9 @@ jobs:
       with:
         name: build-outputs
         path: src
+
+    - name: Restore
+      run: dotnet restore ./src
 
     - name: Run Integration Tests
       working-directory: src/tests/Fig.Integration.Test

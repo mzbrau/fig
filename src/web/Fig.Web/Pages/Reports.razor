@@ -58,14 +58,24 @@
 
                                 @if (parameter.LookupKind == ReportParameterLookupKind.Users)
                                 {
-                                    <RadzenDropDown TValue="string"
-                                                    Data="@_usernames"
-                                                    Value="@GetString(parameter.Name)"
-                                                    ValueChanged="@(v => SetString(parameter.Name, v))"
-                                                    AllowClear="@(!parameter.Required)"
-                                                    AllowFiltering="true"
-                                                    Class="w-100"
-                                                    Placeholder="Select user" />
+                                    @if (_useFreeTextUsername)
+                                    {
+                                        <RadzenTextBox Value="@GetString(parameter.Name)"
+                                                       ValueChanged="@(v => SetString(parameter.Name, v))"
+                                                       Class="w-100"
+                                                       Placeholder="Enter username" />
+                                    }
+                                    else
+                                    {
+                                        <RadzenDropDown TValue="string"
+                                                        Data="@_usernames"
+                                                        Value="@GetString(parameter.Name)"
+                                                        ValueChanged="@(v => SetString(parameter.Name, v))"
+                                                        AllowClear="@(!parameter.Required)"
+                                                        AllowFiltering="true"
+                                                        Class="w-100"
+                                                        Placeholder="Select user" />
+                                    }
                                 }
                                 else if (parameter.LookupKind == ReportParameterLookupKind.Clients)
                                 {

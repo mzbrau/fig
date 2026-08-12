@@ -4,6 +4,7 @@ using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Radzen;
 
 namespace Fig.Web.Pages;
@@ -18,10 +19,20 @@ public partial class ManageAccount
 
     [Inject]
     private INotificationFactory NotificationFactory { get; set; } = null!;
+
+    [Inject]
+    private IOptions<WebSettings> WebSettings { get; set; } = null!;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = null!;
     
     private bool _showPasswordRow;
     private string _password = string.Empty;
     private bool _passwordValid;
+
+    private bool IsKeycloakMode => AccountService.AuthenticationMode == WebAuthMode.Keycloak;
+
+    private string? AccountManagementUrl => WebSettings.Value.Authentication.Keycloak.AccountManagementUrl;
     
     private List<Classification> AllClassifications { get; } = Enum.GetValues(typeof(Classification))
         .Cast<Classification>()
@@ -41,6 +52,13 @@ public partial class ManageAccount
 
     private async Task Submit(AuthenticatedUserModel user)
     {
+        if (IsKeycloakMode)
+        {
+            NotificationService.Notify(NotificationFactory.Info("Managed by Keycloak",
+                "Profile updates are managed by Keycloak in this mode."));
+            return;
+        }
+
         if (AccountService.AuthenticatedUser?.PasswordChangeRequired == true && !_passwordValid)
         {
             NotificationService.Notify(NotificationFactory.Failure(
@@ -78,7 +96,7 @@ public partial class ManageAccount
                 NotificationService.Notify(NotificationFactory.Failure("User Update Failed", ex.Message));
             }
         }
-            
+
     }
 
     private void OnValidPassword(string password)
@@ -104,5 +122,16 @@ public partial class ManageAccount
         _passwordValid = false;
         _password = password;
         StateHasChanged();
+    }
+
+    private void OpenKeycloakAccountManagement()
+    {
+        if (string.IsNullOrWhiteSpace(AccountManagementUrl))
+            return;
+
+        var targetUrl = AccountManagementUrl.EndsWith('/')
+            ? AccountManagementUrl
+            : $"{AccountManagementUrl}/";
+        NavigationManager.NavigateTo(targetUrl, forceLoad: true);
     }
 }

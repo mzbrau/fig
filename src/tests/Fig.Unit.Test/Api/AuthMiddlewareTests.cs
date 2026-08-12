@@ -1,5 +1,5 @@
 using System.Reflection;
-using Fig.Api.Authorization;
+using Fig.Api.Authorization.UserAuth;
 using Fig.Api.Controllers;
 using Fig.Api.Middleware;
 using Fig.Api.Services;
@@ -14,9 +14,8 @@ namespace Fig.Unit.Test.Api;
 [TestFixture]
 public class AuthMiddlewareTests
 {
-    private Mock<IUserService> _userService = null!;
     private Mock<IAuthenticatedService> _authenticatedService = null!;
-    private Mock<ITokenHandler> _tokenHandler = null!;
+    private Mock<IUserAuthenticationModeService> _userAuthenticationModeService = null!;
     private UserDataContract _user = null!;
     private AuthMiddleware _sut = null!;
     private bool _nextCalled;
@@ -35,12 +34,14 @@ public class AuthMiddlewareTests
             [],
             false);
 
-        _userService = new Mock<IUserService>();
-        _userService.Setup(x => x.GetById(_user.Id)).ReturnsAsync(_user);
-
         _authenticatedService = new Mock<IAuthenticatedService>();
-        _tokenHandler = new Mock<ITokenHandler>();
-        _tokenHandler.Setup(x => x.Validate("token")).Returns(new ValidatedTokenData(_user.Id, true));
+        _userAuthenticationModeService = new Mock<IUserAuthenticationModeService>();
+        _userAuthenticationModeService.Setup(x => x.ResolveAuthenticatedUser(It.IsAny<HttpContext>()))
+            .ReturnsAsync(() =>
+            {
+                _user.PasswordChangeRequired = true;
+                return _user;
+            });
 
         _sut = new AuthMiddleware(_ =>
         {
@@ -59,7 +60,7 @@ public class AuthMiddlewareTests
             nameof(UsersController.Update),
             _user.Id);
 
-        await _sut.Invoke(context, _userService.Object, [_authenticatedService.Object], _tokenHandler.Object);
+        await _sut.Invoke(context, [_authenticatedService.Object], _userAuthenticationModeService.Object);
 
         Assert.That(_nextCalled, Is.True);
         _authenticatedService.Verify(x => x.SetAuthenticatedUser(It.Is<UserDataContract>(user =>
@@ -77,7 +78,7 @@ public class AuthMiddlewareTests
             _user.Id);
 
         var exception = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
-            await _sut.Invoke(context, _userService.Object, [_authenticatedService.Object], _tokenHandler.Object));
+            await _sut.Invoke(context, [_authenticatedService.Object], _userAuthenticationModeService.Object));
 
         Assert.That(exception!.Message, Does.Contain("Password change is required"));
         Assert.That(_nextCalled, Is.False);
@@ -95,7 +96,7 @@ public class AuthMiddlewareTests
             otherUserId);
 
         var exception = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
-            await _sut.Invoke(context, _userService.Object, [_authenticatedService.Object], _tokenHandler.Object));
+            await _sut.Invoke(context, [_authenticatedService.Object], _userAuthenticationModeService.Object));
 
         Assert.That(exception!.Message, Does.Contain("Password change is required"));
         Assert.That(_nextCalled, Is.False);

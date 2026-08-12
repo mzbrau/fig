@@ -15,6 +15,7 @@
         <PackageReference Include="Jint" Version="4.14.0" />
         <PackageReference Include="Markdig" Version="1.3.2" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.10" />
+        <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.Authentication" Version="10.0.10" />
         <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.10" PrivateAssets="all" />
         <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
         <PackageReference Include="Microsoft.Extensions.Http" Version="10.0.10" />
@@ -34,6 +35,10 @@
         <ProjectReference Include="..\..\common\Fig.Common\Fig.Common.csproj" />
         <ProjectReference Include="..\..\common\Fig.Common.NetStandard\Fig.Common.NetStandard.csproj" />
         <ProjectReference Include="..\..\common\Fig.Contracts\Fig.Contracts.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <InternalsVisibleTo Include="Fig.Unit.Test" />
     </ItemGroup>
 
     <ItemGroup>

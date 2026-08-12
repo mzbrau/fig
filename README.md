@@ -126,6 +126,18 @@ Examples can be found [here](https://github.com/mzbrau/fig/tree/main/examples).
 
 There is also a quick start repository [here](https://github.com/mzbrau/fig-quick-start).
 
+## Authentication Modes
+
+Fig supports two API/web authentication modes:
+
+- `FigManaged` (default): users authenticate directly against Fig (`/users/authenticate`).
+- `Keycloak`: users authenticate through Keycloak (OIDC/JWT). Fig user-management endpoints are not available in this mode.
+
+For full setup, claim mapping, endpoint behavior, and troubleshooting, see:
+
+- [Security Features](./doc/fig-documentation/docs/security.md)
+- [User Management](./doc/fig-documentation/docs/features/3-user-management.md)
+
 ## Fig NuGet Packages
 
 Fig provides several NuGet packages to support different integration scenarios and environments:

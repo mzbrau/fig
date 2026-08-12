@@ -2,6 +2,7 @@ using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Reports.Rendering.Components;
 using Fig.Api.Reports.Rendering.Views;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.Extensions.Options;
 
 namespace Fig.Api.Reports.Implementations;
 
@@ -45,6 +46,7 @@ public class FigPlatformReport : ReportBase<FigPlatformParameters, FigPlatformRe
     private readonly IUserRepository _userRepository;
     private readonly IWebHookRepository _webHookRepository;
     private readonly ISettingGroupRepository _settingGroupRepository;
+    private readonly AuthMode _authMode;
 
     public FigPlatformReport(
         IApiStatusRepository apiStatusRepository,
@@ -53,7 +55,8 @@ public class FigPlatformReport : ReportBase<FigPlatformParameters, FigPlatformRe
         ISettingClientRepository settingClientRepository,
         IUserRepository userRepository,
         IWebHookRepository webHookRepository,
-        ISettingGroupRepository settingGroupRepository)
+        ISettingGroupRepository settingGroupRepository,
+        IOptions<ApiSettings> apiSettings)
     {
         _apiStatusRepository = apiStatusRepository;
         _configurationRepository = configurationRepository;
@@ -62,6 +65,7 @@ public class FigPlatformReport : ReportBase<FigPlatformParameters, FigPlatformRe
         _userRepository = userRepository;
         _webHookRepository = webHookRepository;
         _settingGroupRepository = settingGroupRepository;
+        _authMode = apiSettings.Value.Authentication.Mode;
     }
 
     public override string Id => "fig-platform";
@@ -77,9 +81,12 @@ public class FigPlatformReport : ReportBase<FigPlatformParameters, FigPlatformRe
         var configuration = await _configurationRepository.GetConfiguration();
         var eventLogCount = await _eventLogRepository.GetEventLogCount();
         var clients = await _settingClientRepository.GetAllClients(RequireAuthenticatedUser());
-        var users = await _userRepository.GetAllUsers();
         var webhooks = await _webHookRepository.GetWebHooks();
         var groups = await _settingGroupRepository.GetAllGroups();
+
+        var usersSummary = _authMode == AuthMode.Keycloak
+            ? "External (Keycloak)"
+            : (await _userRepository.GetAllUsers()).Count.ToString();
 
         return new FigPlatformReportModel
         {
@@ -87,7 +94,7 @@ public class FigPlatformReport : ReportBase<FigPlatformParameters, FigPlatformRe
             [
                 new SummaryCardItem("Active API Nodes", apiNodes.Count.ToString()),
                 new SummaryCardItem("Clients", clients.Count.ToString()),
-                new SummaryCardItem("Users", users.Count.ToString()),
+                new SummaryCardItem("Users", usersSummary),
                 new SummaryCardItem("Webhooks", webhooks.Count.ToString()),
                 new SummaryCardItem("Setting Groups", groups.Count.ToString()),
                 new SummaryCardItem("Event Log Rows", eventLogCount.ToString("N0"))

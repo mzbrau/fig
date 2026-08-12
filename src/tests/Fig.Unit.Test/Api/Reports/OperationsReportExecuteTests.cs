@@ -1,3 +1,4 @@
+using Fig.Api;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Reports.Implementations;
 using Fig.Api.Reports.Rendering.Components;
@@ -10,6 +11,7 @@ using Fig.Contracts.SettingGroups;
 using Fig.Contracts.Settings;
 using Fig.Contracts.WebHook;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -568,7 +570,8 @@ public class OperationsReportExecuteTests
             clientRepo.Object,
             userRepo.Object,
             webhookRepo.Object,
-            groupRepo.Object);
+            groupRepo.Object,
+            Options.Create(new ApiSettings { DbConnectionString = "test" }));
         ReportTestFixtures.Authenticate(report);
 
         var model = (FigPlatformReportModel)await report.ExecuteAsync(new FigPlatformParameters());

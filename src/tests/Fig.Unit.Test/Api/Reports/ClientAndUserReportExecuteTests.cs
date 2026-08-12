@@ -1,3 +1,4 @@
+using Fig.Api;
 using Fig.Api.Datalayer.Repositories;
 using Fig.Api.Reports;
 using Fig.Api.Reports.Implementations;
@@ -7,6 +8,7 @@ using Fig.Common.Constants;
 using Fig.Contracts.Authentication;
 using Fig.Datalayer.BusinessEntities;
 using Fig.Datalayer.BusinessEntities.SettingValues;
+using Microsoft.Extensions.Options;
 using Moq;
 using NUnit.Framework;
 
@@ -109,7 +111,10 @@ public class ClientAndUserReportExecuteTests
                 null))
             .ReturnsAsync(loginEvents);
 
-        var report = new AccessPrivilegeReport(userRepo.Object, eventLog.Object);
+        var report = new AccessPrivilegeReport(
+            userRepo.Object,
+            eventLog.Object,
+            Options.Create(new ApiSettings { DbConnectionString = "test" }));
         ReportTestFixtures.Authenticate(report);
 
         var model = (AccessPrivilegeReportModel)await report.ExecuteAsync(new AccessPrivilegeParameters
@@ -156,7 +161,10 @@ public class ClientAndUserReportExecuteTests
                 null))
             .ReturnsAsync(new List<EventLogBusinessEntity>());
 
-        var report = new AccessPrivilegeReport(userRepo.Object, eventLog.Object);
+        var report = new AccessPrivilegeReport(
+            userRepo.Object,
+            eventLog.Object,
+            Options.Create(new ApiSettings { DbConnectionString = "test" }));
         ReportTestFixtures.Authenticate(report);
 
         var model = (AccessPrivilegeReportModel)await report.ExecuteAsync(new AccessPrivilegeParameters

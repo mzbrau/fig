@@ -7,32 +7,41 @@
     <img class="logo" src="images/fig_logo_only_500x500.png" alt="Logo" />
     <h3 class="white-text">Login to Fig</h3>
     <p>@Settings.Value.Environment</p>
-    @if (!string.IsNullOrEmpty(_errorMessage))
+    @if (IsKeycloakMode)
     {
-        <div class="login-error-banner">
-            <span class="error-icon">⚠</span>
-            <span>@_errorMessage</span>
-        </div>
+        <RadzenCard class="login-card" Style="min-width: 300px">
+            <p class="white-text">Redirecting to Keycloak...</p>
+        </RadzenCard>
     }
-    <RadzenCard class="login-card" Style="min-width: 300px">
-        <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
-            <div class="form-group">
-                <label for="username" class="white-text">Username</label>
-                <RadzenTextBox AutoComplete="true" Name="Username" @bind-Value=@_loginModel.Username Style="width: 100%"/>
-                <RadzenRequiredValidator Component="Username" Text="Username is required" class="validator" />
+    else
+    {
+        @if (!string.IsNullOrEmpty(_errorMessage))
+        {
+            <div class="login-error-banner">
+                <span class="error-icon">⚠</span>
+                <span>@_errorMessage</span>
             </div>
-            <div class="form-group">
-                <label for="password" class="white-text">Password</label>
-                <RadzenPassword AutoComplete="true" Name="Password" @bind-Value=@_loginModel.Password Style="width: 100%" />
-                <RadzenRequiredValidator Component="Password" Text="Password is required" class="validator" />
-            </div>
-            <div class="form-group">
-                <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" data-test-id="LoginButton"
-                              Text="Login" Click=@(OnLogin) IsBusy="_loading" BusyText="Logging in..." class="login-button"
-                              Style="width: 100%"/>
-            </div>
-        </RadzenTemplateForm>
-    </RadzenCard>
+        }
+        <RadzenCard class="login-card" Style="min-width: 300px">
+            <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
+                <div class="form-group">
+                    <label for="username" class="white-text">Username</label>
+                    <RadzenTextBox AutoComplete="true" Name="Username" @bind-Value=@_loginModel.Username Style="width: 100%"/>
+                    <RadzenRequiredValidator Component="Username" Text="Username is required" class="validator" />
+                </div>
+                <div class="form-group">
+                    <label for="password" class="white-text">Password</label>
+                    <RadzenPassword AutoComplete="true" Name="Password" @bind-Value=@_loginModel.Password Style="width: 100%" />
+                    <RadzenRequiredValidator Component="Password" Text="Password is required" class="validator" />
+                </div>
+                <div class="form-group">
+                    <RadzenButton ButtonStyle="ButtonStyle.Primary" ButtonType="ButtonType.Submit" data-test-id="LoginButton"
+                                  Text="Login" Click=@(OnLogin) IsBusy="_loading" BusyText="Logging in..." class="login-button"
+                                  Style="width: 100%"/>
+                </div>
+            </RadzenTemplateForm>
+        </RadzenCard>
+    }
 </div>
 
 <div class="footer">

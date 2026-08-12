@@ -103,6 +103,220 @@ Rate limiting is configured in the `ApiSettings` section of your configuration:
 
 When rate limits are exceeded, clients receive an HTTP 429 (Too Many Requests) response with a descriptive error message.
 
+## Keycloak Authentication Mode
+
+Fig supports running authentication in either `FigManaged` mode or `Keycloak` mode. In `Keycloak` mode, the API validates JWT bearer tokens using OIDC discovery and JWKS from the configured authority.
+
+### API configuration
+
+Configure `ApiSettings.Authentication`:
+
+Development (local Keycloak over HTTP):
+
+```json
+{
+  "ApiSettings": {
+    "Authentication": {
+      "Mode": "Keycloak",
+      "Keycloak": {
+        "Authority": "http://localhost:8080/realms/fig",
+        "Audience": "fig-api",
+        "RequireHttpsMetadata": false,
+        "UsernameClaim": "preferred_username",
+        "FirstNameClaim": "given_name",
+        "LastNameClaim": "family_name",
+        "NameClaim": "name",
+        "RoleClaimPaths": [
+          "groups",
+          "realm_access.roles",
+          "resource_access.fig.roles"
+        ],
+        "RoleMappings": {
+          "Administrator": [ "Administrator", "/fig/Administrator" ],
+          "User": [ "User", "/fig/User" ],
+          "ReadOnly": [ "ReadOnly", "/fig/ReadOnly" ],
+          "LookupService": [ "LookupService", "/fig/LookupService" ]
+        },
+        "AllowedClassificationsClaim": "fig_allowed_classifications",
+        "ClientFilterClaim": "fig_client_filter",
+        "AdminRoleName": "Administrator"
+      }
+    }
+  }
+}
+```
+
+Production:
+
+```json
+{
+  "ApiSettings": {
+    "Authentication": {
+      "Mode": "Keycloak",
+      "Keycloak": {
+        "Authority": "https://keycloak.example.com/realms/fig",
+        "Audience": "fig-api",
+        "RequireHttpsMetadata": true,
+        "UsernameClaim": "preferred_username"
+      }
+    }
+  }
+}
+```
+
+### Web configuration
+
+Configure `WebSettings.Authentication`:
+
+Development (local Keycloak over HTTP):
+
+```json
+{
+  "WebSettings": {
+    "Authentication": {
+      "Mode": "Keycloak",
+      "Keycloak": {
+        "Authority": "http://localhost:8080/realms/fig",
+        "ClientId": "fig-web",
+        "Scopes": "openid profile email",
+        "ApiScope": "fig-api",
+        "ResponseType": "code",
+        "PostLogoutRedirectUri": "https://localhost:7148/",
+        "AccountManagementUrl": "http://localhost:8080/realms/fig/account",
+        "UsernameClaim": "preferred_username",
+        "FirstNameClaim": "given_name",
+        "LastNameClaim": "family_name",
+        "NameClaim": "name",
+        "RoleClaimPaths": [
+          "groups",
+          "realm_access.roles",
+          "resource_access.fig.roles"
+        ],
+        "RoleMappings": {
+          "Administrator": [ "Administrator", "/fig/Administrator" ],
+          "User": [ "User", "/fig/User" ],
+          "ReadOnly": [ "ReadOnly", "/fig/ReadOnly" ],
+          "LookupService": [ "LookupService", "/fig/LookupService" ]
+        },
+        "AllowedClassificationsClaim": "fig_allowed_classifications",
+        "AdminRoleName": "Administrator"
+      }
+    }
+  }
+}
+```
+
+Production:
+
+```json
+{
+  "WebSettings": {
+    "Authentication": {
+      "Mode": "Keycloak",
+      "Keycloak": {
+        "Authority": "https://keycloak.example.com/realms/fig",
+        "ClientId": "fig-web",
+        "Scopes": "openid profile email",
+        "ApiScope": "fig-api",
+        "ResponseType": "code",
+        "PostLogoutRedirectUri": "https://fig.example.com/",
+        "AccountManagementUrl": "https://keycloak.example.com/realms/fig/account",
+        "UsernameClaim": "preferred_username"
+      }
+    }
+  }
+}
+```
+
+### Claim mapping requirements
+
+- `FigManaged` is the default authentication mode. Keycloak is opt-in and should be enabled for both API and web together.
+- `Audience` is required in API Keycloak mode and must match tokens intended for the Fig API.
+- Keycloak groups are the expected access contract. By default, Fig reads `groups`, `realm_access.roles`, and `resource_access.fig.roles`, then maps those values to Fig roles through `RoleMappings`.
+- Role/group claims must map to Fig roles (`Administrator`, `User`, `ReadOnly`, `LookupService`).
+- `fig_allowed_classifications` should be provided as either a JSON array string or a comma-separated list.
+- `fig_client_filter` must be a valid regular expression.
+
+Fallback behavior:
+
+- If `fig_allowed_classifications` is missing for `Administrator`, Fig grants all classifications.
+- If `fig_allowed_classifications` is missing for non-admin users, access is denied.
+
+### Brokered identity providers (e.g. Entra ID)
+
+Fig always authenticates against Keycloak. External providers such as Microsoft Entra ID are configured in **Keycloak Admin** as identity providers (OIDC/SAML broker). Fig never talks to Entra directly.
+
+To send users straight to a brokered IdP (skipping the Keycloak username/password page), set optional web settings:
+
+```json
+{
+  "WebSettings": {
+    "Authentication": {
+      "Mode": "Keycloak",
+      "Keycloak": {
+        "Authority": "https://keycloak.example.com/realms/fig",
+        "ClientId": "fig-web",
+        "IdentityProviderHint": "entra-id",
+        "EnableIdentityProviderHint": true,
+        "LoginPrompt": "",
+        "PostLogoutLoginPrompt": "select_account"
+      }
+    }
+  }
+}
+```
+
+| Setting | Purpose |
+|---|---|
+| `IdentityProviderHint` | Keycloak IdP alias sent as OIDC `kc_idp_hint` (must match the alias in Keycloak) |
+| `EnableIdentityProviderHint` | Set to `false` to stop sending `kc_idp_hint` without removing the hint value |
+| `LoginPrompt` | Optional OIDC `prompt` on normal logins; leave empty for seamless IdP SSO |
+| `PostLogoutLoginPrompt` | OIDC `prompt` on the first login after logout (default `select_account`) so another account can be chosen |
+
+**Near-seamless Windows / Entra SSO** (open Fig and land logged in with little or no prompt) depends on browser and directory setup outside Fig, for example:
+
+- Microsoft Edge with Enterprise SSO / device Primary Refresh Token
+- Entra Connect Seamless SSO (Kerberos) on domain-joined machines
+- An existing Entra session cookie in that browser
+
+Fig cannot guarantee zero-prompt login. True silent Windows PRT/WAM SSO requires the client to talk directly to Entra; that path is not supported for Blazor WASM through Keycloak.
+
+**Logout and alternate accounts:** after logout, the next login uses `PostLogoutLoginPrompt` (default `select_account`). With `IdentityProviderHint` enabled, account selection happens at the brokered IdP (e.g. another Entra account). To allow Keycloak local users instead, set `EnableIdentityProviderHint` to `false`.
+
+**Turning IdP redirect off:** set `EnableIdentityProviderHint` to `false`, clear `IdentityProviderHint`, or switch both API and web back to `FigManaged`.
+
+### Endpoint behavior in Keycloak mode
+
+- `POST /users/authenticate` returns `404`.
+- Fig user-management endpoints are unavailable (`/users`, `/users/register`, `/users/{id}`).
+- Machine-client endpoints continue to work with `clientSecret`.
+- Reports that list Fig-managed users degrade:
+  - **Access & Privilege** is built from login events in the selected range; role/filter/classification fields show `N/A (Keycloak)`.
+  - **Fig Platform Self-Report** shows users as `External (Keycloak)` instead of a Fig database count.
+  - **User Activity** still works; enter the Keycloak username manually (Fig user dropdowns are unavailable).
+- Fig Assistant and other administrator APIs use the live Keycloak access token (refreshed via OIDC), same as other Fig.Web API calls.
+
+### Mode switching and rollback
+
+- To switch to Keycloak mode, set both API and web mode values to `Keycloak`.
+- To roll back, set both API and web mode values to `FigManaged`.
+- Keep API and web modes aligned to avoid login and token propagation mismatches.
+
+### Aspire AppHost (local development)
+
+- By default, `Fig.AppHost` runs with FigManaged authentication and does **not** start a Keycloak container.
+- Set `"UseKeycloak": true` in `Fig.AppHost` `appsettings.json` (or `UseKeycloak=true` via user secrets / environment) to:
+  - start the local Keycloak container with the sample realm import,
+  - configure the API for Keycloak via environment overrides,
+  - set the web environment to `Keycloak` so Blazor WASM loads `wwwroot/appsettings.Keycloak.json`.
+- Leave `UseKeycloak` as `false` (the default) for the normal FigManaged login flow.
+
+### Troubleshooting mode mismatch
+
+- Web is `Keycloak`, API is `FigManaged`: OIDC login succeeds, but API calls fail authorization.
+- Web is `FigManaged`, API is `Keycloak`: local login endpoints are unavailable (`/users/authenticate` returns `404`).
+- Invalid OIDC authority/JWKS/audience causes API token validation failures.
+
 ## Forward Headers
 
 When Fig is deployed behind a reverse proxy or load balancer, the original client IP address and protocol information may be lost. Forward headers configuration allows Fig to trust and process `X-Forwarded-For` and `X-Forwarded-Proto` headers from known proxies.

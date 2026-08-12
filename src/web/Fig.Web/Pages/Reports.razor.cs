@@ -4,6 +4,7 @@ using Fig.Web.Facades;
 using Fig.Web.Models.Reports;
 using Fig.Web.Models.Setting;
 using Fig.Web.Notifications;
+using Fig.Web.Services;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Radzen;
@@ -22,9 +23,11 @@ public partial class Reports
     private List<ClientOption> _clientOptions = new();
     private List<GroupOption> _groupOptions = new();
     private List<string> _settingNames = new();
+    private bool _useFreeTextUsername;
 
     [Inject] private IReportsFacade ReportsFacade { get; set; } = null!;
     [Inject] private IUsersFacade UsersFacade { get; set; } = null!;
+    [Inject] private IAccountService AccountService { get; set; } = null!;
     [Inject] private ISettingClientFacade SettingClientFacade { get; set; } = null!;
     [Inject] private IGroupsFacade GroupsFacade { get; set; } = null!;
     [Inject] private IJSRuntime JavascriptRuntime { get; set; } = null!;
@@ -40,17 +43,22 @@ public partial class Reports
     protected override async Task OnInitializedAsync()
     {
         await ReportsFacade.LoadReports();
-        await UsersFacade.LoadAllUsers();
+
+        _useFreeTextUsername = AccountService.AuthenticationMode == WebAuthMode.Keycloak;
+        if (!_useFreeTextUsername)
+        {
+            await UsersFacade.LoadAllUsers();
+            _usernames = UsersFacade.UserCollection
+                .Select(u => u.Username)
+                .Where(u => !string.IsNullOrWhiteSpace(u))
+                .Cast<string>()
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .OrderBy(u => u)
+                .ToList();
+        }
+
         if (!SettingClientFacade.SettingClients.Any())
             await SettingClientFacade.LoadAllClients(initializeScripts: false);
-
-        _usernames = UsersFacade.UserCollection
-            .Select(u => u.Username)
-            .Where(u => !string.IsNullOrWhiteSpace(u))
-            .Cast<string>()
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .OrderBy(u => u)
-            .ToList();
 
         var groups = await GroupsFacade.GetAllGroups();
         _groupNames = groups

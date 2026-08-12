@@ -9,8 +9,8 @@ using Fig.Contracts.Constants;
 using Fig.Contracts.Diagnostics;
 using Fig.Contracts.Json;
 using Fig.Contracts.SettingDefinitions;
-using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
+using Fig.Web.Services.Authentication;
 using Microsoft.AspNetCore.Components;
 using Newtonsoft.Json;
 using Radzen;
@@ -20,7 +20,7 @@ namespace Fig.Web.Services;
 public class HttpService : IHttpService
 {
     private readonly HttpClient _httpClient;
-    private readonly ILocalStorageService _localStorageService;
+    private readonly IFigApiAccessTokenProvider _accessTokenProvider;
     private readonly NotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
     private readonly NavigationManager _navigationManager;
@@ -28,14 +28,14 @@ public class HttpService : IHttpService
     public HttpService(
         IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
-        ILocalStorageService localStorageService,
+        IFigApiAccessTokenProvider accessTokenProvider,
         NotificationService notificationService,
         INotificationFactory notificationFactory)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _httpClient.Timeout = TimeSpan.FromHours(1);
         _navigationManager = navigationManager;
-        _localStorageService = localStorageService;
+        _accessTokenProvider = accessTokenProvider;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
         Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");
@@ -154,7 +154,7 @@ public class HttpService : IHttpService
     {
         var request = new HttpRequestMessage(method, uri);
 
-        // Add Accept-Encoding header for compression support (GZip only)
+        // Add Accept-Encoding header for Brotli compression support
         request.Headers.AcceptEncoding.Add(new StringWithQualityHeaderValue("br"));
 
         if (value != null)
@@ -406,11 +406,13 @@ public class HttpService : IHttpService
         if (!addJwtHeader)
             return;
 
-        // add jwt auth header if user is logged in and request is to the api url
-        var user = await _localStorageService.GetItem<AuthenticatedUserModel>("user");
         var isApiUrl = !request.RequestUri?.IsAbsoluteUri == true;
-        if (user != null && isApiUrl)
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", user.Token);
+        if (!isApiUrl)
+            return;
+
+        var token = await _accessTokenProvider.GetAccessTokenAsync();
+        if (!string.IsNullOrWhiteSpace(token))
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
     }
 
     private void HandleUnauthorizedResponse(HttpRequestMessage request)

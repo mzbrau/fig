@@ -5,6 +5,8 @@ namespace Fig.Web.Services;
 
 public interface IAccountService
 {
+    WebAuthMode AuthenticationMode { get; }
+
     AuthenticatedUserModel? AuthenticatedUser { get; }
     
     bool IsInitialized { get; }
