@@ -182,8 +182,11 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
                 "highlightSetting requires clientName and settingName (optional instance); scrolls the setting into view and highlights it briefly. " +
                 "When discussing or updating a specific setting, also propose highlightSetting for that setting. " +
                 "generateReport requires reportId from list_reports and optional parameters (property names from the report definition, e.g. ClientName, From, To). " +
-                "Fig.Web generates the report and opens it in a new browser tab.",
-                """{"type":"object","properties":{"actions":{"type":"array","items":{"type":"object","properties":{"type":{"type":"string","enum":["updateSetting","createGroup","createLookupTable","createInstance","searchSettings","highlightSetting","generateReport"]},"clientName":{"type":"string"},"instance":{"type":["string","null"]},"settingName":{"type":"string"},"value":{},"groupName":{"type":"string"},"lookupTableName":{"type":"string"},"description":{"type":"string"},"data":{},"searchQuery":{"type":"string"},"reportId":{"type":"string"},"parameters":{"type":"object","additionalProperties":true}},"required":["type"],"additionalProperties":false}}},"required":["actions"],"additionalProperties":false}""",
+                "Fig.Web generates the report and opens it in a new browser tab. " +
+                "updateDashboardInlineScript requires parameters.componentId and parameters.script (optional parameters.dashboardId). " +
+                "It applies an unsaved inline script draft on the dashboard editor for the selected component. " +
+                "On Dashboard Edit, only propose updateDashboardInlineScript — never layout, create, delete, or other dashboard CRUD actions.",
+                """{"type":"object","properties":{"actions":{"type":"array","items":{"type":"object","properties":{"type":{"type":"string","enum":["updateSetting","createGroup","createLookupTable","createInstance","searchSettings","highlightSetting","generateReport","updateDashboardInlineScript"]},"clientName":{"type":"string"},"instance":{"type":["string","null"]},"settingName":{"type":"string"},"value":{},"groupName":{"type":"string"},"lookupTableName":{"type":"string"},"description":{"type":"string"},"data":{},"searchQuery":{"type":"string"},"reportId":{"type":"string"},"parameters":{"type":"object","additionalProperties":true}},"required":["type"],"additionalProperties":false}}},"required":["actions"],"additionalProperties":false}""",
                 (a, _) => Task.FromResult(ValidateActions(a)))
         };
         _tools = tools.ToDictionary(a => a.Name, StringComparer.Ordinal);
@@ -441,7 +444,8 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
         var validTypes = new HashSet<string>(StringComparer.Ordinal)
         {
             "updateSetting", "createGroup", "createLookupTable",
-            "createInstance", "searchSettings", "highlightSetting", "generateReport"
+            "createInstance", "searchSettings", "highlightSetting", "generateReport",
+            "updateDashboardInlineScript"
         };
         foreach (var action in actions.OfType<JObject>())
         {
@@ -472,6 +476,15 @@ public sealed class AssistantToolRegistry : IAssistantToolRegistry
                 (string.IsNullOrWhiteSpace(action.Value<string>("clientName")) ||
                  string.IsNullOrWhiteSpace(action.Value<string>("settingName"))))
                 throw new ArgumentException("highlightSetting requires clientName and settingName.");
+            if (type == "updateDashboardInlineScript")
+            {
+                var parameters = action["parameters"] as JObject;
+                var data = action["data"] as JObject;
+                var componentId = parameters?.Value<string>("componentId") ?? data?.Value<string>("componentId");
+                var scriptToken = parameters?["script"] ?? data?["script"];
+                if (string.IsNullOrWhiteSpace(componentId) || scriptToken is null || scriptToken.Type == JTokenType.Null)
+                    throw new ArgumentException("updateDashboardInlineScript requires parameters.componentId and parameters.script.");
+            }
         }
         return actions.ToString(Formatting.None);
     }

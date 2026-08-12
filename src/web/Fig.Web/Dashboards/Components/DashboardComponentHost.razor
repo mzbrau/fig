@@ -1,0 +1,122 @@
+@namespace Fig.Web.Dashboards.Components
+@using Fig.Contracts.Dashboards
+@using Fig.Web.Dashboards.Components.Badge
+@using Fig.Web.Dashboards.Components.Chart
+@using Fig.Web.Dashboards.Components.Contracts
+@using Fig.Web.Dashboards.Components.KeyValue
+@using Fig.Web.Dashboards.Components.Kpi
+@using Fig.Web.Dashboards.Components.List
+@using Fig.Web.Dashboards.Components.Table
+@using Fig.Web.Dashboards.Components.Text
+@using Fig.Web.Dashboards.Runtime
+
+<div class="dashboard-component-host">
+    @if (!string.IsNullOrWhiteSpace(Title))
+    {
+        <div class="dashboard-component-host__title">@Title</div>
+    }
+
+    @if (Result is null)
+    {
+        <div class="dashboard-empty">Waiting for data…</div>
+    }
+    else if (!Result.Success)
+    {
+        <div class="dashboard-component-error">
+            <div class="dashboard-component-error__summary">Component error</div>
+            @if (_showError)
+            {
+                <pre class="dashboard-component-error__detail">@Result.Error</pre>
+                <button type="button" class="btn btn-sm btn-secondary" @onclick="() => _showError = false">Hide error</button>
+            }
+            else
+            {
+                <button type="button" class="btn btn-sm btn-secondary" @onclick="() => _showError = true">View error</button>
+            }
+        </div>
+    }
+    else
+    {
+        @RenderComponent()
+    }
+</div>
+
+@code {
+    private bool _showError;
+
+    [Parameter] public DashboardComponentInstanceDataContract? Component { get; set; }
+
+    [Parameter] public DashboardComponentResult? Result { get; set; }
+
+    private string? Title =>
+        Component?.Config?["title"]?.ToString()
+        ?? Component?.Config?["Title"]?.ToString();
+
+    private RenderFragment RenderComponent() => builder =>
+    {
+        var type = Component?.Type ?? string.Empty;
+        var data = Result?.Data;
+
+        switch (type.ToLowerInvariant())
+        {
+            case "kpi":
+                builder.OpenComponent<DashboardKpi>(0);
+                builder.AddAttribute(1, nameof(DashboardKpi.Input), DashboardComponentDataBinder.ToKpi(data));
+                builder.CloseComponent();
+                break;
+            case "text":
+                builder.OpenComponent<DashboardText>(0);
+                builder.AddAttribute(1, nameof(DashboardText.Input), DashboardComponentDataBinder.ToText(data));
+                builder.CloseComponent();
+                break;
+            case "badge":
+                builder.OpenComponent<DashboardBadge>(0);
+                builder.AddAttribute(1, nameof(DashboardBadge.Input), DashboardComponentDataBinder.ToBadge(data));
+                builder.CloseComponent();
+                break;
+            case "bar":
+                builder.OpenComponent<DashboardBarChart>(0);
+                builder.AddAttribute(1, nameof(DashboardBarChart.Points), DashboardComponentDataBinder.ToChartPoints(data));
+                builder.AddAttribute(2, nameof(DashboardBarChart.Title), Title);
+                builder.AddAttribute(3, nameof(DashboardBarChart.LegendPosition),
+                    DashboardComponentDataBinder.ReadLegendPosition(Component?.Config));
+                builder.AddAttribute(4, nameof(DashboardBarChart.LegendVisible),
+                    DashboardComponentDataBinder.ReadLegendVisible(Component?.Config));
+                builder.CloseComponent();
+                break;
+            case "donut":
+                builder.OpenComponent<DashboardDonutChart>(0);
+                builder.AddAttribute(1, nameof(DashboardDonutChart.Points), DashboardComponentDataBinder.ToChartPoints(data));
+                builder.AddAttribute(2, nameof(DashboardDonutChart.Title), Title);
+                builder.AddAttribute(3, nameof(DashboardDonutChart.LegendPosition),
+                    DashboardComponentDataBinder.ReadLegendPosition(Component?.Config));
+                builder.AddAttribute(4, nameof(DashboardDonutChart.LegendVisible),
+                    DashboardComponentDataBinder.ReadLegendVisible(Component?.Config));
+                builder.CloseComponent();
+                break;
+            case "table":
+                builder.OpenComponent<DashboardTable>(0);
+                builder.AddAttribute(1, nameof(DashboardTable.Input),
+                    DashboardComponentDataBinder.ToTable(data, Component?.Config));
+                builder.CloseComponent();
+                break;
+            case "list":
+                builder.OpenComponent<DashboardList>(0);
+                builder.AddAttribute(1, nameof(DashboardList.Input), DashboardComponentDataBinder.ToList(data));
+                builder.CloseComponent();
+                break;
+            case "keyvalue":
+                builder.OpenComponent<DashboardKeyValue>(0);
+                builder.AddAttribute(1, nameof(DashboardKeyValue.Input),
+                    DashboardComponentDataBinder.ToKeyValue(data, Component?.Config));
+                builder.CloseComponent();
+                break;
+            default:
+                builder.OpenElement(0, "div");
+                builder.AddAttribute(1, "class", "dashboard-component-error");
+                builder.AddContent(2, $"Unknown component type '{type}'.");
+                builder.CloseElement();
+                break;
+        }
+    };
+}

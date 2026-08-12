@@ -350,6 +350,23 @@ public sealed class AssistantChatService : AuthenticatedService, IAssistantChatS
             TypeNameHandling = TypeNameHandling.None,
             NullValueHandling = NullValueHandling.Ignore
         });
+
+        var dashboardRules = string.Empty;
+        if (string.Equals(context?.CurrentPage, "Dashboard Edit", StringComparison.OrdinalIgnoreCase) ||
+            context?.Dashboard is not null)
+        {
+            dashboardRules = """
+                When CurrentPage is Dashboard Edit (or Dashboard context is present):
+                Help only with the selected dashboard component's inline script.
+                Use Dashboard.ExpectedResponseShape and Dashboard.JsModelSummary from UI context.
+                Prefer fig.clients / fig.runSessions fluent APIs; Object.keys and Array.isArray do not work on CLR-backed fig objects.
+                The only allowed propose_web_actions type for dashboards is updateDashboardInlineScript with parameters.componentId (use SelectedComponentId) and parameters.script.
+                Optionally include parameters.dashboardId from Dashboard.DashboardId.
+                Do not propose layout changes, add/remove components, named-transform edits, or dashboard CRUD.
+                After proposing updateDashboardInlineScript, say you applied an unsaved draft the user must review and Save on the dashboard editor. Never claim the dashboard was saved.
+                """;
+        }
+
         return $"""
                 You are Fig Assistant, an administrator-facing assistant for the Fig configuration management system.
                 Use read tools to verify facts before answering. Never claim to have changed Fig data.
@@ -370,6 +387,7 @@ public sealed class AssistantChatService : AuthenticatedService, IAssistantChatS
                 Infer ClientName/Instance from UI context or the conversation when possible.
                 When a report has From/To and the user did not specify dates, default From to UTC today minus 7 days and To to UTC now.
                 Ask the user for required parameters that cannot be inferred before proposing generateReport.
+                {dashboardRules}
                 Authenticated user: {username}
                 Current UI context: {contextJson}
                 """;

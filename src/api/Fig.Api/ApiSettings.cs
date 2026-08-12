@@ -152,7 +152,8 @@ public class KeycloakAuthenticationSettings
         [Role.Administrator.ToString()] = ["Administrator", "/fig/Administrator"],
         [Role.User.ToString()] = ["User", "/fig/User"],
         [Role.ReadOnly.ToString()] = ["ReadOnly", "/fig/ReadOnly"],
-        [Role.LookupService.ToString()] = ["LookupService", "/fig/LookupService"]
+        [Role.LookupService.ToString()] = ["LookupService", "/fig/LookupService"],
+        [Role.Dashboard.ToString()] = ["Dashboard", "/fig/Dashboard"]
     };
 
     public string? Authority { get; set; }

@@ -155,6 +155,9 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
         if (ContainsMappedRole(roles, Role.LookupService, settings))
             return Role.LookupService;
 
+        if (ContainsMappedRole(roles, Role.Dashboard, settings))
+            return Role.Dashboard;
+
         if (ContainsMappedRole(roles, Role.User, settings))
             return Role.User;
 

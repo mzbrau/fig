@@ -1,0 +1,63 @@
+@using Fig.Contracts.Dashboards
+@using Fig.Web.Dashboards.Components
+@using Fig.Web.Dashboards.Runtime
+@inject DialogService DialogService
+
+<div class="dashboard-component-edit-dialog">
+    <div class="dashboard-component-edit-dialog__main">
+        <div class="dashboard-component-edit-dialog__form">
+            @* Extension point: future simple binding / view-specific dropdowns go above the script section. *@
+            <DashboardComponentPropertiesForm Component="Component"
+                                              LayoutCell="LayoutCell"
+                                              ConfigJson="@_configJson"
+                                              ConfigJsonChanged="@OnConfigJsonChanged"
+                                              Transforms="@TransformList"
+                                              ShowInlineScript="false"
+                                              ShowEvaluate="false"
+                                              ShowConfigJson="true"
+                                              OnMutated="@OnFormMutated" />
+
+            @if (IsInlineMode)
+            {
+                <div class="dashboard-component-edit-dialog__expected mb-2">
+                    <label class="form-label mb-1">Expected script result</label>
+                    <p class="text-muted small mb-0">@_expectedShape</p>
+                </div>
+
+                <label class="form-label">Inline script</label>
+                <div class="dashboard-component-edit-dialog__monaco monaco-editor-container mb-2">
+                    <div id="@_editorId" class="monaco-editor-element dashboard-component-edit-dialog__monaco-host"></div>
+                </div>
+            }
+        </div>
+
+        <div class="dashboard-component-edit-dialog__preview-pane">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <h6 class="mb-0">Live preview</h6>
+                <RadzenButton Text="Evaluate" Icon="play_arrow" Size="ButtonSize.Small"
+                              ButtonStyle="ButtonStyle.Secondary" Click="@EvaluateNow" />
+            </div>
+            <div class="dashboard-component-edit-dialog__preview-host">
+                <DashboardComponentHost Component="Component" Result="_componentResult" />
+            </div>
+
+            <label class="form-label mt-3">Evaluate result</label>
+            @if (!string.IsNullOrWhiteSpace(_previewError))
+            {
+                <RadzenAlert AlertStyle="AlertStyle.Warning" Text="@_previewError" class="mb-2" />
+            }
+            else if (!string.IsNullOrWhiteSpace(_previewText))
+            {
+                <pre class="dashboard-editor__preview mb-2">@_previewText</pre>
+            }
+            else
+            {
+                <p class="text-muted small mb-2">Run Evaluate to preview the binding result.</p>
+            }
+        </div>
+    </div>
+
+    <div class="dashboard-component-edit-dialog__footer">
+        <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Primary" Click="@Close" />
+    </div>
+</div>

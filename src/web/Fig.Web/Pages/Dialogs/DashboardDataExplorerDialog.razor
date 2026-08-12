@@ -1,0 +1,59 @@
+@using Fig.Web.Dashboards
+@using Fig.Web.Dashboards.Runtime
+@inject DialogService DialogService
+@inject IDashboardDataProvider DataProvider
+
+<div class="dashboard-data-explorer p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
+        <p class="text-muted mb-0 small">
+            Live values from <code>fig</code> (<code>clients</code>, <code>runSessions</code>) and <code>transforms</code>.
+        </p>
+        <div class="d-flex gap-2">
+            <RadzenButton Text="Refresh" Icon="refresh" Size="ButtonSize.Small"
+                          ButtonStyle="ButtonStyle.Light" Click="@Refresh" IsBusy="_refreshing" />
+            <RadzenButton Text="Close" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary"
+                          Click="@(() => DialogService.Close())" />
+        </div>
+    </div>
+
+    <div class="dashboard-data-explorer__body">
+        @foreach (var node in _roots)
+        {
+            <DashboardDataExplorerNodeView Node="node" Depth="0" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public DashboardFigRoot? Fig { get; set; }
+
+    [Parameter] public IReadOnlyDictionary<string, object?>? NamedTransforms { get; set; }
+
+    private IReadOnlyList<DashboardDataExplorerNode> _roots = Array.Empty<DashboardDataExplorerNode>();
+    private bool _refreshing;
+
+    protected override void OnParametersSet()
+    {
+        Rebuild();
+    }
+
+    private void Rebuild()
+    {
+        _roots = DashboardDataExplorerModel.Build(Fig ?? DataProvider.Current, NamedTransforms);
+    }
+
+    private async Task Refresh()
+    {
+        _refreshing = true;
+        try
+        {
+            await DataProvider.EnsureLoadedAsync();
+            Fig = DataProvider.Current;
+            Rebuild();
+        }
+        finally
+        {
+            _refreshing = false;
+        }
+    }
+}

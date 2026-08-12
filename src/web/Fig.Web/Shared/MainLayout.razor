@@ -23,100 +23,114 @@
 
 @if (AccountService.IsInitialized)
 {
-    @if (LoggedIn)
+    @if (LoggedIn && !IsWallboardMode)
     {
         <!-- nav -->
         <nav class="navbar navbar-expand navbar-dark fig-main-nav">
             <div class="navbar-nav fig-navbar-links">
-                <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
-                    <img src="images/fig_logo_name_right_white_299x135.png" width="90" height="40" />
-                </NavLink>
-                <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
-                <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
-                <NavLink href="events" class="nav-item nav-link">Events</NavLink>
-                @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
+                @if (IsDashboardRole)
                 {
-                    <NavLink href="groups" class="nav-item nav-link">Groups</NavLink>
-                    @if (AccountService.AuthenticationMode != WebAuthMode.Keycloak)
-                    {
-                        <NavLink href="users" class="nav-item nav-link">Users</NavLink>
-                    }
-                    <NavLink href="clients" class="nav-item nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
-                        Connected Clients
-                        @if (ClientStatusFacade.ConnectedClientsCount > 0)
-                        {
-                            <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@ClientStatusFacade.ConnectedClientsCount.ToString()" />
-                        }
+                    <NavLink href="dashboards" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
+                        <img src="images/fig_logo_name_right_white_299x135.png" width="90" height="40" />
                     </NavLink>
-                    <NavLink href="apistatus" class="nav-item nav-link">API Status</NavLink>
-                    <NavLink href="importexport" class="nav-item nav-link">Import / Export</NavLink>
-                    <NavLink href="compare" class="nav-item nav-link">Compare</NavLink>
-                    <NavLink href="configuration" class="nav-item nav-link">Configuration</NavLink>
-                    <NavLink href="webhooks" class="nav-item nav-link">Web Hooks</NavLink>
-                    <NavLink href="timemachine" class="nav-item nav-link">Time Machine</NavLink>
-                    <NavLink href="scheduling" class="nav-item nav-link">Scheduling</NavLink>
-                    <NavLink href="clienthistory" class="nav-item nav-link">Client History</NavLink>
-                    <NavLink href="reports" class="nav-item nav-link">Reports</NavLink>
+                    <NavLink href="dashboards" class="nav-item nav-link">Dashboards</NavLink>
                 }
-                <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
+                else
+                {
+                    <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
+                        <img src="images/fig_logo_name_right_white_299x135.png" width="90" height="40" />
+                    </NavLink>
+                    <NavLink href="" Match="NavLinkMatch.All" class="nav-item nav-link">Settings</NavLink>
+                    <NavLink href="settingstable" class="nav-item nav-link">Settings Table</NavLink>
+                    <NavLink href="events" class="nav-item nav-link">Events</NavLink>
+                    @if (AccountService?.AuthenticatedUser?.Role == Role.Administrator)
+                    {
+                        <NavLink href="groups" class="nav-item nav-link">Groups</NavLink>
+                        @if (AccountService.AuthenticationMode != WebAuthMode.Keycloak)
+                        {
+                            <NavLink href="users" class="nav-item nav-link">Users</NavLink>
+                        }
+                        <NavLink href="clients" class="nav-item nav-link" style="display: flex; align-items: center; gap: 0.5rem;">
+                            Connected Clients
+                            @if (ClientStatusFacade.ConnectedClientsCount > 0)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Success" IsPill="true" Text="@ClientStatusFacade.ConnectedClientsCount.ToString()" />
+                            }
+                        </NavLink>
+                        <NavLink href="apistatus" class="nav-item nav-link">API Status</NavLink>
+                        <NavLink href="importexport" class="nav-item nav-link">Import / Export</NavLink>
+                        <NavLink href="compare" class="nav-item nav-link">Compare</NavLink>
+                        <NavLink href="configuration" class="nav-item nav-link">Configuration</NavLink>
+                        <NavLink href="webhooks" class="nav-item nav-link">Web Hooks</NavLink>
+                        <NavLink href="timemachine" class="nav-item nav-link">Time Machine</NavLink>
+                        <NavLink href="scheduling" class="nav-item nav-link">Scheduling</NavLink>
+                        <NavLink href="clienthistory" class="nav-item nav-link">Client History</NavLink>
+                        <NavLink href="reports" class="nav-item nav-link">Reports</NavLink>
+                    }
+                    <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
+                    <NavLink href="dashboards" class="nav-item nav-link">Dashboards</NavLink>
+                }
             </div>
 
             <div class="navbar-nav ms-auto fig-navbar-actions">
-                <div class="fig-navbar-action">
-                    <RadzenButton Variant="Variant.Text" Click="@ShowKeybindings" Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
-                </div>
-
-                <div class="fig-navbar-action">
-                    <RadzenButton Variant="Variant.Flat"
-                                  Icon="search"
-                                  ButtonStyle="ButtonStyle.Light"
-                                  Style="background-color: transparent; color: white; border: none;"
-                                  title="Search"
-                                  AriaLabel="Search"
-                                  Click="@OpenSearchAsync" />
-                </div>
-
-                @if (DisplayScriptStatusService.IsProcessing || DisplayScriptStatusService.IsComplete || DisplayScriptStatusService.HasRuns)
+                @if (!IsDashboardRole)
                 {
-                    <button class="fig-navbar-action fig-script-status-action"
-                            type="button"
-                            aria-label="@(DisplayScriptStatusService.IsProcessing
-                                ? "Display scripts are processing. Click to view run history."
-                                : "View display script run history")"
-                            title="@(DisplayScriptStatusService.IsProcessing
-                                ? "Display scripts are processing. Click to view run history."
-                                : "View display script run history")"
-                            @onclick="ShowDisplayScriptHistory">
-                        @if (DisplayScriptStatusService.IsProcessing)
-                        {
-                            <RadzenProgressBarCircular Size="ProgressBarCircularSize.ExtraSmall"
-                                                       Mode="ProgressBarMode.Indeterminate"
-                                                       ShowValue="false"
-                                                       Style="color: white;" />
-                        }
-                        else if (DisplayScriptStatusService.IsComplete)
-                        {
-                            <RadzenIcon Icon="check_circle" Style="color: white; font-size: 1.4rem;" />
-                        }
-                        else
-                        {
-                            <RadzenIcon Icon="history" Style="color: white; font-size: 1.4rem;" />
-                        }
-                    </button>
-                }
+                    <div class="fig-navbar-action">
+                        <RadzenButton Variant="Variant.Text" Click="@ShowKeybindings" Text="Shortcuts" ButtonStyle="ButtonStyle.Light" Icon="help" />
+                    </div>
 
-                <div class="align-content-center p-1 fig-navbar-action fig-notification-action" @onclick="ShowNotificationHistory">
-                    <RadzenIcon Icon="notifications" Style="color: white; font-size: 1.4rem;" />
-                    @if (NotificationHistoryService.UnreadCount > 0)
+                    <div class="fig-navbar-action">
+                        <RadzenButton Variant="Variant.Flat"
+                                      Icon="search"
+                                      ButtonStyle="ButtonStyle.Light"
+                                      Style="background-color: transparent; color: white; border: none;"
+                                      title="Search"
+                                      AriaLabel="Search"
+                                      Click="@OpenSearchAsync" />
+                    </div>
+
+                    @if (DisplayScriptStatusService.IsProcessing || DisplayScriptStatusService.IsComplete || DisplayScriptStatusService.HasRuns)
                     {
-                        <span class="notification-badge">@(NotificationHistoryService.UnreadCount > 99 ? "99+" : NotificationHistoryService.UnreadCount.ToString())</span>
+                        <button class="fig-navbar-action fig-script-status-action"
+                                type="button"
+                                aria-label="@(DisplayScriptStatusService.IsProcessing
+                                    ? "Display scripts are processing. Click to view run history."
+                                    : "View display script run history")"
+                                title="@(DisplayScriptStatusService.IsProcessing
+                                    ? "Display scripts are processing. Click to view run history."
+                                    : "View display script run history")"
+                                @onclick="ShowDisplayScriptHistory">
+                            @if (DisplayScriptStatusService.IsProcessing)
+                            {
+                                <RadzenProgressBarCircular Size="ProgressBarCircularSize.ExtraSmall"
+                                                           Mode="ProgressBarMode.Indeterminate"
+                                                           ShowValue="false"
+                                                           Style="color: white;" />
+                            }
+                            else if (DisplayScriptStatusService.IsComplete)
+                            {
+                                <RadzenIcon Icon="check_circle" Style="color: white; font-size: 1.4rem;" />
+                            }
+                            else
+                            {
+                                <RadzenIcon Icon="history" Style="color: white; font-size: 1.4rem;" />
+                            }
+                        </button>
                     }
-                </div>
-                
-                <div class="d-flex flex-column align-items-center justify-content-center p-1 fig-connection-status">
-                    <ConnectionStatus/>
-                    <p class="mb-0">@Settings.Value.Environment</p>
-                </div>
+
+                    <div class="align-content-center p-1 fig-navbar-action fig-notification-action" @onclick="ShowNotificationHistory">
+                        <RadzenIcon Icon="notifications" Style="color: white; font-size: 1.4rem;" />
+                        @if (NotificationHistoryService.UnreadCount > 0)
+                        {
+                            <span class="notification-badge">@(NotificationHistoryService.UnreadCount > 99 ? "99+" : NotificationHistoryService.UnreadCount.ToString())</span>
+                        }
+                    </div>
+                    
+                    <div class="d-flex flex-column align-items-center justify-content-center p-1 fig-connection-status">
+                        <ConnectionStatus/>
+                        <p class="mb-0">@Settings.Value.Environment</p>
+                    </div>
+                }
 
                 <RadzenProfileMenu class="fig-profile-menu">
                     <Template>
@@ -134,7 +148,7 @@
         </nav>
     }
 
-    <div class="app-container">
+    <div class="app-container @(IsWallboardMode ? "app-container--wallboard" : null)">
         @if (AccountService?.AuthenticatedUser is not null)
         {
             <RadzenNotification />
@@ -151,7 +165,7 @@
                 <ErrorHandlingForm UnhandledException="ex"/>
             </ErrorContent>
         </ErrorBoundary>
-        @if (LoggedIn && AccountService?.AuthenticatedUser?.Role == Role.Administrator)
+        @if (LoggedIn && !IsWallboardMode && AccountService?.AuthenticatedUser?.Role == Role.Administrator)
         {
             <FigAssistantHost />
         }
@@ -174,8 +188,19 @@ else
 @code {
     
     private bool LoggedIn => AccountService?.AuthenticatedUser != null;
+    private bool IsDashboardRole => AccountService?.AuthenticatedUser?.Role == Role.Dashboard;
     private Guid? _releaseHighlightsCheckedUserId;
     private bool _releaseHighlightsDialogOpen;
+
+    private bool IsWallboardMode
+    {
+        get
+        {
+            var uri = NavigationManager.Uri;
+            return uri.Contains("wallboard=1", StringComparison.OrdinalIgnoreCase) ||
+                   uri.Contains("wallboard=true", StringComparison.OrdinalIgnoreCase);
+        }
+    }
 
     private bool IsSettingsPage
     {
@@ -194,6 +219,7 @@ else
         EventDistributor.Subscribe(EventConstants.LogoutEvent, OnLogout);
         NotificationHistoryService.OnChange += OnNotificationChanged;
         DisplayScriptStatusService.OnChange += OnDisplayScriptStatusChanged;
+        NavigationManager.LocationChanged += OnLocationChanged;
         await base.OnInitializedAsync();
     }
 
@@ -202,6 +228,11 @@ else
         await base.OnAfterRenderAsync(firstRender);
         if (firstRender)
             await TryOpenReleaseHighlights();
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        InvokeAsync(StateHasChanged);
     }
 
     private void OnNotificationChanged()
@@ -388,5 +419,6 @@ else
         EventDistributor.Unsubscribe(EventConstants.LogoutEvent, OnLogout);
         NotificationHistoryService.OnChange -= OnNotificationChanged;
         DisplayScriptStatusService.OnChange -= OnDisplayScriptStatusChanged;
+        NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }

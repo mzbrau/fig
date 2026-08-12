@@ -19,6 +19,7 @@ using Fig.Contracts.Authentication;
 using Fig.Contracts.CheckPoint;
 using Fig.Contracts.Configuration;
 using Fig.Contracts.CustomActions;
+using Fig.Contracts.Dashboards;
 using Fig.Contracts.EventHistory;
 using Fig.Contracts.Health;
 using Fig.Contracts.ImportExport;
@@ -359,7 +360,8 @@ public abstract class IntegrationTestBase
             [Role.Administrator.ToString()] = [Role.Administrator.ToString(), $"/fig/{Role.Administrator}"],
             [Role.User.ToString()] = [Role.User.ToString(), $"/fig/{Role.User}"],
             [Role.ReadOnly.ToString()] = [Role.ReadOnly.ToString(), $"/fig/{Role.ReadOnly}"],
-            [Role.LookupService.ToString()] = [Role.LookupService.ToString(), $"/fig/{Role.LookupService}"]
+            [Role.LookupService.ToString()] = [Role.LookupService.ToString(), $"/fig/{Role.LookupService}"],
+            [Role.Dashboard.ToString()] = [Role.Dashboard.ToString(), $"/fig/{Role.Dashboard}"]
         };
         target.Authentication.Keycloak.AllowedClassificationsClaim = "fig_allowed_classifications";
         target.Authentication.Keycloak.ClientFilterClaim = "fig_client_filter";
@@ -1158,6 +1160,77 @@ public abstract class IntegrationTestBase
         foreach (var item in items)
             if (item.Id.HasValue)
                 await DeleteSettingGroup(item.Id.Value);
+    }
+
+    protected async Task<DashboardDataContract> CreateDashboard(DashboardDataContract dataContract)
+    {
+        const string uri = "/dashboards";
+        var response = await ApiClient.Post(uri, dataContract, authenticate: true);
+        var responseString = await response.Content.ReadAsStringAsync();
+        return JsonConvert.DeserializeObject<DashboardDataContract>(responseString, JsonSettings.FigDefault)
+            ?? throw new InvalidOperationException("Create dashboard returned null");
+    }
+
+    protected async Task<HttpResponseMessage> CreateDashboardRaw(DashboardDataContract dataContract, string? tokenOverride = null)
+    {
+        const string uri = "/dashboards";
+        return await ApiClient.Post(uri, dataContract, authenticate: true, validateSuccess: false, tokenOverride: tokenOverride);
+    }
+
+    protected async Task<DashboardDataContract> UpdateDashboard(
+        Guid id,
+        DashboardDataContract dataContract,
+        bool forceOverwrite = false,
+        bool validateSuccess = true)
+    {
+        var uri = $"/dashboards/{id}?forceOverwrite={forceOverwrite.ToString().ToLowerInvariant()}";
+        if (!validateSuccess)
+        {
+            var response = await ApiClient.Put<HttpResponseMessage>(uri, dataContract, authenticate: true, validateSuccess: false);
+            var body = await response!.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<DashboardDataContract>(body, JsonSettings.FigDefault)
+                   ?? throw new InvalidOperationException("Update dashboard returned null body");
+        }
+
+        var result = await ApiClient.Put<DashboardDataContract>(uri, dataContract);
+        return result ?? throw new InvalidOperationException("Update dashboard returned null");
+    }
+
+    protected async Task<HttpResponseMessage> UpdateDashboardRaw(
+        Guid id,
+        DashboardDataContract dataContract,
+        bool forceOverwrite = false)
+    {
+        var uri = $"/dashboards/{id}?forceOverwrite={forceOverwrite.ToString().ToLowerInvariant()}";
+        return await ApiClient.Put<HttpResponseMessage>(uri, dataContract, authenticate: true, validateSuccess: false)
+               ?? throw new InvalidOperationException("Update dashboard returned null response");
+    }
+
+    protected async Task<List<DashboardDataContract>> GetAllDashboards(string? tokenOverride = null)
+    {
+        const string uri = "/dashboards";
+        var result = await ApiClient.Get<IEnumerable<DashboardDataContract>>(uri, tokenOverride: tokenOverride);
+        return result?.ToList() ?? [];
+    }
+
+    protected async Task<DashboardDataContract?> GetDashboard(Guid id, string? tokenOverride = null)
+    {
+        var uri = $"/dashboards/{id}";
+        return await ApiClient.Get<DashboardDataContract>(uri, tokenOverride: tokenOverride);
+    }
+
+    protected async Task DeleteDashboard(Guid id)
+    {
+        var uri = $"/dashboards/{id}";
+        await ApiClient.Delete(uri);
+    }
+
+    protected async Task DeleteAllDashboards()
+    {
+        var items = await GetAllDashboards();
+        foreach (var item in items)
+            if (item.Id.HasValue)
+                await DeleteDashboard(item.Id.Value);
     }
 
     protected async Task<SettingGroupExportDataContract> ExportSettingGroups()

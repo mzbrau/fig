@@ -20,7 +20,7 @@ public interface IHttpService
 
     Task PutOrThrow(string uri, object? value, int? timeoutOverrideSec = null);
     
-    Task<T?> Put<T>(string uri, object? value);
+    Task<T?> Put<T>(string uri, object? value, bool showNotifications = true);
     
     Task Delete(string uri);
     

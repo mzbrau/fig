@@ -49,7 +49,7 @@ public class StatusController : ControllerBase
         return Ok();
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet]
     public async Task<IActionResult> GetAll()
     {
@@ -57,7 +57,7 @@ public class StatusController : ControllerBase
         return Ok(allStatuses);
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet("properties")]
     public async Task<IActionResult> GetCustomProperties()
     {
@@ -65,7 +65,7 @@ public class StatusController : ControllerBase
         return Ok(properties);
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet("{clientName}/properties")]
     public async Task<IActionResult> GetCustomPropertiesForClient(string clientName, [FromQuery] string? instance)
     {

@@ -265,6 +265,43 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
+                <h3 class="h5">Dashboard Export</h3>
+                <p>Export all dashboard definitions as JSON. Live data and secrets are not included.</p>
+                <div class="p-2">
+                    <RadzenButton Text="Export" IsBusy="_dashboardExportInProgress" BusyText="Exporting..."
+                                  Click="PerformDashboardExport"/>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
+                <h3 class="h5">Dashboard Import</h3>
+                <p>Import dashboard definitions from a JSON file. Each dashboard is created as new (never overwrites). Name collisions are renamed with " (imported)".</p>
+                <div class="p-2">
+                    <RadzenFileInput TValue="string" Class="w-100" ChooseText="Select File" Accept="application/json"
+                                     Change="@(async (args) => await DashboardImportFileChanged(args))" MaxFileSize="@((int)MaxFileSizeBytes)" Error="@(OnDashboardImportFileError)"/>
+                </div>
+
+                @if (_dashboardImportFileProcessing)
+                {
+                    <div class="p-2 text-center">
+                        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium"/>
+                        <p>Processing file...</p>
+                    </div>
+                }
+
+                <div class="p-2">
+                    <RadzenTextArea id="dashboardImportStatusTextArea" Name="dashboardImportStatus" @bind-Value="@_dashboardImportStatus" Disabled="false" ReadOnly="true"
+                                    Class="w-100" Rows="5" Visible="_dashboardImportReady"/>
+                </div>
+
+                <div class="p-2">
+                    <RadzenButton Text="Import" IsBusy="_dashboardImportOperationInProgress" BusyText="Importing..."
+                                  Click="PerformDashboardImport" Visible="_dashboardImportReady"
+                                  Disabled="@(_dashboardImportIsInvalid || _dashboardImportOperationInProgress)"/>
+                </div>
+            </RadzenCard>
+
+            <RadzenCard class="m-3">
                 <h3 class="h5">Deferred Import Clients</h3>
                 <p>Value only settings that have been imported but no matching client was found. Settings will be
                     applied when the client registers for the first time.</p>

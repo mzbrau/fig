@@ -198,6 +198,7 @@ public class AssistantProposedActionParsingTests
         Assert.That(AssistantProposedActionTypes.SearchSettings, Is.EqualTo("searchSettings"));
         Assert.That(AssistantProposedActionTypes.HighlightSetting, Is.EqualTo("highlightSetting"));
         Assert.That(AssistantProposedActionTypes.GenerateReport, Is.EqualTo("generateReport"));
+        Assert.That(AssistantProposedActionTypes.UpdateDashboardInlineScript, Is.EqualTo("updateDashboardInlineScript"));
     }
 }
 
@@ -209,6 +210,7 @@ public class AssistantActionApplierTests
         Mock<IGroupsFacade> groups,
         Mock<ILookupTablesFacade> lookups,
         IAssistantUiActionQueue? queue = null,
+        IDashboardAssistantActionQueue? dashboardQueue = null,
         Mock<INotificationFactory>? notificationFactory = null,
         Mock<IReportsFacade>? reports = null,
         Mock<IJSRuntime>? jsRuntime = null,
@@ -227,11 +229,44 @@ public class AssistantActionApplierTests
             groups.Object,
             lookups.Object,
             queue ?? new AssistantUiActionQueue(),
+            dashboardQueue ?? new DashboardAssistantActionQueue(),
             navigation ?? new TestNavigationManager(),
             reports?.Object ?? Mock.Of<IReportsFacade>(),
             jsRuntime?.Object ?? Mock.Of<IJSRuntime>(),
             new NotificationService(),
             notificationFactory.Object);
+    }
+
+    [Test]
+    public async Task ApplyAsync_UpdateDashboardInlineScript_EnqueuesAndNavigates()
+    {
+        var settings = new Mock<ISettingClientFacade>();
+        var groups = new Mock<IGroupsFacade>();
+        var lookups = new Mock<ILookupTablesFacade>();
+        var dashboardQueue = new DashboardAssistantActionQueue();
+        var navigation = new TestNavigationManager();
+        var dashboardId = Guid.Parse("258ce2d1-ccb2-4735-850a-b4a4008a242c");
+
+        var applier = CreateApplier(settings, groups, lookups, dashboardQueue: dashboardQueue, navigation: navigation);
+
+        await applier.ApplyAsync([
+            new AssistantProposedActionDataContract
+            {
+                Type = AssistantProposedActionTypes.UpdateDashboardInlineScript,
+                Parameters = new Dictionary<string, object?>
+                {
+                    ["componentId"] = "kpi-1",
+                    ["script"] = "return { value: fig.runSessions.length };",
+                    ["dashboardId"] = dashboardId.ToString()
+                }
+            }
+        ]);
+
+        var queued = dashboardQueue.DequeueAll();
+        Assert.That(queued, Has.Count.EqualTo(1));
+        Assert.That(queued[0].ComponentId, Is.EqualTo("kpi-1"));
+        Assert.That(queued[0].Script, Does.Contain("fig.runSessions.length"));
+        Assert.That(navigation.Navigations, Does.Contain($"/dashboards/{dashboardId}/edit"));
     }
 
     [Test]
@@ -563,6 +598,30 @@ public class AssistantReportToolTests
             CancellationToken.None);
         Assert.That(result, Does.Contain("generateReport"));
         Assert.That(result, Does.Contain("client-uptime"));
+    }
+
+    [Test]
+    public async Task ProposeWebActions_UpdateDashboardInlineScript_RequiresComponentIdAndScript()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync(
+                """{"actions":[{"type":"updateDashboardInlineScript","parameters":{"componentId":"kpi-1"}}]}""",
+                CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>());
+    }
+
+    [Test]
+    public async Task ProposeWebActions_UpdateDashboardInlineScript_AcceptsValidAction()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
+        var result = await tool!.ExecuteAsync(
+            """{"actions":[{"type":"updateDashboardInlineScript","parameters":{"componentId":"kpi-1","script":"return { value: 1 };"}}]}""",
+            CancellationToken.None);
+        Assert.That(result, Does.Contain("updateDashboardInlineScript"));
+        Assert.That(result, Does.Contain("kpi-1"));
     }
 
     [Test]

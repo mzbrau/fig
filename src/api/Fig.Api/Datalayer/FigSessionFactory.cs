@@ -180,6 +180,7 @@ public class FigSessionFactory : IFigSessionFactory
             typeof(DatabaseMigrationMap),
             typeof(ClientRegistrationHistoryMap),
             typeof(SettingGroupMap),
+            typeof(DashboardMap),
             typeof(ReleaseHighlightViewMap),
             typeof(ApiSecretRotationStateMap)
         });

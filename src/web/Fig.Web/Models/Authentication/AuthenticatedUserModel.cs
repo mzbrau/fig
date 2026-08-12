@@ -20,4 +20,10 @@ public class AuthenticatedUserModel
     public bool PasswordChangeRequired { get; set; }
 
     public List<Classification> AllowedClassifications { get; set; } = [];
+
+    /// <summary>
+    /// Regex applied when projecting clients / run sessions into dashboard scripts.
+    /// Defaults to match-all; API responses are already scoped server-side.
+    /// </summary>
+    public string ClientFilter { get; set; } = ".*";
 }

@@ -1,0 +1,179 @@
+@page "/dashboards/{Id:guid}/edit"
+@using Fig.Web.Attributes
+@using Fig.Web.Dashboards.Components
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@attribute [Administrator]
+@attribute [DashboardOnly]
+@implements IDisposable
+
+<PageTitle>Fig - Edit @(_dashboard?.Name ?? "Dashboard")</PageTitle>
+
+@if (_loading)
+{
+    <div class="text-center p-5">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                   Size="ProgressBarCircularSize.Large" />
+    </div>
+}
+else if (_dashboard is null)
+{
+    <div class="p-4">
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Title="Not found" Text="Dashboard was not found." />
+        <RadzenButton Text="Back" Icon="arrow_back" Click="@GoToList" ButtonStyle="ButtonStyle.Light" />
+    </div>
+}
+else
+{
+    <div class="dashboard-editor">
+        <div class="dashboard-editor__toolbar">
+            <div>
+                <h3 class="mb-0">@_dashboard.Name</h3>
+                <small class="@(_dirty ? "text-warning" : "text-muted")">
+                    @(_dirty ? "Unsaved changes" : "All changes saved")
+                </small>
+            </div>
+            <div class="d-flex flex-wrap gap-2 align-items-center">
+                <div class="dashboard-editor__selection-actions d-flex flex-wrap gap-1">
+                    <RadzenButton Text="Nudge ←" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
+                                  Disabled="@(SelectedCell is null)" Click="@(() => Nudge(-1, 0))" />
+                    <RadzenButton Text="Nudge →" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
+                                  Disabled="@(SelectedCell is null)" Click="@(() => Nudge(1, 0))" />
+                    <RadzenButton Text="Nudge ↑" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
+                                  Disabled="@(SelectedCell is null)" Click="@(() => Nudge(0, -1))" />
+                    <RadzenButton Text="Nudge ↓" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
+                                  Disabled="@(SelectedCell is null)" Click="@(() => Nudge(0, 1))" />
+                    <RadzenButton Text="Duplicate" Icon="content_copy" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Light"
+                                  Disabled="@(SelectedComponent is null)" Click="@DuplicateSelected" />
+                    <RadzenButton Text="Delete" Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
+                                  Disabled="@(SelectedComponent is null)" Click="@DeleteSelected" />
+                </div>
+                <RadzenButton Text="Save" Icon="save" ButtonStyle="@(_dirty ? ButtonStyle.Warning : ButtonStyle.Success)"
+                              Disabled="@(!_dirty || _saving)" IsBusy="_saving" Click="@Save" />
+                <RadzenButton Text="Explore data" Icon="account_tree" ButtonStyle="ButtonStyle.Light"
+                              Click="@OpenDataExplorer" />
+                <RadzenButton Text="View" Icon="visibility" ButtonStyle="ButtonStyle.Light" Click="@GoToView" />
+                <RadzenButton Text="Back" Icon="arrow_back" ButtonStyle="ButtonStyle.Light" Click="@GoToList" />
+            </div>
+        </div>
+
+        <div class="dashboard-editor__body @BodyCollapseClass">
+            <aside class="dashboard-editor__palette @(_paletteCollapsed ? "dashboard-editor__panel--collapsed" : null)">
+                @if (_paletteCollapsed)
+                {
+                    <button type="button" class="dashboard-editor__panel-expand"
+                            title="Expand components" @onclick="TogglePaletteCollapsed">
+                        <RadzenIcon Icon="chevron_right" />
+                    </button>
+                }
+                else
+                {
+                    <div class="dashboard-editor__panel-header">
+                        <h5 class="mb-0">Components</h5>
+                        <button type="button" class="dashboard-editor__panel-toggle"
+                                title="Collapse components" @onclick="TogglePaletteCollapsed">
+                            <RadzenIcon Icon="chevron_left" />
+                        </button>
+                    </div>
+                    @foreach (var category in PaletteCategories)
+                    {
+                        <div class="dashboard-editor__palette-category">
+                            <div class="dashboard-editor__palette-category-title">@category.Key</div>
+                            @foreach (var descriptor in category)
+                            {
+                                <button type="button" class="dashboard-editor__palette-item"
+                                        @onclick="() => AddComponent(descriptor.Type)"
+                                        title="Add @descriptor.DisplayName">
+                                    <RadzenIcon Icon="@descriptor.Icon" class="dashboard-editor__palette-icon" />
+                                    <span>@descriptor.DisplayName</span>
+                                </button>
+                            }
+                        </div>
+                    }
+                }
+            </aside>
+
+            <section class="dashboard-editor__canvas" tabindex="0" @ref="_editorRoot"
+                     @onkeydown="OnEditorKeyDown">
+                <DashboardGridHost EditMode="true"
+                                   Layout="_dashboard.Definition.Layout"
+                                   Components="_dashboard.Definition.Components"
+                                   Results="_results"
+                                   SelectedComponentId="@_selectedComponentId"
+                                   SelectedComponentIdChanged="OnSelectedChanged" />
+            </section>
+
+            <aside class="dashboard-editor__properties @(_propertiesCollapsed ? "dashboard-editor__panel--collapsed" : null)">
+                @if (_propertiesCollapsed)
+                {
+                    <button type="button" class="dashboard-editor__panel-expand"
+                            title="Expand properties" @onclick="TogglePropertiesCollapsed">
+                        <RadzenIcon Icon="chevron_left" />
+                    </button>
+                }
+                else
+                {
+                    <div class="dashboard-editor__panel-header">
+                        <h5 class="mb-0">Properties</h5>
+                        <button type="button" class="dashboard-editor__panel-toggle"
+                                title="Collapse properties" @onclick="TogglePropertiesCollapsed">
+                            <RadzenIcon Icon="chevron_right" />
+                        </button>
+                    </div>
+                    @if (SelectedComponent is null)
+                    {
+                        <p class="text-muted">Select a component on the canvas.</p>
+                    }
+                    else
+                    {
+                        <div class="mb-2">
+                            <RadzenButton Text="Edit in dialog" Icon="open_in_new" Size="ButtonSize.Small"
+                                          ButtonStyle="ButtonStyle.Primary" Style="width:100%;"
+                                          Click="@OpenComponentEditor" />
+                        </div>
+                        <DashboardComponentPropertiesForm Component="SelectedComponent"
+                                                          LayoutCell="SelectedCell"
+                                                          ConfigJson="@_configJson"
+                                                          ConfigJsonChanged="@OnConfigJsonFromForm"
+                                                          Transforms="@(_dashboard.Definition.Transforms)"
+                                                          ShowInlineScript="true"
+                                                          ShowEvaluate="true"
+                                                          ShowConfigJson="true"
+                                                          PreviewText="@_previewText"
+                                                          PreviewError="@_previewError"
+                                                          OnEvaluate="@EvaluateSelected"
+                                                          OnMutated="@OnComponentFormMutated" />
+                    }
+
+                    <hr />
+                    <div class="d-flex align-items-center justify-content-between mb-2">
+                        <h5 class="mb-0">Named transforms</h5>
+                        <RadzenButton Icon="add" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary"
+                                      Click="@AddTransform" title="Add transform" />
+                    </div>
+                    @foreach (var transform in _dashboard.Definition.Transforms)
+                    {
+                        var local = transform;
+                        <RadzenCard class="mb-2 p-2">
+                            <label class="form-label">Id</label>
+                            <RadzenTextBox Value="@local.Id" ValueChanged="@(v => OnTransformField(local, nameof(local.Id), v))"
+                                           Style="width:100%;" class="mb-1" />
+                            <label class="form-label">Name</label>
+                            <RadzenTextBox Value="@local.Name" ValueChanged="@(v => OnTransformField(local, nameof(local.Name), v))"
+                                           Style="width:100%;" class="mb-1" />
+                            <label class="form-label">Depends on (comma-separated ids)</label>
+                            <RadzenTextBox Value="@string.Join(", ", local.DependsOn)"
+                                           ValueChanged="@(v => OnTransformDependsOn(local, v))"
+                                           Style="width:100%;" class="mb-1" />
+                            <label class="form-label">Script</label>
+                            <RadzenTextArea Value="@local.Script" ValueChanged="@(v => OnTransformField(local, nameof(local.Script), v))"
+                                            Style="width:100%; font-family: monospace;" Rows="5" class="mb-1" />
+                            <RadzenButton Text="Remove" Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
+                                          Click="@(() => RemoveTransform(local))" />
+                        </RadzenCard>
+                    }
+                }
+            </aside>
+        </div>
+    </div>
+}

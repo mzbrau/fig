@@ -27,6 +27,14 @@ public class JintEngine : IJsEngine
         _engine.Execute(code, source);
         return this;
     }
+
+    public object? Evaluate(string code, string? source = null)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return null;
+
+        return _engine.Evaluate(code, source).ToObject();
+    }
     
     public void Dispose()
     {

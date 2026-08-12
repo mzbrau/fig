@@ -1,0 +1,20 @@
+@namespace Fig.Web.Dashboards.Components.Badge
+@using Fig.Web.Dashboards.Components.Contracts
+
+<span class="dashboard-badge dashboard-badge--@(NormalizeVariant(Input?.Variant))">
+    @(Input?.Text ?? string.Empty)
+</span>
+
+@code {
+    [Parameter] public DashboardBadgeInput? Input { get; set; }
+
+    private static string NormalizeVariant(string? variant)
+    {
+        var value = (variant ?? "normal").Trim().ToLowerInvariant();
+        return value switch
+        {
+            "info" or "success" or "warning" or "danger" or "muted" or "normal" => value,
+            _ => "normal"
+        };
+    }
+}

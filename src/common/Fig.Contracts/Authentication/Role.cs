@@ -5,6 +5,7 @@ namespace Fig.Contracts.Authentication
         Administrator,
         User,
         LookupService,
-        ReadOnly
+        ReadOnly,
+        Dashboard
     }
 }

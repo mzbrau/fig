@@ -1,0 +1,29 @@
+@namespace Fig.Web.Dashboards.Components.Chart
+@using Fig.Web.Dashboards.Components.Contracts
+@using Radzen
+@using Radzen.Blazor
+
+@if (Points.Count == 0)
+{
+    <div class="dashboard-empty">No chart data</div>
+}
+else
+{
+    <RadzenChart>
+        <RadzenDonutSeries Data="@Points"
+                           CategoryProperty="@nameof(DashboardChartPoint.Label)"
+                           ValueProperty="@nameof(DashboardChartPoint.Value)"
+                           Title="@(Title ?? "Values")" />
+        <RadzenLegend Visible="@LegendVisible" Position="@LegendPosition" />
+    </RadzenChart>
+}
+
+@code {
+    [Parameter] public IReadOnlyList<DashboardChartPoint> Points { get; set; } = Array.Empty<DashboardChartPoint>();
+
+    [Parameter] public string? Title { get; set; }
+
+    [Parameter] public LegendPosition LegendPosition { get; set; } = LegendPosition.Right;
+
+    [Parameter] public bool LegendVisible { get; set; } = true;
+}

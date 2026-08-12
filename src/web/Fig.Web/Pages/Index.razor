@@ -1,7 +1,26 @@
 ﻿@page "/"
+@using Fig.Contracts.Authentication
+@using Fig.Web.Services
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
+@inject IAccountService AccountService
+@inject NavigationManager NavigationManager
 
-<div class="px-5">
-    <Settings/>
-</div>
+@if (AccountService.AuthenticatedUser?.Role == Role.Dashboard)
+{
+    <p class="p-3">Redirecting to dashboards…</p>
+}
+else
+{
+    <div class="px-5">
+        <Settings/>
+    </div>
+}
+
+@code {
+    protected override void OnInitialized()
+    {
+        if (AccountService.AuthenticatedUser?.Role == Role.Dashboard)
+            NavigationManager.NavigateTo("/dashboards");
+    }
+}

@@ -1,0 +1,80 @@
+@page "/dashboards/{Id:guid}"
+@using Fig.Web.Attributes
+@using Fig.Web.Dashboards.Components
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@attribute [DashboardOnly]
+
+<PageTitle>Fig - @(_dashboard?.Name ?? "Dashboard")</PageTitle>
+
+@if (_loading)
+{
+    <div class="text-center p-5">
+        <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                   Size="ProgressBarCircularSize.Large" />
+    </div>
+}
+else if (_dashboard is null)
+{
+    <div class="p-4">
+        <RadzenAlert AlertStyle="AlertStyle.Danger" Title="Not found" Text="Dashboard was not found or you do not have access." />
+        <RadzenButton Text="Back to list" Icon="arrow_back" Click="@GoToList" ButtonStyle="ButtonStyle.Light" />
+    </div>
+}
+else
+{
+    <div class="dashboard-view @(_wallboard ? "dashboard-view--wallboard" : null)">
+        @if (!_wallboard)
+        {
+            <div class="dashboard-view__toolbar">
+                <div class="dashboard-view__title-block">
+                    <h2 class="mb-0">@_dashboard.Name</h2>
+                    @if (!string.IsNullOrWhiteSpace(_dashboard.Description))
+                    {
+                        <p class="mb-0 text-muted">@_dashboard.Description</p>
+                    }
+                </div>
+                <div class="dashboard-view__actions d-flex flex-wrap gap-2">
+                    <RadzenButton Text="Refresh status" Icon="sync" Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Light" IsBusy="_refreshingStatus"
+                                  Click="@RefreshStatus" />
+                    <RadzenButton Text="Refresh settings" Icon="settings_suggest" Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Light" IsBusy="_refreshingSettings"
+                                  Click="@RefreshSettings" />
+                    <RadzenButton Text="@(_wallboard ? "Exit wallboard" : "Wallboard")"
+                                  Icon="@(_wallboard ? "fullscreen_exit" : "fullscreen")"
+                                  Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@ToggleWallboard" />
+                    <RadzenButton Text="Export HTML" Icon="download" Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Light" IsBusy="_exporting"
+                                  Click="@ExportHtml" />
+                    @if (IsAdmin)
+                    {
+                        <RadzenButton Text="Edit" Icon="edit" Size="ButtonSize.Small"
+                                      ButtonStyle="ButtonStyle.Primary" Click="@GoToEdit" />
+                    }
+                    <RadzenButton Text="All dashboards" Icon="list" Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Light" Click="@GoToList" />
+                </div>
+            </div>
+            <div class="dashboard-view__meta text-muted mb-2">
+                Status cached: @FormatCache(DataProvider.StatusLastRefreshUtc)
+                · Settings cached: @FormatCache(DataProvider.SettingsLastRefreshUtc)
+            </div>
+        }
+        else
+        {
+            <div class="dashboard-view__wallboard-exit">
+                <RadzenButton Icon="fullscreen_exit" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary"
+                              Text="Exit wallboard" Click="@ToggleWallboard" title="Exit wallboard (Esc)" />
+            </div>
+        }
+
+        <div @ref="_viewRoot" tabindex="0" class="dashboard-view__focus-host"
+             @onkeydown="OnViewKeyDown">
+            <DashboardGridHost Layout="_dashboard.Definition.Layout"
+                               Components="_dashboard.Definition.Components"
+                               Results="_results" />
+        </div>
+    </div>
+}
