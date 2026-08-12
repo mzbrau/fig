@@ -661,7 +661,7 @@ public class LookupTablesTests : IntegrationTestBase
             { "Feature", null },
             { "Task", null }
         };
-        var typeLookup = new LookupTableDataContract(null, "IssueType", issueTypeLookup, true);
+        var typeLookup = new LookupTableDataContract(null, "IssuePropertyTest:IssueType", issueTypeLookup, true);
         await AddLookupTable(typeLookup);
 
         var (settings, configuration) = InitializeConfigurationProvider<IssuePropertyTest>(secret);

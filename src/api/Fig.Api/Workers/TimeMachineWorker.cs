@@ -8,7 +8,9 @@ namespace Fig.Api.Workers;
 
 public class TimeMachineWorker : BackgroundService
 {
-    private const long DefaultInterval = 60000;
+    // When disabled (<= 0), poll frequently so enabling via IOptionsMonitor takes effect promptly.
+    // The timer period is fixed at construction; evaluation is still gated on CurrentValue > 0.
+    private const long DisabledPollIntervalMs = 1000;
     private readonly ILogger<TimeMachineWorker> _logger;
     private readonly IOptionsMonitor<ApiSettings> _settings;
     private readonly IServiceScopeFactory _serviceScopeFactory;
@@ -23,7 +25,9 @@ public class TimeMachineWorker : BackgroundService
         _logger = logger;
         _settings = settings;
         _serviceScopeFactory = serviceScopeFactory;
-        _interval = settings.CurrentValue.TimeMachineCheckIntervalMs <= 0 ? DefaultInterval : settings.CurrentValue.TimeMachineCheckIntervalMs;
+        _interval = settings.CurrentValue.TimeMachineCheckIntervalMs <= 0
+            ? DisabledPollIntervalMs
+            : settings.CurrentValue.TimeMachineCheckIntervalMs;
         _timer = timerFactory.Create(TimeSpan.FromMilliseconds(_interval));
     }
     
