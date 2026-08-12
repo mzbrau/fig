@@ -208,30 +208,34 @@ public class DataCleanupTests : IntegrationTestBase
     [Test]
     public async Task ShallDeleteOldCheckpointsWhenConfigured()
     {
-        // Arrange - Configure cleanup for checkpoints older than 7 days  
-        await SetConfiguration(CreateConfiguration(timeMachineCleanupDays: 7));
-        
         var startTime = DateTime.UtcNow;
-        
+
         // Register a client and wait for checkpoint to be created
         await RegisterClientAndWaitForCheckpoint<ThreeSettings>();
-        
+
+        // Re-apply cleanup retention after RegisterClientAndWaitForCheckpoint (EnableTimeMachine
+        // resets configuration to defaults). Disable TimeMachine so background writers do not
+        // contend with the cleanup DELETE under SQLite's single-writer lock.
+        await SetConfiguration(CreateConfiguration(
+            timeMachineCleanupDays: 7,
+            enableTimeMachine: false));
+
         // Verify we have the recent checkpoint
         var checkpointsBefore = await GetCheckpoints(startTime, DateTime.UtcNow);
-        Assert.That(checkpointsBefore.CheckPoints.Count(), Is.EqualTo(1), 
+        Assert.That(checkpointsBefore.CheckPoints.Count(), Is.EqualTo(1),
             "Should have created one checkpoint");
-        
+
         var recentCheckpoint = checkpointsBefore.CheckPoints.First();
-        
+
         // Backdate the checkpoint to make it older than the retention period (8 days old)
         var oldTimestamp = DateTime.UtcNow.AddDays(-8);
         await BackdateCheckpoint(recentCheckpoint.Id, oldTimestamp);
-        
+
         // Verify the checkpoint now appears in the old date range
         var oldCheckpoints = await GetCheckpoints(oldTimestamp.AddMinutes(-1), oldTimestamp.AddMinutes(1));
-        Assert.That(oldCheckpoints.CheckPoints.Count(), Is.EqualTo(1), 
+        Assert.That(oldCheckpoints.CheckPoints.Count(), Is.EqualTo(1),
             "Should have one backdated checkpoint");
-        
+
         // Act - Run cleanup service (should delete the old checkpoint)
         int deletedCount;
         using (var scope = GetServiceScope())
@@ -239,12 +243,12 @@ public class DataCleanupTests : IntegrationTestBase
             var cleanupService = scope.ServiceProvider.GetRequiredService<IDataCleanupService>();
             deletedCount = await cleanupService.PerformCleanupAsync();
         }
-        
+
         // Assert - The old checkpoint should be deleted
         Assert.That(deletedCount, Is.GreaterThan(0), "Should have deleted old checkpoint");
-        
+
         var checkpointsAfter = await GetCheckpoints(oldTimestamp.AddMinutes(-1), oldTimestamp.AddMinutes(1));
-        Assert.That(checkpointsAfter.CheckPoints.Count(), Is.EqualTo(0), 
+        Assert.That(checkpointsAfter.CheckPoints.Count(), Is.EqualTo(0),
             "Old checkpoint should no longer exist");
     }
     

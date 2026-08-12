@@ -1371,6 +1371,7 @@ public abstract class IntegrationTestBase
 
     protected async Task<T> RegisterClientAndWaitForCheckpoint<T>(string? secret = null) where T : TestSettingsBase
     {
+        await EnableTimeMachine();
         var theSecret = secret ?? GetNewSecret();
         var setupStartTime = DateTime.UtcNow;
         var settings = await RegisterSettings<T>(theSecret);
