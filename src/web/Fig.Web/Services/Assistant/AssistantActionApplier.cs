@@ -18,6 +18,7 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
     private readonly IGroupsFacade _groupsFacade;
     private readonly ILookupTablesFacade _lookupTablesFacade;
     private readonly IAssistantUiActionQueue _uiActionQueue;
+    private readonly IDashboardAssistantActionQueue _dashboardActionQueue;
     private readonly NavigationManager _navigationManager;
     private readonly IReportsFacade _reportsFacade;
     private readonly IJSRuntime _jsRuntime;
@@ -29,6 +30,7 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
         IGroupsFacade groupsFacade,
         ILookupTablesFacade lookupTablesFacade,
         IAssistantUiActionQueue uiActionQueue,
+        IDashboardAssistantActionQueue dashboardActionQueue,
         NavigationManager navigationManager,
         IReportsFacade reportsFacade,
         IJSRuntime jsRuntime,
@@ -39,6 +41,7 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
         _groupsFacade = groupsFacade;
         _lookupTablesFacade = lookupTablesFacade;
         _uiActionQueue = uiActionQueue;
+        _dashboardActionQueue = dashboardActionQueue;
         _navigationManager = navigationManager;
         _reportsFacade = reportsFacade;
         _jsRuntime = jsRuntime;
@@ -54,6 +57,7 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
         var needsSettingsPage = false;
         var needsGroupsPage = false;
         var needsLookupTablesPage = false;
+        string? dashboardEditRoute = null;
         foreach (var action in actions)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -69,6 +73,9 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
                     needsGroupsPage = true;
                 if (kind is AppliedKind.DraftWithLookupTables)
                     needsLookupTablesPage = true;
+                if (kind is AppliedKind.DraftWithDashboard &&
+                    TryGetDashboardEditRoute(action, out var route))
+                    dashboardEditRoute = route;
             }
             catch (Exception ex)
             {
@@ -83,6 +90,8 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
             EnsureOnPage("groups");
         if (needsLookupTablesPage)
             EnsureOnPage("lookuptables");
+        if (!string.IsNullOrWhiteSpace(dashboardEditRoute))
+            EnsureOnDashboardEdit(dashboardEditRoute);
 
         if (draftCount > 0)
         {
@@ -142,6 +151,14 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
             case AssistantProposedActionTypes.GenerateReport:
                 await GenerateAndOpenReport(action);
                 return AppliedKind.Immediate;
+
+            case AssistantProposedActionTypes.UpdateDashboardInlineScript:
+            {
+                var componentId = RequiredParameter(action, "componentId");
+                var script = RequiredParameter(action, "script");
+                _dashboardActionQueue.EnqueueInlineScriptUpdate(componentId, script);
+                return AppliedKind.DraftWithDashboard;
+            }
 
             default:
                 throw new InvalidOperationException($"Unsupported assistant action '{action.Type}'.");
@@ -215,6 +232,58 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
         }
 
         _navigationManager.NavigateTo($"/{pageSegment}");
+    }
+
+    private void EnsureOnDashboardEdit(string route)
+    {
+        var relative = _navigationManager.ToBaseRelativePath(_navigationManager.Uri).Split('?', 2)[0];
+        if (relative.Equals(route.TrimStart('/'), StringComparison.OrdinalIgnoreCase))
+            return;
+
+        _navigationManager.NavigateTo(route);
+    }
+
+    private static bool TryGetDashboardEditRoute(
+        AssistantProposedActionDataContract action,
+        out string route)
+    {
+        route = string.Empty;
+        var dashboardId = GetParameter(action, "dashboardId");
+        if (string.IsNullOrWhiteSpace(dashboardId) || !Guid.TryParse(dashboardId, out var id))
+            return false;
+
+        route = $"/dashboards/{id}/edit";
+        return true;
+    }
+
+    private static string RequiredParameter(AssistantProposedActionDataContract action, string name)
+    {
+        var value = GetParameter(action, name);
+        return Required(value, name);
+    }
+
+    private static string? GetParameter(AssistantProposedActionDataContract action, string name)
+    {
+        if (action.Parameters is not null &&
+            action.Parameters.TryGetValue(name, out var fromParams) &&
+            fromParams is not null)
+        {
+            return fromParams switch
+            {
+                string s => s,
+                JToken token => token.Type == JTokenType.String ? token.Value<string>() : token.ToString(Formatting.None),
+                _ => Convert.ToString(fromParams, CultureInfo.InvariantCulture)
+            };
+        }
+
+        if (action.Data is JObject obj)
+        {
+            var token = obj[name];
+            if (token is not null && token.Type != JTokenType.Null)
+                return token.Type == JTokenType.String ? token.Value<string>() : token.ToString(Formatting.None);
+        }
+
+        return null;
     }
 
     private static string? SerializeSettingValue(object? value)
@@ -302,6 +371,7 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
         DraftWithUi,
         DraftWithGroups,
         DraftWithLookupTables,
+        DraftWithDashboard,
         UiNavigation,
         Immediate
     }

@@ -165,6 +165,7 @@ builder.Services.AddScoped<ICustomActionRepository, CustomActionRepository>();
 builder.Services.AddScoped<ICustomActionExecutionRepository, CustomActionExecutionRepository>();
 builder.Services.AddScoped<IDatabaseMigrationRepository, DatabaseMigrationRepository>();
 builder.Services.AddScoped<ISettingGroupRepository, SettingGroupRepository>();
+builder.Services.AddScoped<IDashboardRepository, DashboardRepository>();
 builder.Services.AddScoped<IReleaseHighlightViewRepository, ReleaseHighlightViewRepository>();
 builder.Services.AddScoped<IApiSecretRotationStateRepository, ApiSecretRotationStateRepository>();
 
@@ -207,6 +208,7 @@ builder.Services.AddScoped<ISessionCleanupService, SessionCleanupService>();
 builder.Services.AddScoped<IClientRegistrationHistoryRepository, ClientRegistrationHistoryRepository>();
 builder.Services.AddScoped<IClientRegistrationHistoryService, ClientRegistrationHistoryService>();
 builder.Services.AddScoped<ISettingGroupService, SettingGroupService>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 builder.Services.AddScoped<IGroupImportExportService, GroupImportExportService>();
 builder.Services.AddScoped<IReleaseHighlightsService, ReleaseHighlightsService>();
 builder.Services.AddScoped<IFigReleaseDiscoveryService, GitHubReleaseDiscoveryService>();
@@ -256,6 +258,7 @@ builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IStatusServi
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IEncryptionMigrationService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ICustomActionService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<ISettingGroupService>()!);
+builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IDashboardService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IGroupImportExportService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IReleaseHighlightsService>()!);
 builder.Services.AddScoped<IAuthenticatedService>(a => a.GetService<IReportExecutionService>()!);

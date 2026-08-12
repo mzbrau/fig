@@ -42,7 +42,7 @@ public class ClientsController : ControllerBase
     ///     to cut Blazor WASM parse cost. Fig.Client does not use this endpoint.
     /// </summary>
     /// <returns>A collection of all registered clients and their setting definitions</returns>
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet]
     [SkipTransaction]
     public async Task<IActionResult> GetAllClients()
@@ -107,7 +107,7 @@ public class ClientsController : ControllerBase
     ///     Called by the web client to get just the names and descriptions of all clients.
     /// </summary>
     /// <returns>A collection of client names and descriptions</returns>
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet("descriptions")]
     [SkipTransaction]
     public async Task<IActionResult> GetClientDescriptions()
@@ -136,7 +136,7 @@ public class ClientsController : ControllerBase
         return Ok(settings);
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet("{clientName}/settings/{settingName}/history")]
     public async Task<IActionResult> GetSettingHistory(string clientName, string settingName, [FromQuery] string? instance)
     {
@@ -144,7 +144,7 @@ public class ClientsController : ControllerBase
         return Ok(history);
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet("settings/lastchanged")]
     public async Task<IActionResult> GetLastChangedForAllClientsSettings()
     {

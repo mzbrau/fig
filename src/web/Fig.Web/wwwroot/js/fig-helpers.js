@@ -272,3 +272,33 @@ window.cleanupFigAssistantEnterToSend = function(binding) {
         binding.cleanup();
     }
 };
+
+window.figIsEditableFocus = function() {
+    const el = document.activeElement;
+    if (!el) return false;
+    const tag = el.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return true;
+    if (el.isContentEditable) return true;
+    return false;
+};
+
+window.__figDocumentKeyHandlers = window.__figDocumentKeyHandlers || {};
+
+window.figBindDocumentKey = function(key, dotNetRef, methodName) {
+    window.figUnbindDocumentKey(key);
+    const handler = function(e) {
+        if (e.key === key) {
+            e.preventDefault();
+            dotNetRef.invokeMethodAsync(methodName);
+        }
+    };
+    window.__figDocumentKeyHandlers[key] = handler;
+    document.addEventListener('keydown', handler);
+};
+
+window.figUnbindDocumentKey = function(key) {
+    const handler = window.__figDocumentKeyHandlers[key];
+    if (!handler) return;
+    document.removeEventListener('keydown', handler);
+    delete window.__figDocumentKeyHandlers[key];
+};

@@ -237,6 +237,9 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         if (ContainsMappedRole(roleClaims, Role.LookupService, settings))
             return Role.LookupService;
 
+        if (ContainsMappedRole(roleClaims, Role.Dashboard, settings))
+            return Role.Dashboard;
+
         if (ContainsMappedRole(roleClaims, Role.User, settings))
             return Role.User;
 

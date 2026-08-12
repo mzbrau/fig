@@ -3,8 +3,10 @@ using System.IO;
 using System.Text;
 using Fig.Common.ExtensionMethods;
 using Fig.Common.NetStandard.Json;
+using Fig.Contracts.Dashboards;
 using Fig.Contracts.ImportExport;
 using Fig.Contracts.SettingGroups;
+using Fig.Web.Dashboards.Facades;
 using Fig.Web.Facades;
 using Fig.Web.Factories;
 using Fig.Web.MarkdownReport;
@@ -61,6 +63,15 @@ public partial class ImportExport : IDisposable
     private ImportType _groupImportType = ImportType.AddNew;
     private SettingGroupExportDataContract? _groupDataToImport;
 
+    // Dashboard import/export fields
+    private bool _dashboardExportInProgress;
+    private bool _dashboardImportReady;
+    private bool _dashboardImportIsInvalid;
+    private bool _dashboardImportFileProcessing;
+    private bool _dashboardImportOperationInProgress;
+    private string? _dashboardImportStatus;
+    private List<DashboardDataContract>? _dashboardsToImport;
+
     private List<DeferredImportClientModel> DeferredClients => DataFacade.DeferredClients;
 
     [Inject] public IDataFacade DataFacade { get; set; } = null!;
@@ -78,6 +89,8 @@ public partial class ImportExport : IDisposable
     [Inject] private IOptions<WebSettings> Settings { get; set; } = null!;
 
     [Inject] private IGroupsFacade GroupsFacade { get; set; } = null!;
+
+    [Inject] private IDashboardFacade DashboardFacade { get; set; } = null!;
 
     private List<ImportTypeEnumerable> ImportTypes { get; } = new();
 
@@ -980,5 +993,201 @@ public partial class ImportExport : IDisposable
             _groupImportOperationInProgress = false;
             StateHasChanged();
         }
+    }
+
+    private async Task PerformDashboardExport()
+    {
+        _dashboardExportInProgress = true;
+        try
+        {
+            await DashboardFacade.LoadAll();
+            var export = new DashboardDefinitionExport
+            {
+                ExportedAt = DateTime.UtcNow,
+                Version = 1,
+                Dashboards = DashboardFacade.Dashboards.Select(d => new DashboardDataContract
+                {
+                    Name = d.Name,
+                    Description = d.Description,
+                    AdminOnly = d.AdminOnly,
+                    Definition = d.Definition
+                }).ToList()
+            };
+
+            var text = JsonConvert.SerializeObject(export, JsonSettings.FigMinimalUserFacing);
+            var bytes = Encoding.UTF8.GetBytes(text);
+            var timestamp = DateTime.Now.ToString("yyyy-MM-ddTHH-mm-ss");
+            await FileUtil.SaveAs(JavascriptRuntime, $"FigDashboardExport-{timestamp}.json", bytes);
+        }
+        finally
+        {
+            _dashboardExportInProgress = false;
+        }
+    }
+
+    private async Task DashboardImportFileChanged(string? fileContent)
+    {
+        _dashboardImportFileProcessing = true;
+        _dashboardImportIsInvalid = true;
+        _dashboardsToImport = null;
+        _dashboardImportStatus = null;
+        _dashboardImportReady = false;
+        await InvokeAsync(StateHasChanged);
+        await Task.Delay(50);
+
+        try
+        {
+            if (string.IsNullOrWhiteSpace(fileContent))
+                return;
+
+            var commaIdx = fileContent.IndexOf(',');
+            if (commaIdx < 0)
+                throw new FormatException("Invalid data URL format.");
+
+            var trimmed = fileContent.Substring(commaIdx + 1);
+            var bytes = Convert.FromBase64String(trimmed);
+            if (bytes.Length > MaxFileSizeBytes)
+            {
+                var fileSizeMb = Math.Round(bytes.Length / (1024.0 * 1024.0), 2);
+                var maxFileSizeMb = Math.Round(MaxFileSizeBytes / (1024.0 * 1024.0), 2);
+                _dashboardImportStatus = $"File is too large ({fileSizeMb} MB). Maximum allowed size is {maxFileSizeMb} MB.";
+                _dashboardImportIsInvalid = true;
+                _dashboardImportReady = true;
+                return;
+            }
+
+            var json = Encoding.UTF8.GetString(bytes);
+            var dashboards = ParseDashboardImport(json);
+            if (dashboards.Count == 0)
+            {
+                _dashboardImportStatus = "Invalid file: No dashboards found.";
+                _dashboardImportIsInvalid = true;
+            }
+            else
+            {
+                _dashboardsToImport = dashboards;
+                _dashboardImportIsInvalid = false;
+                _dashboardImportStatus = $"File loaded successfully. Found {dashboards.Count} dashboard(s) to import.";
+                foreach (var dashboard in dashboards)
+                    _dashboardImportStatus += $"\n  - {dashboard.Name}";
+            }
+
+            _dashboardImportReady = true;
+        }
+        catch (Exception ex)
+        {
+            _dashboardImportStatus = $"Error reading file: {ex.Message}";
+            _dashboardImportIsInvalid = true;
+            _dashboardImportReady = true;
+        }
+        finally
+        {
+            _dashboardImportFileProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private static List<DashboardDataContract> ParseDashboardImport(string json)
+    {
+        var wrapped = JsonConvert.DeserializeObject<DashboardDefinitionExport>(json);
+        if (wrapped?.Dashboards is { Count: > 0 })
+            return wrapped.Dashboards;
+
+        var list = JsonConvert.DeserializeObject<List<DashboardDataContract>>(json);
+        if (list is { Count: > 0 })
+            return list;
+
+        var single = JsonConvert.DeserializeObject<DashboardDataContract>(json);
+        if (single is not null && !string.IsNullOrWhiteSpace(single.Name))
+            return [single];
+
+        return [];
+    }
+
+    private void OnDashboardImportFileError(UploadErrorEventArgs args)
+    {
+        _dashboardsToImport = null;
+        _dashboardImportStatus = $"Error: {args.Message}";
+        _dashboardImportIsInvalid = true;
+        _dashboardImportReady = true;
+        StateHasChanged();
+    }
+
+    private async Task PerformDashboardImport()
+    {
+        if (_dashboardsToImport is null || _dashboardsToImport.Count == 0)
+            return;
+
+        _dashboardImportOperationInProgress = true;
+        StateHasChanged();
+
+        try
+        {
+            await DashboardFacade.LoadAll();
+            var existingNames = DashboardFacade.Dashboards
+                .Select(d => d.Name)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            var imported = 0;
+            foreach (var source in _dashboardsToImport)
+            {
+                var name = UniqueImportedName(source.Name, existingNames);
+                existingNames.Add(name);
+
+                var created = await DashboardFacade.Create(new DashboardDataContract
+                {
+                    Name = name,
+                    Description = source.Description,
+                    AdminOnly = source.AdminOnly,
+                    Definition = source.Definition ?? new DashboardDefinitionDataContract()
+                });
+
+                if (created is not null)
+                {
+                    imported++;
+                    _dashboardImportStatus += $"\nCreated '{created.Name}'.";
+                }
+                else
+                {
+                    _dashboardImportStatus += $"\nFailed to create '{name}'.";
+                }
+            }
+
+            _dashboardImportStatus += $"\nImport finished. {imported} dashboard(s) created.";
+        }
+        catch (Exception ex)
+        {
+            _dashboardImportStatus += $"\nImport failed: {ex.Message}";
+        }
+        finally
+        {
+            _dashboardImportOperationInProgress = false;
+            StateHasChanged();
+        }
+    }
+
+    private static string UniqueImportedName(string? name, HashSet<string> existingNames)
+    {
+        var baseName = string.IsNullOrWhiteSpace(name) ? "Imported dashboard" : name.Trim();
+        if (!existingNames.Contains(baseName))
+            return baseName;
+
+        var candidate = $"{baseName} (imported)";
+        if (!existingNames.Contains(candidate))
+            return candidate;
+
+        var i = 2;
+        while (existingNames.Contains($"{baseName} (imported {i})"))
+            i++;
+        return $"{baseName} (imported {i})";
+    }
+
+    private sealed class DashboardDefinitionExport
+    {
+        public DateTime ExportedAt { get; set; }
+
+        public int Version { get; set; } = 1;
+
+        public List<DashboardDataContract> Dashboards { get; set; } = new();
     }
 }

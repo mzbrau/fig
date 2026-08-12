@@ -1,0 +1,97 @@
+@page "/dashboards"
+@using Fig.Web.Attributes
+@using Microsoft.AspNetCore.Authorization
+@attribute [Authorize]
+@attribute [DashboardOnly]
+
+<PageTitle>Fig - Dashboards</PageTitle>
+
+<div class="dashboards-page container-fluid p-3">
+    <div class="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+        <div>
+            <h2 class="mb-1">Dashboards</h2>
+            <p class="mb-0 text-muted">Read-only views of Fig status and settings data.</p>
+        </div>
+        @if (IsAdmin)
+        {
+            <RadzenButton Text="New Dashboard" Icon="add_circle_outline" ButtonStyle="ButtonStyle.Success"
+                          Click="@CreateDashboard" />
+        }
+    </div>
+
+    @if (_loading)
+    {
+        <div class="text-center p-5">
+            <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate"
+                                       Size="ProgressBarCircularSize.Large" />
+        </div>
+    }
+    else if (!_dashboards.Any())
+    {
+        <div class="empty-state">
+            <div class="empty-card">
+                <div class="empty-icon">
+                    <RadzenIcon Icon="dashboard" Style="font-size: 2rem;" />
+                </div>
+                <div class="empty-title">No dashboards yet</div>
+                <div class="empty-subtitle">
+                    @(IsAdmin
+                        ? "Create a dashboard to build a wallboard or status board."
+                        : "Ask an administrator to create a dashboard for you.")
+                </div>
+            </div>
+        </div>
+    }
+    else
+    {
+        <RadzenDataGrid Data="@_dashboards" TItem="Fig.Contracts.Dashboards.DashboardDataContract"
+                        AllowSorting="true" AllowFiltering="true" FilterMode="FilterMode.Simple"
+                        Density="Density.Compact" class="dashboards-grid">
+            <Columns>
+                <RadzenDataGridColumn TItem="Fig.Contracts.Dashboards.DashboardDataContract" Property="Name" Title="Name" />
+                <RadzenDataGridColumn TItem="Fig.Contracts.Dashboards.DashboardDataContract" Property="Description" Title="Description" />
+                <RadzenDataGridColumn TItem="Fig.Contracts.Dashboards.DashboardDataContract" Title="Visibility" Width="120px">
+                    <Template Context="row">
+                        @if (row.AdminOnly)
+                        {
+                            <RadzenBadge Text="Admin only" BadgeStyle="BadgeStyle.Warning" IsPill="true" />
+                        }
+                        else
+                        {
+                            <RadzenBadge Text="Shared" BadgeStyle="BadgeStyle.Info" IsPill="true" />
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Fig.Contracts.Dashboards.DashboardDataContract" Title="Modified" Width="180px">
+                    <Template Context="row">
+                        @row.LastModifiedAt.ToLocalTime().ToString("g")
+                    </Template>
+                </RadzenDataGridColumn>
+                <RadzenDataGridColumn TItem="Fig.Contracts.Dashboards.DashboardDataContract" Title="" Sortable="false" Filterable="false" Width="280px">
+                    <Template Context="row">
+                        <div class="d-flex gap-1 flex-wrap">
+                            <RadzenButton Text="Open" Icon="visibility" Size="ButtonSize.Small"
+                                          ButtonStyle="ButtonStyle.Primary"
+                                          Click="@(() => OpenView(row))" />
+                            @if (IsAdmin && row.Id is Guid id)
+                            {
+                                <RadzenButton Text="Edit" Icon="edit" Size="ButtonSize.Small"
+                                              ButtonStyle="ButtonStyle.Light"
+                                              Click="@(() => OpenEdit(id))" />
+                                <RadzenButton Icon="content_copy" Size="ButtonSize.Small"
+                                              ButtonStyle="ButtonStyle.Light" title="Duplicate"
+                                              Click="@(() => DuplicateDashboard(row))" />
+                                <RadzenButton Icon="settings" Size="ButtonSize.Small"
+                                              ButtonStyle="ButtonStyle.Light" title="Properties"
+                                              Click="@(() => EditProperties(row))" />
+                                <RadzenButton Icon="delete" Size="ButtonSize.Small"
+                                              ButtonStyle="ButtonStyle.Danger" title="Delete"
+                                              Click="@(() => DeleteDashboard(row))" />
+                            }
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+</div>

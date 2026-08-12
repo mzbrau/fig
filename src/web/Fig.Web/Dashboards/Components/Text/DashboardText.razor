@@ -1,0 +1,22 @@
+@namespace Fig.Web.Dashboards.Components.Text
+@using Fig.Web.Dashboards.Components.Contracts
+
+@{
+    var variant = (Input?.Variant ?? "body").Trim().ToLowerInvariant();
+}
+@if (variant == "heading")
+{
+    <h3 class="dashboard-text dashboard-text--heading">@(Input?.Text)</h3>
+}
+else if (variant == "muted")
+{
+    <p class="dashboard-text dashboard-text--muted">@(Input?.Text)</p>
+}
+else
+{
+    <p class="dashboard-text dashboard-text--body">@(Input?.Text)</p>
+}
+
+@code {
+    [Parameter] public DashboardTextInput? Input { get; set; }
+}

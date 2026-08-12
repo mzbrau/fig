@@ -94,10 +94,10 @@ public class HttpService : IHttpService
         await SendRequestOrThrow(request, timeoutOverrideSec);
     }
 
-    public async Task<T?> Put<T>(string uri, object? value)
+    public async Task<T?> Put<T>(string uri, object? value, bool showNotifications = true)
     {
         var request = CreateRequest(HttpMethod.Put, uri, value);
-        return await SendRequest<T>(request);
+        return await SendRequest<T>(request, showNotifications);
     }
 
     public async Task Delete(string uri)

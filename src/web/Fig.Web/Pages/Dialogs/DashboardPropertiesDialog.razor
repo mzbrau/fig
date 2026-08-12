@@ -1,0 +1,69 @@
+@using Fig.Contracts.Dashboards
+@inject DialogService DialogService
+
+<div class="p-3">
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <RadzenTextBox @bind-Value="_name" Style="width: 100%;" Name="dashboardName" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Description</label>
+        <RadzenTextBox @bind-Value="_description" Style="width: 100%;" Name="dashboardDescription" />
+    </div>
+    <div class="mb-3 d-flex align-items-center gap-2">
+        <RadzenCheckBox @bind-Value="_adminOnly" Name="adminOnly" TValue="bool" />
+        <label for="adminOnly" class="mb-0">Admin only</label>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Status refresh (sec, min 60)</label>
+        <RadzenNumeric TValue="int" @bind-Value="_statusSeconds" Style="width: 100%;" Min="60" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Settings refresh (sec, min 600)</label>
+        <RadzenNumeric TValue="int" @bind-Value="_settingsSeconds" Style="width: 100%;" Min="600" />
+    </div>
+    <div class="d-flex gap-2">
+        <RadzenButton Text="Save" Click="@Save" Disabled="@string.IsNullOrWhiteSpace(_name)" />
+        <RadzenButton Text="Cancel" Click="@Cancel" ButtonStyle="ButtonStyle.Secondary" />
+    </div>
+</div>
+
+@code {
+    [Parameter] public DashboardDataContract? Dashboard { get; set; }
+
+    private string _name = string.Empty;
+    private string _description = string.Empty;
+    private bool _adminOnly;
+    private int _statusSeconds = 60;
+    private int _settingsSeconds = 600;
+
+    protected override void OnParametersSet()
+    {
+        if (Dashboard is null)
+            return;
+
+        _name = Dashboard.Name ?? string.Empty;
+        _description = Dashboard.Description ?? string.Empty;
+        _adminOnly = Dashboard.AdminOnly;
+        var refresh = Dashboard.Definition?.Refresh;
+        _statusSeconds = Math.Max(60, refresh?.StatusSeconds ?? 60);
+        _settingsSeconds = Math.Max(600, refresh?.SettingsSeconds ?? 600);
+    }
+
+    private void Save()
+    {
+        if (string.IsNullOrWhiteSpace(_name))
+            return;
+
+        DialogService.Close(new DashboardPropertiesDialogResult
+        {
+            Name = _name.Trim(),
+            Description = string.IsNullOrWhiteSpace(_description) ? null : _description.Trim(),
+            AdminOnly = _adminOnly,
+            StatusSeconds = Math.Max(60, _statusSeconds),
+            SettingsSeconds = Math.Max(600, _settingsSeconds)
+        });
+    }
+
+    private void Cancel() => DialogService.Close(null);
+}

@@ -1,0 +1,32 @@
+@namespace Fig.Web.Dashboards.Components.KeyValue
+@using Fig.Web.Dashboards.Components.Contracts
+
+@if (Input is null || Input.Items.Count == 0)
+{
+    <div class="dashboard-empty">No values</div>
+}
+else
+{
+    <div class="dashboard-key-value-card">
+        @if (!string.IsNullOrWhiteSpace(Input.StatusIcon))
+        {
+            <div class="dashboard-key-value__status" style="background-color: @(Input.StatusColor ?? "#6c757d");"
+                 title="@Input.StatusIcon">
+                <RadzenIcon Icon="@Input.StatusIcon" />
+            </div>
+        }
+        <dl class="dashboard-key-value">
+            @foreach (var item in Input.Items)
+            {
+                <div class="dashboard-key-value__row">
+                    <dt>@(item.Key ?? string.Empty)</dt>
+                    <dd>@(item.Value?.ToString() ?? "—")</dd>
+                </div>
+            }
+        </dl>
+    </div>
+}
+
+@code {
+    [Parameter] public DashboardKeyValueInput? Input { get; set; }
+}

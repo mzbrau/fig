@@ -48,7 +48,8 @@ public sealed class AssistantContextService : IAssistantContextService
                 : (onSettings ? null : _publishedContext.SelectedGroupName),
             SelectedLookupTableName = onSettings ? null : _publishedContext.SelectedLookupTableName,
             Username = _accountService.AuthenticatedUser?.Username,
-            DirtySettings = CollectDirtySettings()
+            DirtySettings = CollectDirtySettings(),
+            Dashboard = onSettings ? null : _publishedContext.Dashboard
         };
     }
 
@@ -94,6 +95,9 @@ public sealed class AssistantContextService : IAssistantContextService
         {
             "lookuptables" => "Lookup Tables",
             "settingstable" => "Settings Table",
+            "dashboards" => route.Contains("/edit", StringComparison.OrdinalIgnoreCase)
+                ? "Dashboard Edit"
+                : "Dashboards",
             var segment when !string.IsNullOrWhiteSpace(segment) =>
                 char.ToUpperInvariant(segment[0]) + segment[1..],
             _ => "Settings"

@@ -1,0 +1,45 @@
+@namespace Fig.Web.Dashboards.Components.Table
+@using Fig.Web.Dashboards.Components.Contracts
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+
+@if (Input is null || Input.Rows.Count == 0)
+{
+    <div class="dashboard-empty">No rows</div>
+}
+else
+{
+    <div class="dashboard-table">
+        <div class="dashboard-table__header" style="@GridTemplate">
+            @foreach (var column in Input.Columns)
+            {
+                <div class="dashboard-table__cell dashboard-table__cell--header">@(column.Header ?? column.Property)</div>
+            }
+        </div>
+        <Virtualize Items="Input.Rows.ToList()" Context="row">
+            <div class="dashboard-table__row" style="@GridTemplate">
+                @foreach (var column in Input.Columns)
+                {
+                    <div class="dashboard-table__cell">@GetCell(row, column.Property)</div>
+                }
+            </div>
+        </Virtualize>
+    </div>
+}
+
+@code {
+    [Parameter] public DashboardTableInput? Input { get; set; }
+
+    private string GridTemplate =>
+        Input is null || Input.Columns.Count == 0
+            ? "grid-template-columns: 1fr;"
+            : $"grid-template-columns: repeat({Input.Columns.Count}, minmax(0, 1fr));";
+
+    private static string GetCell(IDictionary<string, object?> row, string property)
+    {
+        if (row.TryGetValue(property, out var value) && value is not null)
+            return value.ToString() ?? string.Empty;
+
+        var match = row.FirstOrDefault(kv => string.Equals(kv.Key, property, StringComparison.OrdinalIgnoreCase));
+        return match.Value?.ToString() ?? string.Empty;
+    }
+}

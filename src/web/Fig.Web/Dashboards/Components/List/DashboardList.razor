@@ -1,0 +1,29 @@
+@namespace Fig.Web.Dashboards.Components.List
+@using Fig.Web.Dashboards.Components.Contracts
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+
+@if (Input is null || Input.Items.Count == 0)
+{
+    <div class="dashboard-empty">No items</div>
+}
+else
+{
+    <div class="dashboard-list">
+        <Virtualize Items="Input.Items.ToList()" Context="item">
+            <div class="dashboard-list__item dashboard-list__item--@(NormalizeVariant(item.Variant))">
+                <div class="dashboard-list__text">@item.Text</div>
+                @if (!string.IsNullOrWhiteSpace(item.Secondary))
+                {
+                    <div class="dashboard-list__secondary">@item.Secondary</div>
+                }
+            </div>
+        </Virtualize>
+    </div>
+}
+
+@code {
+    [Parameter] public DashboardListInput? Input { get; set; }
+
+    private static string NormalizeVariant(string? variant) =>
+        string.IsNullOrWhiteSpace(variant) ? "normal" : variant.Trim().ToLowerInvariant();
+}

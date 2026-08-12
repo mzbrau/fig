@@ -1,0 +1,82 @@
+@namespace Fig.Web.Dashboards.Components
+@using Fig.Contracts.Dashboards
+@using Fig.Web.Dashboards.Runtime
+
+<div class="dashboard-grid @(EditMode ? "dashboard-grid--edit" : null)"
+     style="@GridStyle"
+     @onclick="OnBackgroundClicked">
+    @foreach (var cell in OrderedCells)
+    {
+        var component = ComponentsById.GetValueOrDefault(cell.Id);
+        var result = Results.GetValueOrDefault(cell.Id);
+        var selected = EditMode && string.Equals(SelectedComponentId, cell.Id, StringComparison.OrdinalIgnoreCase);
+        <div class="dashboard-grid__cell @(selected ? "dashboard-grid__cell--selected" : null)"
+             style="@CellStyle(cell)"
+             data-component-id="@cell.Id"
+             @onclick="() => OnCellClicked(cell.Id)"
+             @onclick:stopPropagation="true">
+            @if (component is null)
+            {
+                <div class="dashboard-component-error">Missing component for layout cell '@cell.Id'.</div>
+            }
+            else
+            {
+                <DashboardComponentHost Component="component" Result="result" />
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public IReadOnlyList<DashboardLayoutCellDataContract> Layout { get; set; } =
+        Array.Empty<DashboardLayoutCellDataContract>();
+
+    [Parameter] public IReadOnlyList<DashboardComponentInstanceDataContract> Components { get; set; } =
+        Array.Empty<DashboardComponentInstanceDataContract>();
+
+    [Parameter] public IReadOnlyDictionary<string, DashboardComponentResult> Results { get; set; } =
+        new Dictionary<string, DashboardComponentResult>();
+
+    [Parameter] public bool EditMode { get; set; }
+
+    [Parameter] public string? SelectedComponentId { get; set; }
+
+    [Parameter] public EventCallback<string?> SelectedComponentIdChanged { get; set; }
+
+    private IReadOnlyList<DashboardLayoutCellDataContract> OrderedCells =>
+        Layout.OrderBy(c => c.Y).ThenBy(c => c.X).ToList();
+
+    private Dictionary<string, DashboardComponentInstanceDataContract> ComponentsById =>
+        Components.ToDictionary(c => c.Id, StringComparer.OrdinalIgnoreCase);
+
+    private int RowCount =>
+        Layout.Count == 0 ? 1 : Layout.Max(c => c.Y + Math.Max(c.Height, 1));
+
+    private string GridStyle =>
+        $"--dashboard-rows: {RowCount};";
+
+    private async Task OnCellClicked(string cellId)
+    {
+        if (!EditMode)
+            return;
+
+        await SelectedComponentIdChanged.InvokeAsync(cellId);
+    }
+
+    private async Task OnBackgroundClicked()
+    {
+        if (!EditMode)
+            return;
+
+        await SelectedComponentIdChanged.InvokeAsync(null);
+    }
+
+    private static string CellStyle(DashboardLayoutCellDataContract cell)
+    {
+        var col = Math.Clamp(cell.X, 0, 11) + 1;
+        var row = Math.Max(cell.Y, 0) + 1;
+        var width = Math.Clamp(cell.Width <= 0 ? 4 : cell.Width, 1, 12);
+        var height = Math.Max(cell.Height <= 0 ? 2 : cell.Height, 1);
+        return $"grid-column: {col} / span {width}; grid-row: {row} / span {height};";
+    }
+}

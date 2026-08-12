@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace Fig.Contracts.Assistant
@@ -25,6 +26,20 @@ namespace Fig.Contracts.Assistant
         public string? SelectedLookupTableName { get; set; }
         public string? Username { get; set; }
         public List<AssistantDirtySettingDataContract> DirtySettings { get; set; } = new List<AssistantDirtySettingDataContract>();
+        public AssistantDashboardContextDataContract? Dashboard { get; set; }
+    }
+
+    public class AssistantDashboardContextDataContract
+    {
+        public Guid? DashboardId { get; set; }
+        public string? DashboardName { get; set; }
+        public string? SelectedComponentId { get; set; }
+        public string? SelectedComponentType { get; set; }
+        public string? BindingMode { get; set; }
+        public string? InlineScript { get; set; }
+        public string? ExpectedResponseShape { get; set; }
+        public string? JsModelSummary { get; set; }
+        public List<string> NamedTransformIds { get; set; } = new List<string>();
     }
 
     public class AssistantDirtySettingDataContract
@@ -66,6 +81,7 @@ namespace Fig.Contracts.Assistant
         public const string SearchSettings = "searchSettings";
         public const string HighlightSetting = "highlightSetting";
         public const string GenerateReport = "generateReport";
+        public const string UpdateDashboardInlineScript = "updateDashboardInlineScript";
     }
 
     public class AssistantProposedActionDataContract

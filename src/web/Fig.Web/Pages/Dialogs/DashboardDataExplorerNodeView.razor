@@ -1,0 +1,53 @@
+@using Fig.Web.Dashboards
+
+<div class="dashboard-data-explorer__node" style="--depth: @Depth">
+    <button type="button" class="dashboard-data-explorer__row"
+            @onclick="Toggle"
+            disabled="@(!Node.HasChildren)">
+        <span class="dashboard-data-explorer__chevron">
+            @if (Node.HasChildren)
+            {
+                <RadzenIcon Icon="@(_expanded ? "expand_more" : "chevron_right")" />
+            }
+        </span>
+        <span class="dashboard-data-explorer__name">@Node.Name</span>
+        <span class="dashboard-data-explorer__type">@Node.Type</span>
+    </button>
+    @if (!string.IsNullOrEmpty(Node.Value))
+    {
+        <pre class="dashboard-data-explorer__value">@Node.Value</pre>
+    }
+    @if (_expanded && Node.HasChildren)
+    {
+        foreach (var child in Node.Children)
+        {
+            <DashboardDataExplorerNodeView Node="child" Depth="Depth + 1" />
+        }
+    }
+</div>
+
+@code {
+    [Parameter, EditorRequired] public DashboardDataExplorerNode Node { get; set; } = null!;
+
+    [Parameter] public int Depth { get; set; }
+
+    private bool _expanded;
+    private bool _initialized;
+
+    protected override void OnParametersSet()
+    {
+        if (_initialized)
+            return;
+
+        // Expand top two levels by default for discoverability.
+        _expanded = Depth < 2;
+        _initialized = true;
+    }
+
+    private void Toggle()
+    {
+        if (!Node.HasChildren)
+            return;
+        _expanded = !_expanded;
+    }
+}

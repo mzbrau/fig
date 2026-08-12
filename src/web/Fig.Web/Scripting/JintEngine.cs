@@ -20,7 +20,7 @@ public class JintEngine : IJsEngine
 
     public IJsEngine SetValue<T>(string name, T? obj)
     {
-        _engine.SetValue<T>(name, obj);
+        _engine.SetValue(name, obj);
         return this;
     }
 
@@ -31,6 +31,14 @@ public class JintEngine : IJsEngine
         
         _engine.Execute(code, source);
         return this;
+    }
+
+    public object? Evaluate(string code, string? source = null)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+            return null;
+
+        return _engine.Evaluate(code, source).ToObject();
     }
     
     public void Dispose()

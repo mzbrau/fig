@@ -28,6 +28,7 @@ public class AppRouteView : RouteView
         var authorize = Attribute.GetCustomAttribute(RouteData.PageType, typeof(AuthorizeAttribute)) != null;
         var isManagePage = Attribute.GetCustomAttribute(RouteData.PageType, typeof(ManageAttribute)) != null;
         var isAdministratorPage = Attribute.GetCustomAttribute(RouteData.PageType, typeof(AdministratorAttribute)) != null;
+        var isDashboardOnlyPage = Attribute.GetCustomAttribute(RouteData.PageType, typeof(DashboardOnlyAttribute)) != null;
         
         // Check if user authentication is required
         if (authorize && AccountService?.AuthenticatedUser == null && NavigationManager != null)
@@ -52,8 +53,40 @@ public class AppRouteView : RouteView
             NavigationManager?.NavigateTo("/");
             return;
         }
+
+        // Dashboard role may only visit dashboards-related pages (and account/login/manage).
+        if (AccountService?.AuthenticatedUser?.Role == Role.Dashboard &&
+            NavigationManager is not null &&
+            !isDashboardOnlyPage &&
+            !IsDashboardAllowedPath(NavigationManager.Uri))
+        {
+            NavigationManager.NavigateTo("/dashboards");
+            return;
+        }
         
         // Render the page if all checks pass
         base.Render(builder);
+    }
+
+    private static bool IsDashboardAllowedPath(string uri)
+    {
+        if (!Uri.TryCreate(uri, UriKind.Absolute, out var absolute))
+            return false;
+
+        var path = absolute.AbsolutePath.TrimEnd('/');
+        if (string.IsNullOrEmpty(path))
+            path = "/";
+
+        // Index — Dashboard role should land on /dashboards
+        if (path is "/" or "")
+            return false;
+
+        if (path.StartsWith("/dashboards", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (path.StartsWith("/account", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        return false;
     }
 }

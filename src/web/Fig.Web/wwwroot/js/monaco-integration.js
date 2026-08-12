@@ -151,7 +151,11 @@ window.monacoIntegration = {
             // Use a unique URI incorporating a timestamp to ensure fresh model state
             // even if a stale model with the same URI somehow persists
             const timestamp = Date.now();
-            const modelUri = monaco.Uri.parse(`inmemory://model/${elementId}-${timestamp}.json`);
+            const language = options.language || 'json';
+            const extension = language === 'javascript' || language === 'typescript'
+                ? (language === 'typescript' ? 'ts' : 'js')
+                : 'json';
+            const modelUri = monaco.Uri.parse(`inmemory://model/${elementId}-${timestamp}.${extension}`);
             
             // Double-check: dispose any orphaned model with this URI (should not happen
             // after dispose() but guards against edge cases)
@@ -161,7 +165,7 @@ window.monacoIntegration = {
                 existingModel.dispose();
             }
             
-            const model = monaco.editor.createModel(options.value || '', options.language || 'json', modelUri);
+            const model = monaco.editor.createModel(options.value || '', language, modelUri);
             
             const editorOptions = {
                 model: model,
@@ -339,6 +343,60 @@ window.monacoIntegration = {
             this.updateJsonDiagnostics();
         } catch (error) {
             console.error('Error setting JSON schema:', error);
+        }
+    },
+
+    /**
+     * Configure JavaScript language defaults and ambient extra libs for IntelliSense.
+     * Previous Fig dashboard libs (ts:fig-dashboard-*) are disposed before adding new ones.
+     *
+     * @param {Array<{content: string, filePath: string}>} libs
+     */
+    async setJavascriptExtraLibs(libs) {
+        await this.loadMonaco();
+        if (typeof monaco === 'undefined') {
+            console.error('Monaco Editor is not loaded');
+            return;
+        }
+
+        const defaults = monaco.languages.typescript.javascriptDefaults;
+        defaults.setCompilerOptions({
+            allowNonTsExtensions: true,
+            checkJs: true,
+            allowJs: true,
+            target: monaco.languages.typescript.ScriptTarget.ESNext,
+            module: monaco.languages.typescript.ModuleKind.ESNext,
+            noLib: false
+        });
+        defaults.setDiagnosticsOptions({
+            noSemanticValidation: false,
+            noSyntaxValidation: false
+        });
+
+        if (!this._figDashboardExtraLibs) {
+            this._figDashboardExtraLibs = [];
+        }
+
+        for (const disposable of this._figDashboardExtraLibs) {
+            try {
+                disposable.dispose();
+            } catch (error) {
+                console.error('Error disposing previous extra lib:', error);
+            }
+        }
+        this._figDashboardExtraLibs = [];
+
+        if (!Array.isArray(libs)) {
+            return;
+        }
+
+        for (const lib of libs) {
+            if (!lib || !lib.content) {
+                continue;
+            }
+            const path = lib.filePath || `ts:fig-extra-${Date.now()}.d.ts`;
+            const disposable = defaults.addExtraLib(lib.content, path);
+            this._figDashboardExtraLibs.push(disposable);
         }
     },
     
