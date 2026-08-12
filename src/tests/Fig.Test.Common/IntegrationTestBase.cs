@@ -94,7 +94,7 @@ public abstract class IntegrationTestBase
         // System.Data.SQLite under NHibernate LockMode.Upgrade (encryption migration).
         // Contention is addressed via Busy Timeout and quieter TimeMachine defaults.
         Settings.DbConnectionString = $"Data Source={_dbFile};Version=3;New=True;Busy Timeout=5000";
-        Settings.Secret = "50b93c880cdf4041954da041386d54f9";
+        Settings.Secret = Guid.NewGuid().ToString("N");
         Settings.TokenLifeMinutes = 60;
         Settings.SchedulingCheckIntervalMs = 547;
         // Off by default — TimeMachineWorker no-ops evaluation when <= 0. Tests that need
@@ -189,18 +189,27 @@ public abstract class IntegrationTestBase
 
     private static void TryDeleteFile(string path)
     {
-        if (!File.Exists(path))
-            return;
+        IOException? lastError = null;
+        for (var attempt = 0; attempt < 5; attempt++)
+        {
+            if (!File.Exists(path))
+                return;
 
-        try
-        {
-            File.Delete(path);
+            try
+            {
+                File.Delete(path);
+                return;
+            }
+            catch (IOException ex)
+            {
+                lastError = ex;
+                if (attempt < 4)
+                    Thread.Sleep(100);
+            }
         }
-        catch (IOException ex)
-        {
-            // Log the error but don't fail the test - the file will be cleaned up by the next run
-            Console.WriteLine($"Warning: Could not delete {path}: {ex.Message}");
-        }
+
+        // Log only after all attempts — leftover files use unique GUID names per fixture
+        Console.WriteLine($"Warning: Could not delete {path}: {lastError?.Message}");
     }
 
     [SetUp]
@@ -1064,6 +1073,8 @@ public abstract class IntegrationTestBase
 
     protected async Task EnableTimeMachine()
     {
+        Settings.TimeMachineCheckIntervalMs = 1002;
+        ConfigReloader.Reload(Settings);
         await SetConfiguration(CreateConfiguration(enableTimeMachine: true));
     }
 
