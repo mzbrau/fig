@@ -25,8 +25,11 @@ if (useKeycloak)
         .WithLifetime(ContainerLifetime.Persistent);
 }
 
+var crashReportPath = Path.Combine(Path.GetTempPath(), "fig-api-crash.%p");
 var figApi = builder.AddProject<Fig_Api>("fig-api")
-    .WithHttpsEndpoint(7281, name: "fig-api-https");
+    .WithHttpsEndpoint(7281, name: "fig-api-https")
+    .WithEnvironment("DOTNET_EnableCrashReportOnly", "1")
+    .WithEnvironment("DOTNET_DbgMiniDumpName", crashReportPath);
 
 if (useKeycloak)
 {

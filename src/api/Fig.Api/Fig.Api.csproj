@@ -26,6 +26,8 @@
         <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="Serilog.Sinks.OpenTelemetry" Version="4.2.0" />
         <PackageReference Include="Swashbuckle.AspNetCore" Version="10.2.3" />
+        <PackageReference Include="System.Data.SQLite" Version="2.0.4" />
+        <PackageReference Include="SourceGear.sqlite3" Version="3.53.4" />
         <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.21.0" />
         <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="10.0.10" />
         <PackageReference Include="zxcvbn-core" Version="7.0.92" />
@@ -65,17 +67,6 @@
         <RazorComponent Remove="Reports/**/*.razor" />
         <Content Remove="Reports/**/*.razor" />
         <Compile Include="Reports/StrykerStubs/**/*.cs" />
-    </ItemGroup>
-
-   <!-- M2 macs can't use the nuget package as it does not support that processor -->
-    <ItemGroup>
-        <Reference Include="System.Data.SQLite" Condition="'$(NETCoreSdkRuntimeIdentifier)' == 'osx-arm64'">
-            <HintPath>..\..\..\external\arm64\System.Data.SQLite.dll</HintPath>
-        </Reference>
-        <PackageReference Include="System.Data.SQLite.Core" Version="1.0.119" Condition="'$(NETCoreSdkRuntimeIdentifier)' != 'osx-arm64'" />
-        <None Include="..\..\..\external\arm64\SQLite.Interop.dll" Condition="'$(NETCoreSdkRuntimeIdentifier)' == 'osx-arm64'">
-            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-        </None>
     </ItemGroup>
 
     <PropertyGroup>

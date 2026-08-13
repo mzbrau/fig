@@ -225,7 +225,17 @@ public class FigSessionFactory : IFigSessionFactory
             return null;
         }
 
-        if (!IsSqlLite(connectionString))
+        if (IsSqlLite(connectionString))
+        {
+            var sqliteBuilder = new DbConnectionStringBuilder { ConnectionString = connectionString };
+            sqliteBuilder.TryGetValue("Data Source", out var dataSource);
+            var providerVersion = typeof(System.Data.SQLite.SQLiteConnection).Assembly.GetName().Version;
+            _logger.LogInformation(
+                "Using SQLite via System.Data.SQLite {ProviderVersion} with native e_sqlite3 (SourceGear.sqlite3 RID assets). Data Source: {DataSource}",
+                providerVersion,
+                dataSource?.ToString() ?? "(unknown)");
+        }
+        else
         {
             var builder = new SqlConnectionStringBuilder(connectionString);
             
