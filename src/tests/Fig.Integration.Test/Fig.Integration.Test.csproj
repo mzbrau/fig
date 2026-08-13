@@ -41,10 +41,4 @@
         <ProjectReference Include="..\Fig.WebHooks.TestClient\Fig.WebHooks.TestClient.csproj" />
     </ItemGroup>
 
-    <ItemGroup>
-        <Reference Include="System.Data.SQLite" Condition="'$(NETCoreSdkRuntimeIdentifier)' == 'osx-arm64'">
-            <HintPath>..\..\..\external\arm64\System.Data.SQLite.dll</HintPath>
-        </Reference>
-    </ItemGroup>
-
 </Project>

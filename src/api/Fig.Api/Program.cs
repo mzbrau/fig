@@ -62,7 +62,35 @@ var apiSettingsObject = apiSettings.Get<ApiSettings>() ?? new ApiSettings { DbCo
 AuthenticationSettingsValidator.Validate(apiSettingsObject);
 
 var logger = CreateLogger(builder);
+Log.Logger = logger;
 builder.Host.UseSerilog(logger);
+
+AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+{
+    if (args.ExceptionObject is Exception exception)
+    {
+        logger.Fatal(exception, "Unhandled exception. IsTerminating={IsTerminating}", args.IsTerminating);
+    }
+    else
+    {
+        logger.Fatal("Unhandled non-Exception fault: {ExceptionObject}. IsTerminating={IsTerminating}",
+            args.ExceptionObject,
+            args.IsTerminating);
+    }
+
+    Log.CloseAndFlush();
+};
+
+TaskScheduler.UnobservedTaskException += (_, args) =>
+{
+    logger.Error(args.Exception, "Unobserved task exception");
+    args.SetObserved();
+};
+
+builder.Services.Configure<HostOptions>(options =>
+{
+    options.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.StopHost;
+});
 
 if (apiSettingsObject.Authentication.Mode == AuthMode.Keycloak)
 {
