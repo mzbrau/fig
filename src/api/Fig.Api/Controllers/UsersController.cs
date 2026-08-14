@@ -68,7 +68,7 @@ public class UsersController : ControllerBase
         return Ok(user);
     }
 
-    [Authorize(Role.Administrator, Role.User)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpPut("{id}")]
     public async Task<IActionResult> Update(Guid id, UpdateUserRequestDataContract model)
     {

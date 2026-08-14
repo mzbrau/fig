@@ -8,8 +8,6 @@ namespace Fig.Contracts.Dashboards
 
         public DashboardRefreshDataContract Refresh { get; set; } = new();
 
-        public List<DashboardTransformDataContract> Transforms { get; set; } = new();
-
         public List<DashboardComponentInstanceDataContract> Components { get; set; } = new();
 
         public List<DashboardLayoutCellDataContract> Layout { get; set; } = new();

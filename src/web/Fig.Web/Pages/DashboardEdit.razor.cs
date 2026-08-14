@@ -91,7 +91,6 @@ public partial class DashboardEdit : IDisposable
 
             _dashboard.Definition ??= new DashboardDefinitionDataContract();
             _dashboard.Definition.Refresh ??= new DashboardRefreshDataContract();
-            _dashboard.Definition.Transforms ??= new List<DashboardTransformDataContract>();
             _dashboard.Definition.Components ??= new List<DashboardComponentInstanceDataContract>();
             _dashboard.Definition.Layout ??= new List<DashboardLayoutCellDataContract>();
 
@@ -224,17 +223,10 @@ public partial class DashboardEdit : IDisposable
             Id = id,
             Type = type,
             Config = preset?.DefaultConfig.DeepClone() as JObject ?? new JObject { ["title"] = descriptor.DisplayName },
-            DataBinding = preset is null
-                ? new DashboardDataBindingDataContract
-                {
-                    Mode = "inline",
-                    InlineScript = DefaultInlineScript(type)
-                }
-                : new DashboardDataBindingDataContract
-                {
-                    Mode = "preset",
-                    PresetId = preset.Id
-                }
+            DataBinding = new DashboardDataBindingDataContract
+            {
+                InlineScript = preset?.Script ?? DefaultInlineScript(type)
+            }
         };
 
         _dashboard.Definition.Components.Add(component);
@@ -271,6 +263,19 @@ public partial class DashboardEdit : IDisposable
                 { key: 'unhealthy', value: unhealthy }
               ]
             };
+            """,
+        "cards" => """
+            const expected = 2;
+            return fig.clients.map(c => {
+              const sessions = fig.runSessions.filter(s => s.name === c.name);
+              const running = sessions.length;
+              return {
+                title: c.name,
+                value: running + '/' + expected,
+                variant: running >= expected ? 'success' : running > 0 ? 'warning' : 'danger',
+                rows: [{ key: 'Sessions', value: running }]
+              };
+            });
             """,
         "table" => "return fig.runSessions.map(s => ({ name: s.name, hostname: s.hostname }));",
         "bar" or "donut" =>
@@ -348,55 +353,6 @@ public partial class DashboardEdit : IDisposable
         PublishAssistantContext();
     }
 
-    private void AddTransform()
-    {
-        if (_dashboard is null) return;
-        var id = $"transform-{_dashboard.Definition.Transforms.Count + 1}";
-        _dashboard.Definition.Transforms.Add(new DashboardTransformDataContract
-        {
-            Id = id,
-            Name = id,
-            Script = "return fig.runSessions;",
-            DependsOn = new List<string>()
-        });
-        MarkDirty();
-        PublishAssistantContext();
-    }
-
-    private void RemoveTransform(DashboardTransformDataContract transform)
-    {
-        _dashboard?.Definition.Transforms.Remove(transform);
-        MarkDirty();
-        PublishAssistantContext();
-    }
-
-    private void OnTransformField(DashboardTransformDataContract transform, string field, string value)
-    {
-        switch (field)
-        {
-            case nameof(DashboardTransformDataContract.Id):
-                transform.Id = value;
-                break;
-            case nameof(DashboardTransformDataContract.Name):
-                transform.Name = value;
-                break;
-            case nameof(DashboardTransformDataContract.Script):
-                transform.Script = value;
-                break;
-        }
-
-        MarkDirty();
-        PublishAssistantContext();
-    }
-
-    private void OnTransformDependsOn(DashboardTransformDataContract transform, string value)
-    {
-        transform.DependsOn = value
-            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .ToList();
-        MarkDirty();
-    }
-
     private async Task EvaluateSelected()
     {
         if (_dashboard is null || SelectedComponent is null)
@@ -421,15 +377,14 @@ public partial class DashboardEdit : IDisposable
 
     private async Task OpenDataExplorer()
     {
-        await DataProvider.EnsureLoadedAsync();
+        await DataProvider.RefreshAllAsync();
         ReEvaluate();
 
         await DialogService.OpenAsync<Dialogs.DashboardDataExplorerDialog>(
             "Data explorer",
             new Dictionary<string, object?>
             {
-                { nameof(Dialogs.DashboardDataExplorerDialog.Fig), DataProvider.Current },
-                { nameof(Dialogs.DashboardDataExplorerDialog.NamedTransforms), Runtime.NamedTransformResults }
+                { nameof(Dialogs.DashboardDataExplorerDialog.Fig), DataProvider.Current }
             },
             new DialogOptions
             {
@@ -464,7 +419,8 @@ public partial class DashboardEdit : IDisposable
                 Height = "90vh",
                 Resizable = true,
                 Draggable = true,
-                CloseDialogOnOverlayClick = false
+                CloseDialogOnOverlayClick = false,
+                CssClass = "dashboard-component-edit-dialog-container"
             });
 
         SyncConfigEditor();
@@ -529,7 +485,7 @@ public partial class DashboardEdit : IDisposable
             {
                 await SaveInternal(forceOverwrite: true);
             }
-            else
+            else if (choice == false)
             {
                 _dashboard = ex.Current;
                 _selectedComponentId = null;
@@ -539,6 +495,7 @@ public partial class DashboardEdit : IDisposable
                 PublishAssistantContext();
                 NotificationService.Notify(NotificationFactory.Info("Reloaded", "Loaded the latest saved version."));
             }
+            // choice == null: dialog dismissed — leave local draft untouched
         }
     }
 
@@ -558,11 +515,9 @@ public partial class DashboardEdit : IDisposable
                 DashboardName = _dashboard.Name,
                 SelectedComponentId = selected?.Id,
                 SelectedComponentType = selected?.Type,
-                BindingMode = selected?.DataBinding.Mode,
                 InlineScript = selected?.DataBinding.InlineScript,
                 ExpectedResponseShape = descriptor?.ExpectedScriptShape,
-                JsModelSummary = DashboardComponentRegistry.JsModelSummary,
-                NamedTransformIds = _dashboard.Definition.Transforms.Select(t => t.Id).ToList()
+                JsModelSummary = DashboardComponentRegistry.JsModelSummary
             }
         });
     }
@@ -574,8 +529,13 @@ public partial class DashboardEdit : IDisposable
 
     private void ApplyQueuedAssistantActions()
     {
-        var actions = DashboardAssistantActionQueue.DequeueAll();
-        if (actions.Count == 0 || _dashboard is null)
+        // Do not dequeue until the target dashboard is loaded — otherwise early
+        // OnInitialized calls permanently discard actions queued before navigation.
+        if (_dashboard is null)
+            return;
+
+        var actions = DashboardAssistantActionQueue.DequeueForDashboard(Id);
+        if (actions.Count == 0)
             return;
 
         var applied = 0;
@@ -586,7 +546,6 @@ public partial class DashboardEdit : IDisposable
             if (component is null)
                 continue;
 
-            component.DataBinding.Mode = "inline";
             component.DataBinding.InlineScript = action.Script;
             _selectedComponentId = component.Id;
             applied++;

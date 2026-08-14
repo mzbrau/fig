@@ -89,6 +89,8 @@ public class SessionCleanupService : ISessionCleanupService
                     _logger.LogInformation("All sessions expired for client {ClientName}. Setting LastRunSessionDisconnected to {Time} and LastRunSessionMachineName to {Machine}", 
                         client.Name.Sanitize(), client.LastRunSessionDisconnected, client.LastRunSessionMachineName);
                 }
+
+                ClientUptimeTracker.ApplyStateChange(client, DateTime.UtcNow);
                 
                 try
                 {

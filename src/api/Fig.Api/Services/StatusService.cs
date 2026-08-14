@@ -109,6 +109,8 @@ public class StatusService : AuthenticatedService, IStatusService
             if (debugEnabled) _logger.LogDebug("ClientConnected webhook completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);
         }
 
+        ClientUptimeTracker.ApplyStateChange(client, DateTime.UtcNow);
+
         stepSw?.Restart();
         await _clientStatusRepository.UpdateClientStatus(client);
         if (debugEnabled) _logger.LogDebug("UpdateClientStatus completed in {ElapsedMs} ms for client {ClientName}", stepSw!.ElapsedMilliseconds, sanitizedClientName);

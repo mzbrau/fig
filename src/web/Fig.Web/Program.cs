@@ -137,7 +137,6 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IDashboardFacade, DashboardFacade>();
     builder.Services.AddScoped<IDashboardDataProvider, DashboardDataProvider>();
     builder.Services.AddScoped<DashboardTransformEngine>();
-    builder.Services.AddScoped<DashboardDependencyResolver>();
     builder.Services.AddScoped<DashboardRuntime>();
     builder.Services.AddSingleton<DashboardComponentRegistry>();
     builder.Services.AddSingleton<Fig.Web.Dashboards.Export.DashboardHtmlExporter>();

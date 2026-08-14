@@ -362,7 +362,7 @@ public sealed class AssistantChatService : AuthenticatedService, IAssistantChatS
                 Prefer fig.clients / fig.runSessions fluent APIs; Object.keys and Array.isArray do not work on CLR-backed fig objects.
                 The only allowed propose_web_actions type for dashboards is updateDashboardInlineScript with parameters.componentId (use SelectedComponentId) and parameters.script.
                 Optionally include parameters.dashboardId from Dashboard.DashboardId.
-                Do not propose layout changes, add/remove components, named-transform edits, or dashboard CRUD.
+                Do not propose layout changes, add/remove components, or dashboard CRUD.
                 After proposing updateDashboardInlineScript, say you applied an unsaved draft the user must review and Save on the dashboard editor. Never claim the dashboard was saved.
                 """;
         }

@@ -7,10 +7,11 @@
 }
 else
 {
-    <div class="dashboard-key-value-card">
-        @if (!string.IsNullOrWhiteSpace(Input.StatusIcon))
+    var hasStatus = !string.IsNullOrWhiteSpace(Input.StatusIcon);
+    <div class="@(hasStatus ? "dashboard-key-value-card dashboard-key-value-card--has-status" : "dashboard-key-value-card")">
+        @if (hasStatus)
         {
-            <div class="dashboard-key-value__status" style="background-color: @(Input.StatusColor ?? "#6c757d");"
+            <div class="dashboard-key-value__status" style="--dash-status-accent: @(Input.StatusColor ?? "#9aa0a6");"
                  title="@Input.StatusIcon">
                 <RadzenIcon Icon="@Input.StatusIcon" />
             </div>

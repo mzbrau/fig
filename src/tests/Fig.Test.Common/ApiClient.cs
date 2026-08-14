@@ -80,27 +80,59 @@ public class ApiClient
 
     public async Task<T?> Get<T>(string uri, bool authenticate = true, string? secret = null, string? tokenOverride = null)
     {
-        using var httpClient = GetHttpClient();
-        
-        if (secret is not null)
-            httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
-        
-        if (authenticate)
-            httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
+        const int maxAttempts = 3;
+        ErrorResultDataContract? lastError = null;
+        HttpStatusCode lastStatus = 0;
 
-        using var response = await httpClient.GetAsync(uri);
-        if (!response.IsSuccessStatusCode)
+        for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
-            var error = await GetErrorResult(response);
+            using var httpClient = GetHttpClient();
+
+            if (secret is not null)
+                httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
+
+            if (authenticate)
+                httpClient.DefaultRequestHeaders.Add("Authorization", tokenOverride ?? _bearerToken);
+
+            using var response = await httpClient.GetAsync(uri);
+            if (response.IsSuccessStatusCode)
+            {
+                var result = await response.Content.ReadAsStringAsync();
+                Assert.That(result, Is.Not.Null, $"Non null result expected for uri {uri}.");
+
+                var settings = IsClientsListUri(uri) ? FigWebLoadJsonSettings.Instance : JsonSettings.FigDefault;
+                return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, settings) : default;
+            }
+
+            lastStatus = response.StatusCode;
+            lastError = await GetErrorResult(response);
+            if (attempt < maxAttempts && IsSqliteLockContention(lastStatus, lastError))
+            {
+                await Task.Delay(100 * attempt);
+                continue;
+            }
+
             Assert.Fail(
-                $"Get to uri {uri} should succeed. {(int)response.StatusCode} {response.StatusCode}: {error}");
+                $"Get to uri {uri} should succeed. {(int)lastStatus} {lastStatus}: {lastError}" +
+                (string.IsNullOrEmpty(lastError?.Detail) ? string.Empty : $"\n{lastError.Detail}"));
         }
 
-        var result = await response.Content.ReadAsStringAsync();
-        Assert.That(result, Is.Not.Null, $"Non null result expected for uri {uri}.");
-        
-        var settings = IsClientsListUri(uri) ? FigWebLoadJsonSettings.Instance : JsonSettings.FigDefault;
-        return !string.IsNullOrEmpty(result) ? JsonConvert.DeserializeObject<T>(result, settings) : default;
+        Assert.Fail(
+            $"Get to uri {uri} should succeed. {(int)lastStatus} {lastStatus}: {lastError}" +
+            (string.IsNullOrEmpty(lastError?.Detail) ? string.Empty : $"\n{lastError.Detail}"));
+        return default;
+    }
+
+    private static bool IsSqliteLockContention(HttpStatusCode status, ErrorResultDataContract? error)
+    {
+        if (status != HttpStatusCode.InternalServerError || error is null)
+            return false;
+
+        var text = $"{error.Message}\n{error.Detail}";
+        return text.Contains("database is locked", StringComparison.OrdinalIgnoreCase)
+               || text.Contains("Busy (5)", StringComparison.OrdinalIgnoreCase)
+               || text.Contains("SQLITE_BUSY", StringComparison.OrdinalIgnoreCase)
+               || text.Contains("sqlite busy", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsClientsListUri(string uri)

@@ -35,11 +35,9 @@ namespace Fig.Contracts.Assistant
         public string? DashboardName { get; set; }
         public string? SelectedComponentId { get; set; }
         public string? SelectedComponentType { get; set; }
-        public string? BindingMode { get; set; }
         public string? InlineScript { get; set; }
         public string? ExpectedResponseShape { get; set; }
         public string? JsModelSummary { get; set; }
-        public List<string> NamedTransformIds { get; set; } = new List<string>();
     }
 
     public class AssistantDirtySettingDataContract

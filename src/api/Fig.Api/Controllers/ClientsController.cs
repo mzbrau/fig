@@ -136,7 +136,7 @@ public class ClientsController : ControllerBase
         return Ok(settings);
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("{clientName}/settings/{settingName}/history")]
     public async Task<IActionResult> GetSettingHistory(string clientName, string settingName, [FromQuery] string? instance)
     {
@@ -144,7 +144,7 @@ public class ClientsController : ControllerBase
         return Ok(history);
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
     [HttpGet("settings/lastchanged")]
     public async Task<IActionResult> GetLastChangedForAllClientsSettings()
     {

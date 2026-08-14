@@ -450,7 +450,8 @@ public abstract class IntegrationTestBase
         if (queryParts.Count > 0)
             requestUri += "?" + string.Join("&", queryParts);
 
-        var result = await ApiClient.Get<IEnumerable<SettingDataContract>>(requestUri, false, clientSecret);
+        var result = await ExecuteWithTransientHttpRetry(async () =>
+            await ApiClient.Get<IEnumerable<SettingDataContract>>(requestUri, false, clientSecret));
 
         return result is not null ? result.ToList() : Array.Empty<SettingDataContract>().ToList();
     }
@@ -616,9 +617,26 @@ public abstract class IntegrationTestBase
                     $"Warning: HTTP request attempt {attempt} failed ({ex.Message}); retrying...");
                 await Task.Delay(100 * attempt);
             }
+            catch (AssertionException ex) when (attempt < maxAttempts && IsSqliteLockContentionMessage(ex.Message))
+            {
+                Console.WriteLine(
+                    $"Warning: SQLite lock contention on attempt {attempt} ({ex.Message}); retrying...");
+                await Task.Delay(100 * attempt);
+            }
         }
 
         throw new InvalidOperationException("ExecuteWithTransientHttpRetry should not reach this point.");
+    }
+
+    private static bool IsSqliteLockContentionMessage(string? message)
+    {
+        if (string.IsNullOrEmpty(message))
+            return false;
+
+        return message.Contains("database is locked", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("Busy (5)", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("SQLITE_BUSY", StringComparison.OrdinalIgnoreCase)
+               || message.Contains("sqlite busy", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task ExecuteWithTransientHttpRetry(Func<Task> action, int maxAttempts = 3)

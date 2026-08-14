@@ -317,23 +317,40 @@ public class SettingClientRepository : RepositoryBase<SettingClientBusinessEntit
               from SettingClientBusinessEntity c
               left join c.Settings s";
 
-        IList<object[]> rows;
+        IList<object[]> rows = Array.Empty<object[]>();
         using (Activity? clientRowActivity = ApiActivitySource.Instance.StartActivity("SettingsLoad.ClientRow"))
         {
-            IQuery query;
-            if (instance is null)
+            const int maxAttempts = 3;
+            for (var attempt = 1; attempt <= maxAttempts; attempt++)
             {
-                query = Session.CreateQuery(selectList + " where c.Name = :name and c.Instance is null");
-                query.SetParameter("name", name);
-            }
-            else
-            {
-                query = Session.CreateQuery(selectList + " where c.Name = :name and c.Instance = :instance");
-                query.SetParameter("name", name);
-                query.SetParameter("instance", instance);
+                try
+                {
+                    IQuery query;
+                    if (instance is null)
+                    {
+                        query = Session.CreateQuery(selectList + " where c.Name = :name and c.Instance is null");
+                        query.SetParameter("name", name);
+                    }
+                    else
+                    {
+                        query = Session.CreateQuery(selectList + " where c.Name = :name and c.Instance = :instance");
+                        query.SetParameter("name", name);
+                        query.SetParameter("instance", instance);
+                    }
+
+                    rows = await query.ListAsync<object[]>();
+                    break;
+                }
+                catch (Exception ex) when (attempt < maxAttempts && ex.IsLockContention())
+                {
+                    _logger.LogWarning(ex,
+                        "Settings load query for client {ClientName} hit lock contention on attempt {Attempt}; retrying",
+                        name.Sanitize(),
+                        attempt);
+                    await Task.Delay(100 * attempt);
+                }
             }
 
-            rows = await query.ListAsync<object[]>();
             clientRowActivity?.SetTag("fig.api.row_count", rows.Count);
         }
 

@@ -1,4 +1,5 @@
 using Fig.Api.ExtensionMethods;
+using Fig.Api.Services;
 using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Health;
 using Fig.Contracts.Status;
@@ -18,7 +19,8 @@ public class ClientStatusConverter : IClientStatusConverter
             client.LastSettingValueUpdate,
             runSessions,
             client.LastRunSessionDisconnected,
-            client.LastRunSessionMachineName);
+            client.LastRunSessionMachineName,
+            ClientUptimeTracker.ComputePercent(client, DateTime.UtcNow));
     }
 
     private List<ClientRunSessionDataContract> Convert(IEnumerable<ClientRunSessionBusinessEntity> sessions)

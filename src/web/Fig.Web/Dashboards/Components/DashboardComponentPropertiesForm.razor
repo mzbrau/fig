@@ -5,117 +5,293 @@
 @if (Component is not null)
 {
 var selected = Component;
+var isChart = string.Equals(selected.Type, "bar", StringComparison.OrdinalIgnoreCase)
+              || string.Equals(selected.Type, "donut", StringComparison.OrdinalIgnoreCase);
+var isDonut = string.Equals(selected.Type, "donut", StringComparison.OrdinalIgnoreCase);
+var isKeyValue = string.Equals(selected.Type, "keyValue", StringComparison.OrdinalIgnoreCase);
+var isCards = string.Equals(selected.Type, "cards", StringComparison.OrdinalIgnoreCase);
 
-<label class="form-label">Id</label>
-<RadzenTextBox Value="@selected.Id" Style="width:100%;" ReadOnly="true" class="mb-2" />
-
-<label class="form-label">Type</label>
-<RadzenTextBox Value="@selected.Type" Style="width:100%;" ReadOnly="true" class="mb-2" />
-
-<label class="form-label">Title</label>
-<RadzenTextBox Value="@GetConfigString("title")" ValueChanged="@(v => SetConfigString("title", v))"
-               Style="width:100%;" class="mb-2" />
-
-@if (LayoutCell is not null)
+@if (DenseLayout)
 {
-    <div class="row g-2 mb-2">
-        <div class="col-6">
-            <label class="form-label">X</label>
-            <RadzenNumeric TValue="int" Value="@LayoutCell.X" ValueChanged="@OnCellXChanged" Style="width:100%;" Min="0" Max="11" />
+    <div class="dashboard-component-form--dense">
+        <div class="dashboard-component-form__title">
+            <label class="form-label">Title</label>
+            <RadzenTextBox Value="@GetConfigString("title")" ValueChanged="@(v => SetConfigString("title", v))"
+                           Style="width:100%;" />
         </div>
-        <div class="col-6">
-            <label class="form-label">Y</label>
-            <RadzenNumeric TValue="int" Value="@LayoutCell.Y" ValueChanged="@OnCellYChanged" Style="width:100%;" Min="0" />
+
+        <div class="dashboard-component-form__xy">
+            @if (LayoutCell is not null)
+            {
+                <div class="dashboard-component-form__field--pair">
+                    <div>
+                        <label class="form-label">X</label>
+                        <RadzenNumeric TValue="int" Value="@LayoutCell.X" ValueChanged="@OnCellXChanged" Style="width:100%;" Min="0" Max="11" />
+                    </div>
+                    <div>
+                        <label class="form-label">Y</label>
+                        <RadzenNumeric TValue="int" Value="@LayoutCell.Y" ValueChanged="@OnCellYChanged" Style="width:100%;" Min="0" />
+                    </div>
+                </div>
+            }
         </div>
-        <div class="col-6">
-            <label class="form-label">Width</label>
-            <RadzenNumeric TValue="int" Value="@LayoutCell.Width" ValueChanged="@OnCellWidthChanged" Style="width:100%;" Min="1" Max="12" />
+
+        <div class="dashboard-component-form__idtype">
+            <div class="dashboard-component-form__field--pair">
+                <div>
+                    <label class="form-label">Id</label>
+                    <RadzenTextBox Value="@selected.Id" Style="width:100%;" ReadOnly="true" />
+                </div>
+                <div>
+                    <label class="form-label">Type</label>
+                    <RadzenTextBox Value="@selected.Type" Style="width:100%;" ReadOnly="true" />
+                </div>
+            </div>
         </div>
-        <div class="col-6">
-            <label class="form-label">Height</label>
-            <RadzenNumeric TValue="int" Value="@LayoutCell.Height" ValueChanged="@OnCellHeightChanged" Style="width:100%;" Min="1" />
+
+        <div class="dashboard-component-form__wh">
+            @if (LayoutCell is not null)
+            {
+                <div class="dashboard-component-form__field--pair">
+                    <div>
+                        <label class="form-label">Width</label>
+                        <RadzenNumeric TValue="int" Value="@LayoutCell.Width" ValueChanged="@OnCellWidthChanged" Style="width:100%;" Min="1" Max="12" />
+                    </div>
+                    <div>
+                        <label class="form-label">Height</label>
+                        <RadzenNumeric TValue="int" Value="@LayoutCell.Height" ValueChanged="@OnCellHeightChanged" Style="width:100%;" Min="1" />
+                    </div>
+                </div>
+            }
         </div>
+
+        <div class="dashboard-component-form__binding">
+            <div class="dashboard-component-form__field--pair">
+                <div>
+                    <label class="form-label">Suggested script</label>
+                    <RadzenDropDown TValue="string" Data="@SuggestedScriptOptions" TextProperty="Text" ValueProperty="Value"
+                                    Style="width:100%;"
+                                    Value="@SelectedSuggestionId"
+                                    ValueChanged="@OnSuggestedScriptChanged" />
+                </div>
+                <div>
+                    @if (isChart)
+                    {
+                        <label class="form-label">Legend</label>
+                        <RadzenDropDown TValue="string" Data="@LegendPositionOptions" TextProperty="Text" ValueProperty="Value"
+                                        Style="width:100%;"
+                                        Value="@GetLegendPosition()"
+                                        ValueChanged="@OnLegendPositionChanged" />
+                    }
+                    else if (isKeyValue)
+                    {
+                        <label class="form-label">Status icon</label>
+                        <RadzenTextBox Value="@GetConfigString("statusIcon")"
+                                       ValueChanged="@(v => SetConfigString("statusIcon", v))"
+                                       Style="width:100%;" Placeholder="e.g. check" />
+                    }
+                    else if (isCards)
+                    {
+                        <label class="form-label">Style</label>
+                        <RadzenDropDown TValue="string" Data="@CardStyleOptions" TextProperty="Text" ValueProperty="Value"
+                                        Style="width:100%;"
+                                        Value="@GetCardStyle()"
+                                        ValueChanged="@OnCardStyleChanged" />
+                    }
+                </div>
+            </div>
+
+            @if (isKeyValue)
+            {
+                <div class="mt-1">
+                    <label class="form-label">Status color</label>
+                    <RadzenTextBox Value="@GetConfigString("statusColor")"
+                                   ValueChanged="@(v => SetConfigString("statusColor", v))"
+                                   Style="width:100%;" Placeholder="e.g. #22c55e" />
+                </div>
+            }
+
+            @if (isDonut)
+            {
+                <div class="mt-1">
+                    <label class="form-label">Chart size</label>
+                    <RadzenDropDown TValue="string" Data="@ChartSizeOptions" TextProperty="Text" ValueProperty="Value"
+                                    Style="width:100%;"
+                                    Value="@GetChartSize()"
+                                    ValueChanged="@OnChartSizeChanged" />
+                </div>
+            }
+
+            @if (ShowInlineScript)
+            {
+                <div class="mt-1">
+                    <label class="form-label">Inline script</label>
+                    <RadzenTextArea Value="@(selected.DataBinding.InlineScript ?? string.Empty)"
+                                    ValueChanged="@OnInlineScriptChanged"
+                                    Style="width:100%; font-family: monospace;" Rows="6" />
+                </div>
+            }
+        </div>
+
+        <div class="dashboard-component-form__expected">
+            @if (ShowExpectedShape && !string.IsNullOrWhiteSpace(ExpectedScriptShape))
+            {
+                <div class="dashboard-component-edit-dialog__expected">
+                    <label class="form-label mb-1">Expected script result</label>
+                    <p class="text-muted small mb-0">@ExpectedScriptShape</p>
+                </div>
+            }
+        </div>
+
+        @if (ShowConfigJson)
+        {
+            <div class="dashboard-component-form__config" @onfocusout="OnConfigJsonBlur">
+                <label class="form-label">Config JSON</label>
+                <RadzenTextArea Value="@ConfigJson"
+                                ValueChanged="@OnConfigJsonChanged"
+                                Style="width:100%; font-family: monospace; height: calc(100% - 1.5rem); min-height: 6rem;"
+                                Rows="6" />
+            </div>
+        }
     </div>
-}
 
-<label class="form-label">Data binding</label>
-<RadzenDropDown TValue="string" Data="@BindingModes" Style="width:100%;" class="mb-2"
-                Value="@selected.DataBinding.Mode"
-                ValueChanged="@OnBindingModeChanged" />
-
-@if (string.Equals(selected.DataBinding.Mode, "preset", StringComparison.OrdinalIgnoreCase))
-{
-    <label class="form-label">Preset</label>
-    <RadzenDropDown TValue="string" Data="@PresetOptions" TextProperty="Text" ValueProperty="Value"
-                    Style="width:100%;" class="mb-2"
-                    Value="@(selected.DataBinding.PresetId ?? string.Empty)"
-                    ValueChanged="@OnPresetChanged" />
-}
-else if (string.Equals(selected.DataBinding.Mode, "namedTransform", StringComparison.OrdinalIgnoreCase))
-{
-    <label class="form-label">Named transform</label>
-    <RadzenDropDown TValue="string" Data="@TransformOptions" TextProperty="Text" ValueProperty="Value"
-                    Style="width:100%;" class="mb-2"
-                    Value="@(selected.DataBinding.TransformId ?? string.Empty)"
-                    ValueChanged="@OnTransformIdChanged" />
-}
-else if (ShowInlineScript)
-{
-    <label class="form-label">Inline script</label>
-    <RadzenTextArea Value="@(selected.DataBinding.InlineScript ?? string.Empty)"
-                    ValueChanged="@OnInlineScriptChanged"
-                    Style="width:100%; font-family: monospace;" Rows="10" class="mb-2" />
-}
-
-@if (ShowEvaluate)
-{
-    <div class="mb-2">
-        <RadzenButton Text="Evaluate" Icon="play_arrow" Size="ButtonSize.Small"
-                      ButtonStyle="ButtonStyle.Secondary"
-                      Click="@(() => OnEvaluate.InvokeAsync())" />
-    </div>
-    <label class="form-label">Evaluate result</label>
-    @if (!string.IsNullOrWhiteSpace(PreviewError))
+    @if (ShowEvaluate)
     {
-        <RadzenAlert AlertStyle="AlertStyle.Warning" Text="@PreviewError" class="mb-2" />
-    }
-    else if (!string.IsNullOrWhiteSpace(PreviewText))
-    {
-        <pre class="dashboard-editor__preview mb-2">@PreviewText</pre>
-    }
-    else
-    {
-        <p class="text-muted small mb-2">Run Evaluate to preview the binding result.</p>
+        <div class="mb-2 mt-2">
+            <RadzenButton Text="Evaluate" Icon="play_arrow" Size="ButtonSize.Small"
+                          ButtonStyle="ButtonStyle.Secondary"
+                          Click="@(() => OnEvaluate.InvokeAsync())" />
+        </div>
+        <label class="form-label">Evaluate result</label>
+        @if (!string.IsNullOrWhiteSpace(PreviewError))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Text="@PreviewError" class="mb-2" />
+        }
+        else if (!string.IsNullOrWhiteSpace(PreviewText))
+        {
+            <pre class="dashboard-editor__preview mb-2">@PreviewText</pre>
+        }
+        else
+        {
+            <p class="text-muted small mb-2">Run Evaluate to preview the binding result.</p>
+        }
     }
 }
-
-@if (string.Equals(selected.Type, "keyValue", StringComparison.OrdinalIgnoreCase))
+else
 {
-    <label class="form-label">Status icon</label>
-    <RadzenTextBox Value="@GetConfigString("statusIcon")"
-                   ValueChanged="@(v => SetConfigString("statusIcon", v))"
-                   Style="width:100%;" class="mb-1" Placeholder="e.g. check, warning" />
-    <label class="form-label">Status color</label>
-    <RadzenTextBox Value="@GetConfigString("statusColor")"
-                   ValueChanged="@(v => SetConfigString("statusColor", v))"
-                   Style="width:100%;" class="mb-1" Placeholder="e.g. #22c55e" />
-    <p class="text-muted small mb-2">Static fallback only. Script <code>statusIcon</code> / <code>statusColor</code> override these when returned.</p>
-}
+    <label class="form-label">Id</label>
+    <RadzenTextBox Value="@selected.Id" Style="width:100%;" ReadOnly="true" class="mb-2" />
 
-@if (string.Equals(selected.Type, "bar", StringComparison.OrdinalIgnoreCase) ||
-     string.Equals(selected.Type, "donut", StringComparison.OrdinalIgnoreCase))
-{
-    <label class="form-label">Legend</label>
-    <RadzenDropDown TValue="string" Data="@LegendPositionOptions" TextProperty="Text" ValueProperty="Value"
+    <label class="form-label">Type</label>
+    <RadzenTextBox Value="@selected.Type" Style="width:100%;" ReadOnly="true" class="mb-2" />
+
+    <label class="form-label">Title</label>
+    <RadzenTextBox Value="@GetConfigString("title")" ValueChanged="@(v => SetConfigString("title", v))"
+                   Style="width:100%;" class="mb-2" />
+
+    @if (LayoutCell is not null)
+    {
+        <div class="row g-2 mb-2">
+            <div class="col-6">
+                <label class="form-label">X</label>
+                <RadzenNumeric TValue="int" Value="@LayoutCell.X" ValueChanged="@OnCellXChanged" Style="width:100%;" Min="0" Max="11" />
+            </div>
+            <div class="col-6">
+                <label class="form-label">Y</label>
+                <RadzenNumeric TValue="int" Value="@LayoutCell.Y" ValueChanged="@OnCellYChanged" Style="width:100%;" Min="0" />
+            </div>
+            <div class="col-6">
+                <label class="form-label">Width</label>
+                <RadzenNumeric TValue="int" Value="@LayoutCell.Width" ValueChanged="@OnCellWidthChanged" Style="width:100%;" Min="1" Max="12" />
+            </div>
+            <div class="col-6">
+                <label class="form-label">Height</label>
+                <RadzenNumeric TValue="int" Value="@LayoutCell.Height" ValueChanged="@OnCellHeightChanged" Style="width:100%;" Min="1" />
+            </div>
+        </div>
+    }
+
+    <label class="form-label">Suggested script</label>
+    <RadzenDropDown TValue="string" Data="@SuggestedScriptOptions" TextProperty="Text" ValueProperty="Value"
                     Style="width:100%;" class="mb-2"
-                    Value="@GetLegendPosition()"
-                    ValueChanged="@OnLegendPositionChanged" />
-}
+                    Value="@SelectedSuggestionId"
+                    ValueChanged="@OnSuggestedScriptChanged" />
 
-@if (ShowConfigJson)
-{
-    <label class="form-label">Config JSON</label>
-    <RadzenTextArea Value="@ConfigJson" ValueChanged="@OnConfigJsonChanged"
-                    Style="width:100%; font-family: monospace;" Rows="6" class="mb-2" />
+    @if (ShowInlineScript)
+    {
+        <label class="form-label">Inline script</label>
+        <RadzenTextArea Value="@(selected.DataBinding.InlineScript ?? string.Empty)"
+                        ValueChanged="@OnInlineScriptChanged"
+                        Style="width:100%; font-family: monospace;" Rows="10" class="mb-2" />
+    }
+
+    @if (ShowEvaluate)
+    {
+        <div class="mb-2">
+            <RadzenButton Text="Evaluate" Icon="play_arrow" Size="ButtonSize.Small"
+                          ButtonStyle="ButtonStyle.Secondary"
+                          Click="@(() => OnEvaluate.InvokeAsync())" />
+        </div>
+        <label class="form-label">Evaluate result</label>
+        @if (!string.IsNullOrWhiteSpace(PreviewError))
+        {
+            <RadzenAlert AlertStyle="AlertStyle.Warning" Text="@PreviewError" class="mb-2" />
+        }
+        else if (!string.IsNullOrWhiteSpace(PreviewText))
+        {
+            <pre class="dashboard-editor__preview mb-2">@PreviewText</pre>
+        }
+        else
+        {
+            <p class="text-muted small mb-2">Run Evaluate to preview the binding result.</p>
+        }
+    }
+
+    @if (isKeyValue)
+    {
+        <label class="form-label">Status icon</label>
+        <RadzenTextBox Value="@GetConfigString("statusIcon")"
+                       ValueChanged="@(v => SetConfigString("statusIcon", v))"
+                       Style="width:100%;" class="mb-1" Placeholder="e.g. check, warning" />
+        <label class="form-label">Status color</label>
+        <RadzenTextBox Value="@GetConfigString("statusColor")"
+                       ValueChanged="@(v => SetConfigString("statusColor", v))"
+                       Style="width:100%;" class="mb-1" Placeholder="e.g. #22c55e" />
+        <p class="text-muted small mb-2">Static fallback only. Script <code>statusIcon</code> / <code>statusColor</code> override these when returned.</p>
+    }
+
+    @if (isChart)
+    {
+        <label class="form-label">Legend</label>
+        <RadzenDropDown TValue="string" Data="@LegendPositionOptions" TextProperty="Text" ValueProperty="Value"
+                        Style="width:100%;" class="mb-2"
+                        Value="@GetLegendPosition()"
+                        ValueChanged="@OnLegendPositionChanged" />
+    }
+
+    @if (isDonut)
+    {
+        <label class="form-label">Chart size</label>
+        <RadzenDropDown TValue="string" Data="@ChartSizeOptions" TextProperty="Text" ValueProperty="Value"
+                        Style="width:100%;" class="mb-2"
+                        Value="@GetChartSize()"
+                        ValueChanged="@OnChartSizeChanged" />
+    }
+
+    @if (isCards)
+    {
+        <label class="form-label">Style</label>
+        <RadzenDropDown TValue="string" Data="@CardStyleOptions" TextProperty="Text" ValueProperty="Value"
+                        Style="width:100%;" class="mb-2"
+                        Value="@GetCardStyle()"
+                        ValueChanged="@OnCardStyleChanged" />
+    }
+
+    @if (ShowConfigJson)
+    {
+        <label class="form-label">Config JSON</label>
+        <RadzenTextArea Value="@ConfigJson" ValueChanged="@OnConfigJsonChanged"
+                        Style="width:100%; font-family: monospace;" Rows="6" class="mb-2" />
+    }
 }
 }

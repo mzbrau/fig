@@ -1,7 +1,9 @@
+using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Dashboards;
 using Fig.Web.Dashboards.Components;
 using Fig.Web.Dashboards.Runtime;
 using Fig.Web.Dashboards.Scripting;
+using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
@@ -13,7 +15,6 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
 {
     private readonly string _editorId = $"dashboard-script-editor-{Guid.NewGuid():N}";
     private DotNetObjectReference<DashboardComponentEditDialog>? _dotNetRef;
-    private CancellationTokenSource? _debounceCts;
     private bool _monacoInitialized;
     private bool _disposed;
     private string _configJson = "{}";
@@ -35,13 +36,9 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
     [Inject] private DashboardRuntime Runtime { get; set; } = null!;
     [Inject] private DashboardComponentRegistry ComponentRegistry { get; set; } = null!;
     [Inject] private IJSRuntime JsRuntime { get; set; } = null!;
-
-    private bool IsInlineMode =>
-        string.Equals(Component.DataBinding.Mode, "inline", StringComparison.OrdinalIgnoreCase)
-        || string.IsNullOrWhiteSpace(Component.DataBinding.Mode);
-
-    private IReadOnlyList<DashboardTransformDataContract> TransformList =>
-        Definition.Transforms ?? (IReadOnlyList<DashboardTransformDataContract>)Array.Empty<DashboardTransformDataContract>();
+    [Inject] private IScriptBeautifier ScriptBeautifier { get; set; } = null!;
+    [Inject] private NotificationService NotificationService { get; set; } = null!;
+    [Inject] private INotificationFactory NotificationFactory { get; set; } = null!;
 
     protected override void OnParametersSet()
     {
@@ -56,11 +53,8 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
         {
             await DataProvider.EnsureLoadedAsync();
             await EvaluateNow();
-            if (IsInlineMode)
-            {
-                await Task.Delay(200);
-                await InitializeMonacoAsync();
-            }
+            await Task.Delay(200);
+            await InitializeMonacoAsync();
         }
     }
 
@@ -71,11 +65,7 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
 
         try
         {
-            var libs = DashboardScriptTypings.Build(
-                Component.Type,
-                DataProvider.Current,
-                Runtime.NamedTransformResults);
-
+            var libs = DashboardScriptTypings.Build(Component.Type, DataProvider.Current);
             var libPayload = libs.Select(l => new { content = l.Content, filePath = l.FilePath }).ToArray();
             await JsRuntime.InvokeVoidAsync("MonacoIntegration.setJavascriptExtraLibs", libPayload);
 
@@ -92,11 +82,13 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
             await JsRuntime.InvokeVoidAsync("MonacoIntegration.initialize", _editorId, options);
 
             _dotNetRef = DotNetObjectReference.Create(this);
+            // Do not sync on every keystroke — that interrupts IntelliSense when typing '.'.
+            // Sync + evaluate on blur, Evaluate, and Close instead.
             await JsRuntime.InvokeVoidAsync(
-                "MonacoIntegration.onDidChangeModelContent",
+                "MonacoIntegration.onDidBlurEditorText",
                 _editorId,
                 _dotNetRef,
-                nameof(OnMonacoContentChanged));
+                nameof(OnMonacoBlurred));
 
             _monacoInitialized = true;
 
@@ -110,18 +102,26 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
     }
 
     [JSInvokable]
-    public async Task OnMonacoContentChanged()
+    public async Task OnMonacoBlurred()
     {
         if (!_monacoInitialized || _disposed)
             return;
 
+        await SyncScriptFromMonacoAsync(evaluate: true, notifyParent: true);
+    }
+
+    private async Task SyncScriptFromMonacoAsync(bool evaluate, bool notifyParent)
+    {
         try
         {
             var value = await JsRuntime.InvokeAsync<string>("MonacoIntegration.getValue", _editorId);
             Component.DataBinding.InlineScript = value;
-            await OnMutated.InvokeAsync();
-            await DebouncedEvaluateAsync();
-            await InvokeAsync(StateHasChanged);
+
+            if (notifyParent)
+                await OnMutated.InvokeAsync();
+
+            if (evaluate)
+                await EvaluateNow();
         }
         catch (JSException)
         {
@@ -129,65 +129,30 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
         }
     }
 
-    private async Task DebouncedEvaluateAsync()
+    private async Task OnSuggestedScriptApplied(string script)
     {
-        _debounceCts?.Cancel();
-        _debounceCts?.Dispose();
-        _debounceCts = new CancellationTokenSource();
-        var token = _debounceCts.Token;
+        if (_monacoInitialized)
+        {
+            try
+            {
+                await JsRuntime.InvokeVoidAsync("MonacoIntegration.setValue", _editorId, script ?? string.Empty);
+            }
+            catch (JSException)
+            {
+                // Editor may not be ready.
+            }
+        }
 
-        try
-        {
-            await Task.Delay(400, token);
-            if (!token.IsCancellationRequested)
-                await EvaluateNow();
-        }
-        catch (TaskCanceledException)
-        {
-            // Newer keystroke superseded this evaluate.
-        }
+        await EvaluateNow();
     }
 
     private async Task OnFormMutated(bool needsReEvaluate)
     {
         await OnMutated.InvokeAsync();
+
+        // Defer preview re-render for continuous typing (config JSON); discrete controls pass true.
         if (needsReEvaluate)
             await EvaluateNow();
-
-        if (IsInlineMode)
-        {
-            if (!_monacoInitialized)
-            {
-                await InvokeAsync(async () =>
-                {
-                    StateHasChanged();
-                    await Task.Delay(50);
-                    await InitializeMonacoAsync();
-                });
-                return;
-            }
-
-            // Keep IntelliSense libs aligned with current component type / live data.
-            try
-            {
-                var libs = DashboardScriptTypings.Build(
-                    Component.Type,
-                    DataProvider.Current,
-                    Runtime.NamedTransformResults);
-                var libPayload = libs.Select(l => new { content = l.Content, filePath = l.FilePath }).ToArray();
-                await JsRuntime.InvokeVoidAsync("MonacoIntegration.setJavascriptExtraLibs", libPayload);
-            }
-            catch
-            {
-                // Non-fatal if typings refresh fails.
-            }
-        }
-        else if (_monacoInitialized)
-        {
-            await DisposeMonacoAsync();
-        }
-
-        await InvokeAsync(StateHasChanged);
     }
 
     private async Task DisposeMonacoAsync()
@@ -201,7 +166,7 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
         }
         catch
         {
-            // Ignore dispose failures during mode switches.
+            // Ignore dispose failures.
         }
 
         _monacoInitialized = false;
@@ -213,6 +178,72 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
     {
         _configJson = value;
         return Task.CompletedTask;
+    }
+
+    private async Task EvaluateAndNotify()
+    {
+        if (_monacoInitialized)
+            await SyncScriptFromMonacoAsync(evaluate: false, notifyParent: false);
+
+        await EvaluateNow();
+        await OnMutated.InvokeAsync();
+    }
+
+    private async Task FormatScriptAsync()
+    {
+        if (_monacoInitialized)
+            await SyncScriptFromMonacoAsync(evaluate: false, notifyParent: false);
+
+        var script = Component.DataBinding.InlineScript ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(script))
+            return;
+
+        var formatted = ScriptBeautifier.FormatScript(script);
+        Component.DataBinding.InlineScript = formatted;
+
+        if (_monacoInitialized)
+        {
+            try
+            {
+                await JsRuntime.InvokeVoidAsync("MonacoIntegration.setValue", _editorId, formatted);
+            }
+            catch (JSException)
+            {
+                // Editor may not be ready.
+            }
+        }
+
+        await OnMutated.InvokeAsync();
+    }
+
+    private async Task CopyAiPromptAsync()
+    {
+        if (_monacoInitialized)
+            await SyncScriptFromMonacoAsync(evaluate: false, notifyParent: false);
+
+        await DataProvider.EnsureLoadedAsync();
+
+        var descriptor = ComponentRegistry.Get(Component.Type);
+        var prompt = DashboardScriptAiPromptBuilder.Build(
+            Component.Type,
+            descriptor?.DisplayName,
+            descriptor?.ExpectedScriptShape ?? _expectedShape,
+            Component.DataBinding.InlineScript,
+            DataProvider.Current);
+
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", prompt);
+            NotificationService.Notify(NotificationFactory.Success(
+                "Copied",
+                "AI prompt copied. Add what you want shown, then paste into your AI tool."));
+        }
+        catch (Exception)
+        {
+            NotificationService.Notify(NotificationFactory.Warning(
+                "Copy failed",
+                "Could not write to the clipboard. Check browser permissions and try again."));
+        }
     }
 
     private async Task EvaluateNow()
@@ -245,17 +276,21 @@ public partial class DashboardComponentEditDialog : IAsyncDisposable
         await InvokeAsync(StateHasChanged);
     }
 
-    private void Close() => DialogService.Close();
+    private async Task Close()
+    {
+        if (_monacoInitialized)
+            await SyncScriptFromMonacoAsync(evaluate: false, notifyParent: true);
+        else
+            await OnMutated.InvokeAsync();
+
+        DialogService.Close();
+    }
 
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
             return;
         _disposed = true;
-
-        _debounceCts?.Cancel();
-        _debounceCts?.Dispose();
-        _debounceCts = null;
 
         if (_monacoInitialized)
             await DisposeMonacoAsync();

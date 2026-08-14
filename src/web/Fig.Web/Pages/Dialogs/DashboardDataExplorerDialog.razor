@@ -6,7 +6,7 @@
 <div class="dashboard-data-explorer p-3">
     <div class="d-flex justify-content-between align-items-center mb-3 gap-2">
         <p class="text-muted mb-0 small">
-            Live values from <code>fig</code> (<code>clients</code>, <code>runSessions</code>) and <code>transforms</code>.
+            Live values from <code>fig</code> (<code>clients</code>, <code>runSessions</code>).
         </p>
         <div class="d-flex gap-2">
             <RadzenButton Text="Refresh" Icon="refresh" Size="ButtonSize.Small"
@@ -27,8 +27,6 @@
 @code {
     [Parameter] public DashboardFigRoot? Fig { get; set; }
 
-    [Parameter] public IReadOnlyDictionary<string, object?>? NamedTransforms { get; set; }
-
     private IReadOnlyList<DashboardDataExplorerNode> _roots = Array.Empty<DashboardDataExplorerNode>();
     private bool _refreshing;
 
@@ -39,7 +37,7 @@
 
     private void Rebuild()
     {
-        _roots = DashboardDataExplorerModel.Build(Fig ?? DataProvider.Current, NamedTransforms);
+        _roots = DashboardDataExplorerModel.Build(Fig ?? DataProvider.Current);
     }
 
     private async Task Refresh()
@@ -47,7 +45,7 @@
         _refreshing = true;
         try
         {
-            await DataProvider.EnsureLoadedAsync();
+            await DataProvider.RefreshAllAsync();
             Fig = DataProvider.Current;
             Rebuild();
         }

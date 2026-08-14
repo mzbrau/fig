@@ -1,13 +1,23 @@
 @namespace Fig.Web.Dashboards.Components.Kpi
 @using Fig.Web.Dashboards.Components.Contracts
 
-<div class="dashboard-kpi dashboard-kpi--@(NormalizeVariant(Input?.Variant))">
+<div class="@RootClass">
+    @if (HasIcon)
+    {
+        <div class="dashboard-kpi__icon" title="@Input!.Icon">
+            <RadzenIcon Icon="@Input.Icon" />
+        </div>
+    }
     @if (!string.IsNullOrWhiteSpace(Input?.Label))
     {
         <div class="dashboard-kpi__label">@Input!.Label</div>
     }
-    <div class="dashboard-kpi__value">@(Input?.Value?.ToString() ?? "—")</div>
-    @if (Input?.Trend is not null)
+    <div class="dashboard-kpi__value">@DisplayValue</div>
+    @if (!string.IsNullOrWhiteSpace(Input?.Subtitle))
+    {
+        <div class="dashboard-kpi__subtitle">@Input!.Subtitle</div>
+    }
+    else if (Input?.Trend is not null)
     {
         <div class="dashboard-kpi__trend">@Input.Trend</div>
     }
@@ -16,6 +26,37 @@
 @code {
     [Parameter] public DashboardKpiInput? Input { get; set; }
 
-    private static string NormalizeVariant(string? variant) =>
-        string.IsNullOrWhiteSpace(variant) ? "normal" : variant.Trim().ToLowerInvariant();
+    private bool HasIcon => !string.IsNullOrWhiteSpace(Input?.Icon);
+
+    private string RootClass
+    {
+        get
+        {
+            var cls = $"dashboard-kpi dashboard-kpi--{NormalizeVariant(Input?.Variant)}";
+            if (HasIcon)
+                cls += " dashboard-kpi--has-icon";
+            return cls;
+        }
+    }
+
+    private string DisplayValue
+    {
+        get
+        {
+            if (Input?.Numerator is not null && Input.Denominator is not null)
+                return $"{Input.Numerator}/{Input.Denominator}";
+
+            return Input?.Value?.ToString() ?? "—";
+        }
+    }
+
+    private static string NormalizeVariant(string? variant)
+    {
+        var value = (variant ?? "normal").Trim().ToLowerInvariant();
+        return value switch
+        {
+            "info" or "success" or "warning" or "danger" or "normal" => value,
+            _ => "normal"
+        };
+    }
 }

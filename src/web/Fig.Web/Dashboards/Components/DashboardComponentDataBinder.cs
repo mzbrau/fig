@@ -27,11 +27,54 @@ public static class DashboardComponentDataBinder
         var obj = ToJObject(data);
         return new DashboardKpiInput
         {
-            Value = obj["value"] ?? obj["Value"],
+            Value = ToClr(obj["value"] ?? obj["Value"]),
             Label = obj.Value<string>("label") ?? obj.Value<string>("Label"),
-            Trend = obj["trend"] ?? obj["Trend"],
-            Variant = obj.Value<string>("variant") ?? obj.Value<string>("Variant")
+            Trend = ToClr(obj["trend"] ?? obj["Trend"]),
+            Variant = obj.Value<string>("variant") ?? obj.Value<string>("Variant"),
+            Numerator = ToClr(obj["numerator"] ?? obj["Numerator"]),
+            Denominator = ToClr(obj["denominator"] ?? obj["Denominator"]),
+            Subtitle = obj.Value<string>("subtitle") ?? obj.Value<string>("Subtitle"),
+            Icon = obj.Value<string>("icon") ?? obj.Value<string>("Icon")
         };
+    }
+
+    public static DashboardCardsInput ToCards(object? data)
+    {
+        if (data is DashboardCardsInput typed)
+            return typed;
+
+        var cards = new List<DashboardCardItem>();
+        var token = ToJToken(data);
+        if (token is not JArray array)
+            return new DashboardCardsInput { Cards = cards };
+
+        foreach (var item in array.OfType<JObject>())
+        {
+            var rows = new List<DashboardCardRow>();
+            var rowsToken = item["rows"] ?? item["Rows"];
+            if (rowsToken is JArray rowsArray)
+            {
+                foreach (var row in rowsArray.OfType<JObject>())
+                {
+                    rows.Add(new DashboardCardRow
+                    {
+                        Key = row.Value<string>("key") ?? row.Value<string>("Key"),
+                        Value = ToClr(row["value"] ?? row["Value"])
+                    });
+                }
+            }
+
+            cards.Add(new DashboardCardItem
+            {
+                Title = item.Value<string>("title") ?? item.Value<string>("Title"),
+                Value = ToClr(item["value"] ?? item["Value"]),
+                Variant = item.Value<string>("variant") ?? item.Value<string>("Variant"),
+                Icon = item.Value<string>("icon") ?? item.Value<string>("Icon"),
+                Rows = rows
+            });
+        }
+
+        return new DashboardCardsInput { Cards = cards };
     }
 
     public static DashboardTextInput ToText(object? data)
@@ -39,18 +82,100 @@ public static class DashboardComponentDataBinder
         if (data is null)
             return new DashboardTextInput();
 
-        if (data is string s)
-            return new DashboardTextInput { Text = s };
-
         if (data is DashboardTextInput typed)
-            return typed;
+            return NormalizeText(typed);
 
-        var obj = ToJObject(data);
-        return new DashboardTextInput
+        if (data is string s)
+            return NormalizeText(new DashboardTextInput
+            {
+                Lines = [new DashboardTextLine { Text = s, Size = "md" }]
+            });
+
+        var token = ToJToken(data);
+        if (token is JArray array)
         {
-            Text = obj.Value<string>("text") ?? obj.Value<string>("Text") ?? data.ToString(),
-            Variant = obj.Value<string>("variant") ?? obj.Value<string>("Variant")
+            return NormalizeText(new DashboardTextInput
+            {
+                Lines = array.OfType<JObject>().Select(ParseTextLine).ToList()
+            });
+        }
+
+        var obj = token as JObject ?? new JObject();
+        var linesToken = obj["lines"] ?? obj["Lines"];
+        if (linesToken is JArray linesArray)
+        {
+            return NormalizeText(new DashboardTextInput
+            {
+                Lines = linesArray.OfType<JObject>().Select(ParseTextLine).ToList()
+            });
+        }
+
+        var text = obj.Value<string>("text") ?? obj.Value<string>("Text");
+        var variant = obj.Value<string>("variant") ?? obj.Value<string>("Variant");
+        if (text is not null || variant is not null)
+        {
+            return NormalizeText(new DashboardTextInput
+            {
+                Lines =
+                [
+                    new DashboardTextLine
+                    {
+                        Text = text ?? data.ToString(),
+                        Size = MapVariantToSize(variant)
+                    }
+                ]
+            });
+        }
+
+        // Single line object without wrapping { lines: ... }
+        if (obj["text"] is null && obj["Text"] is null && obj.Properties().Any())
+        {
+            // fall through to string representation
+        }
+
+        return NormalizeText(new DashboardTextInput
+        {
+            Lines = [new DashboardTextLine { Text = data.ToString(), Size = "md" }]
+        });
+    }
+
+    private static DashboardTextLine ParseTextLine(JObject item)
+    {
+        return new DashboardTextLine
+        {
+            Text = item.Value<string>("text") ?? item.Value<string>("Text"),
+            Size = item.Value<string>("size") ?? item.Value<string>("Size"),
+            Color = item.Value<string>("color") ?? item.Value<string>("Color"),
+            Align = item.Value<string>("align") ?? item.Value<string>("Align"),
+            Weight = item.Value<string>("weight") ?? item.Value<string>("Weight")
         };
+    }
+
+    private static string MapVariantToSize(string? variant)
+    {
+        return (variant ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "heading" => "xl",
+            "muted" => "sm",
+            _ => "md"
+        };
+    }
+
+    private static DashboardTextInput NormalizeText(DashboardTextInput input)
+    {
+        if (input.Lines.Count == 0 && !string.IsNullOrWhiteSpace(input.Text))
+        {
+            input.Lines =
+            [
+                new DashboardTextLine
+                {
+                    Text = input.Text,
+                    Size = MapVariantToSize(input.Variant)
+                }
+            ];
+        }
+
+        return input;
     }
 
     public static DashboardBadgeInput ToBadge(object? data)
@@ -243,6 +368,27 @@ public static class DashboardComponentDataBinder
             return "hidden";
         return string.Equals(value, "bottom", StringComparison.OrdinalIgnoreCase) ? "bottom" : "right";
     }
+
+    /// <summary>Returns <c>compact</c>, <c>wide</c>, or <c>extraWide</c> for cards layout style.</summary>
+    public static string ReadCardStyle(JObject? config)
+    {
+        var value = config?["cardStyle"]?.ToString() ?? config?["CardStyle"]?.ToString();
+        if (string.Equals(value, "extraWide", StringComparison.OrdinalIgnoreCase))
+            return "extraWide";
+        if (string.Equals(value, "wide", StringComparison.OrdinalIgnoreCase))
+            return "wide";
+        return "compact";
+    }
+
+    /// <summary>Returns <c>large</c> or <c>small</c> for donut chart size.</summary>
+    public static string ReadChartSize(JObject? config)
+    {
+        var value = config?["chartSize"]?.ToString() ?? config?["ChartSize"]?.ToString();
+        if (string.Equals(value, "small", StringComparison.OrdinalIgnoreCase))
+            return "small";
+        return "large";
+    }
+
     private static IReadOnlyList<DashboardTableColumn> ReadColumns(JObject? config)
     {
         if (config is null)

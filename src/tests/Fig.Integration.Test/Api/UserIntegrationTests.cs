@@ -129,6 +129,17 @@ public class UserIntegrationTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallNotRequirePasswordChangeOnLoginWhenNotFlagged()
+    {
+        var user = NewUser(passwordChangeRequired: false);
+        await CreateUser(user);
+
+        var loginResult = await Login(user.Username, user.Password!);
+
+        Assert.That(loginResult.PasswordChangeRequired, Is.False);
+    }
+
+    [Test]
     public async Task ShallRequirePasswordChangeOnNextLoginWhenFlagged()
     {
         var user = NewUser(passwordChangeRequired: true);
@@ -139,6 +150,80 @@ public class UserIntegrationTests : IntegrationTestBase
         Assert.That(loginResult.PasswordChangeRequired, Is.True);
 
         await ApiClient.GetAndVerify("/users", HttpStatusCode.Unauthorized, tokenOverride: loginResult.Token);
+
+        var update = new UpdateUserRequestDataContract
+        {
+            Username = user.Username,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Password = "another complex password!",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
+        };
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
+        var json = JsonConvert.SerializeObject(update);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var result = await httpClient.PutAsync($"/users/{id}", data);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        // Stale JWT still has passwordChangeRequired claim, but DB flag is cleared —
+        // subsequent requests must not keep forcing a password change.
+        var postChangeUpdate = new UpdateUserRequestDataContract
+        {
+            Username = user.Username,
+            FirstName = "AfterChange",
+            LastName = user.LastName,
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
+        };
+        var postChangeJson = JsonConvert.SerializeObject(postChangeUpdate);
+        var postChangeData = new StringContent(postChangeJson, Encoding.UTF8, "application/json");
+        var postChangeResult = await httpClient.PutAsync($"/users/{id}", postChangeData);
+        Assert.That(postChangeResult.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var secondLogin = await Login(user.Username, update.Password);
+        Assert.That(secondLogin.PasswordChangeRequired, Is.False);
+    }
+
+    [Test]
+    public async Task ShallAllowReadOnlyUserToClearForcedPasswordChange()
+    {
+        var user = NewUser(username: "forcedReadOnly", role: Role.ReadOnly, passwordChangeRequired: true);
+        var id = await CreateUser(user);
+
+        var loginResult = await Login(user.Username, user.Password!);
+        Assert.That(loginResult.PasswordChangeRequired, Is.True);
+
+        var update = new UpdateUserRequestDataContract
+        {
+            Username = user.Username,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Password = "another complex password!",
+            AllowedClassifications = Enum.GetValues<Classification>().ToList()
+        };
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", loginResult.Token);
+        var json = JsonConvert.SerializeObject(update);
+        var data = new StringContent(json, Encoding.UTF8, "application/json");
+        var result = await httpClient.PutAsync($"/users/{id}", data);
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+
+        var secondLogin = await Login(user.Username, update.Password);
+        Assert.That(secondLogin.PasswordChangeRequired, Is.False);
+    }
+
+    [Test]
+    public async Task ShallAllowDashboardUserToClearForcedPasswordChange()
+    {
+        var user = NewUser(username: "forcedDashboard", role: Role.Dashboard, passwordChangeRequired: true);
+        var id = await CreateUser(user);
+
+        var loginResult = await Login(user.Username, user.Password!);
+        Assert.That(loginResult.PasswordChangeRequired, Is.True);
 
         var update = new UpdateUserRequestDataContract
         {

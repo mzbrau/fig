@@ -9,13 +9,14 @@
 }
 else
 {
-    <RadzenChart>
-        <RadzenDonutSeries Data="@Points"
-                           CategoryProperty="@nameof(DashboardChartPoint.Label)"
-                           ValueProperty="@nameof(DashboardChartPoint.Value)"
-                           Title="@(Title ?? "Values")" />
-        <RadzenLegend Visible="@LegendVisible" Position="@LegendPosition" />
-    </RadzenChart>
+    <div class="@RootClass">
+        <RadzenChart>
+            <RadzenDonutSeries Data="@Points"
+                               CategoryProperty="@nameof(DashboardChartPoint.Label)"
+                               ValueProperty="@nameof(DashboardChartPoint.Value)" />
+            <RadzenLegend Visible="@LegendVisible" Position="@LegendPosition" />
+        </RadzenChart>
+    </div>
 }
 
 @code {
@@ -26,4 +27,12 @@ else
     [Parameter] public LegendPosition LegendPosition { get; set; } = LegendPosition.Right;
 
     [Parameter] public bool LegendVisible { get; set; } = true;
+
+    /// <summary>Visual size: <c>large</c> (default) or <c>small</c>.</summary>
+    [Parameter] public string Size { get; set; } = "large";
+
+    private string NormalizedSize =>
+        string.Equals(Size, "small", StringComparison.OrdinalIgnoreCase) ? "small" : "large";
+
+    private string RootClass => $"dashboard-chart dashboard-chart--{NormalizedSize}";
 }

@@ -166,6 +166,15 @@ public class DashboardTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task ShallAllowCaseOnlyRename()
+    {
+        var created = await CreateDashboard(CreateTestDashboard("Overview"));
+        created.Name = "OVERVIEW";
+        var updated = await UpdateDashboard(created.Id!.Value, created);
+        Assert.That(updated.Name, Is.EqualTo("OVERVIEW"));
+    }
+
+    [Test]
     public async Task ShallReturnBadRequestForEmptyName()
     {
         var response = await CreateDashboardRaw(CreateTestDashboard("  "));
@@ -250,5 +259,15 @@ public class DashboardTests : IntegrationTestBase
 
         await ApiClient.GetAndVerify("/clients", HttpStatusCode.OK, tokenOverride: login.Token);
         await ApiClient.GetAndVerify("/statuses", HttpStatusCode.OK, tokenOverride: login.Token);
+    }
+
+    [Test]
+    public async Task ShallAllowDashboardRoleToGetSettingGroups()
+    {
+        var user = NewUser(username: "dashGroups", role: Role.Dashboard);
+        await CreateUser(user);
+        var login = await Login(user.Username, user.Password!);
+
+        await ApiClient.GetAndVerify("/settinggroups", HttpStatusCode.OK, tokenOverride: login.Token);
     }
 }

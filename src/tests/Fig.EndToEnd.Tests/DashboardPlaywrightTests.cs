@@ -7,8 +7,8 @@ namespace Fig.EndToEnd.Tests;
 [TestFixture]
 public class DashboardPlaywrightTests : EndToEndTestBase
 {
-    // Enable when the end-to-end harness is configured for dashboards CI runs.
-    //[Test]
+    [Test]
+    [Ignore("Requires dashboard-capable E2E harness / wallboard user in CI")]
     public async Task AdminCanCreateAndOpenDashboard()
     {
         var page = await GetPage();
@@ -20,7 +20,8 @@ public class DashboardPlaywrightTests : EndToEndTestBase
         await Expect(page.Locator(".dashboards-page")).ToBeVisibleAsync();
     }
 
-    //[Test]
+    [Test]
+    [Ignore("Requires dashboard-capable E2E harness / wallboard user in CI")]
     public async Task DashboardRoleSeesDashboardsOnlyChrome()
     {
         var page = await GetPage();

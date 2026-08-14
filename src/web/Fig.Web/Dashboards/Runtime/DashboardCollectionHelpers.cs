@@ -20,8 +20,6 @@ public sealed class DashboardJsArray : IEnumerable<object?>
 
     public int length => _items.Count;
 
-    public int Count => _items.Count;
-
     public object? this[int index] => _items[index];
 
     public DashboardJsArray filter(Func<object?, bool> predicate)
