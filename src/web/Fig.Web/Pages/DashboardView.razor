@@ -24,25 +24,54 @@ else if (_dashboard is null)
 else
 {
     <div class="dashboard-view @(_wallboard ? "dashboard-view--wallboard" : null)">
+        @if (ShowStatusBar)
+        {
+            <div class="dashboard-view__status-bar">
+                <div class="dashboard-view__status-bar-left">
+                    <img class="dashboard-view__status-bar-logo"
+                         src="images/fig_logo_name_right_white_299x135.png"
+                         alt="Fig"
+                         width="72"
+                         height="32" />
+                    <span class="dashboard-view__status-bar-name">@_dashboard.Name</span>
+                    <span class="dashboard-view__status-bar-cache text-muted">
+                        Status cached: @FormatCache(DataProvider.StatusLastRefreshUtc)
+                        · Settings cached: @FormatCache(DataProvider.SettingsLastRefreshUtc)
+                    </span>
+                </div>
+                <div class="dashboard-view__status-bar-right">
+                    <ConnectionStatus ShowStaleStatus="false" />
+                    @if (_wallboard)
+                    {
+                        <RadzenButton Icon="fullscreen_exit" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary"
+                                      Text="Exit wallboard" Click="@ToggleWallboard" title="Exit wallboard (Esc)" />
+                    }
+                </div>
+            </div>
+        }
+
         @if (!_wallboard)
         {
             <div class="dashboard-view__toolbar">
-                <div class="dashboard-view__title-block">
-                    <h2 class="mb-0">@_dashboard.Name</h2>
-                    @if (!string.IsNullOrWhiteSpace(_dashboard.Description))
-                    {
-                        <p class="mb-0 text-muted">@_dashboard.Description</p>
-                    }
-                </div>
-                <div class="dashboard-view__actions d-flex flex-wrap gap-2">
+                @if (!IsDashboardRole)
+                {
+                    <div class="dashboard-view__title-block">
+                        <h2 class="mb-0">@_dashboard.Name</h2>
+                        @if (!string.IsNullOrWhiteSpace(_dashboard.Description))
+                        {
+                            <p class="mb-0 text-muted">@_dashboard.Description</p>
+                        }
+                    </div>
+                }
+                <div class="dashboard-view__actions d-flex flex-wrap gap-2 @(IsDashboardRole ? "ms-auto" : null)">
                     <RadzenButton Text="Refresh status" Icon="sync" Size="ButtonSize.Small"
                                   ButtonStyle="ButtonStyle.Light" IsBusy="_refreshingStatus"
                                   Click="@RefreshStatus" />
                     <RadzenButton Text="Refresh settings" Icon="settings_suggest" Size="ButtonSize.Small"
                                   ButtonStyle="ButtonStyle.Light" IsBusy="_refreshingSettings"
                                   Click="@RefreshSettings" />
-                    <RadzenButton Text="@(_wallboard ? "Exit wallboard" : "Wallboard")"
-                                  Icon="@(_wallboard ? "fullscreen_exit" : "fullscreen")"
+                    <RadzenButton Text="Wallboard"
+                                  Icon="fullscreen"
                                   Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary"
                                   Click="@ToggleWallboard" />
                     <RadzenButton Text="Export HTML" Icon="download" Size="ButtonSize.Small"
@@ -57,17 +86,13 @@ else
                                   ButtonStyle="ButtonStyle.Light" Click="@GoToList" />
                 </div>
             </div>
-            <div class="dashboard-view__meta text-muted mb-2">
-                Status cached: @FormatCache(DataProvider.StatusLastRefreshUtc)
-                · Settings cached: @FormatCache(DataProvider.SettingsLastRefreshUtc)
-            </div>
-        }
-        else
-        {
-            <div class="dashboard-view__wallboard-exit">
-                <RadzenButton Icon="fullscreen_exit" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary"
-                              Text="Exit wallboard" Click="@ToggleWallboard" title="Exit wallboard (Esc)" />
-            </div>
+            @if (!IsDashboardRole)
+            {
+                <div class="dashboard-view__meta text-muted mb-2">
+                    Status cached: @FormatCache(DataProvider.StatusLastRefreshUtc)
+                    · Settings cached: @FormatCache(DataProvider.SettingsLastRefreshUtc)
+                </div>
+            }
         }
 
         <div @ref="_viewRoot" tabindex="0" class="dashboard-view__focus-host"

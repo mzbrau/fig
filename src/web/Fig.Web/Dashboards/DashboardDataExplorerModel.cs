@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using Fig.Web.Dashboards.Runtime;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -12,44 +13,69 @@ namespace Fig.Web.Dashboards;
 /// </summary>
 public static class DashboardDataExplorerModel
 {
-    public static IReadOnlyList<DashboardDataExplorerNode> Build(
-        DashboardFigRoot? fig,
-        IReadOnlyDictionary<string, object?>? namedTransforms = null)
-    {
-        var roots = new List<DashboardDataExplorerNode>();
+    private static readonly Regex JsIdentifier = new(@"^[A-Za-z_$][A-Za-z0-9_$]*$", RegexOptions.Compiled);
 
+    public static IReadOnlyList<DashboardDataExplorerNode> Build(DashboardFigRoot? fig)
+    {
+        const string rootPath = "fig";
         var clients = EnumerateJsArray(fig?.clients);
         var runSessions = EnumerateJsArray(fig?.runSessions);
+
+        var clientsPath = JoinPath(rootPath, "clients");
+        var runSessionsPath = JoinPath(rootPath, "runSessions");
+
         var figChildren = new List<DashboardDataExplorerNode>
         {
             new(
                 "clients",
+                clientsPath,
                 $"array ({clients.Count})",
                 null,
-                clients.Select((client, index) => ObjectOrValueNode($"[{index}]", client)).ToList()),
+                clients.Select((client, index) =>
+                    ObjectOrValueNode($"[{index}]", JoinPath(clientsPath, $"[{index}]"), client)).ToList()),
             new(
                 "runSessions",
+                runSessionsPath,
                 $"array ({runSessions.Count})",
                 null,
-                runSessions.Select((session, index) => ObjectOrValueNode($"[{index}]", session)).ToList())
+                runSessions.Select((session, index) =>
+                    ObjectOrValueNode($"[{index}]", JoinPath(runSessionsPath, $"[{index}]"), session)).ToList())
         };
 
-        roots.Add(new DashboardDataExplorerNode("fig", "object", null, figChildren));
-
-        if (namedTransforms is { Count: > 0 })
-        {
-            roots.Add(new DashboardDataExplorerNode(
-                "transforms",
-                $"object ({namedTransforms.Count})",
-                null,
-                namedTransforms
-                    .OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase)
-                    .Select(kv => ValueNode(kv.Key, kv.Value))
-                    .ToList()));
-        }
-
-        return roots;
+        return
+        [
+            new DashboardDataExplorerNode("fig", rootPath, "object", null, figChildren)
+        ];
     }
+
+    /// <summary>
+    /// Formats a dictionary key as a JS path segment (without a leading parent).
+    /// Valid identifiers return the bare key (caller joins with a dot); others return <c>["escaped"]</c>.
+    /// </summary>
+    public static string FormatPathSegment(string key)
+    {
+        if (IsValidJsIdentifier(key))
+            return key;
+
+        return "[" + JsonConvert.SerializeObject(key) + "]";
+    }
+
+    public static string JoinPath(string parentPath, string segment)
+    {
+        if (string.IsNullOrEmpty(parentPath))
+            return segment;
+
+        if (string.IsNullOrEmpty(segment))
+            return parentPath;
+
+        if (segment.StartsWith('['))
+            return parentPath + segment;
+
+        return parentPath + "." + segment;
+    }
+
+    public static bool IsValidJsIdentifier(string key) =>
+        !string.IsNullOrEmpty(key) && JsIdentifier.IsMatch(key);
 
     public static string FormatValue(object? value)
     {
@@ -115,10 +141,10 @@ public static class DashboardDataExplorerModel
         return type.Name;
     }
 
-    private static DashboardDataExplorerNode ObjectNode(string label, object? value)
+    private static DashboardDataExplorerNode ObjectNode(string label, string path, object? value)
     {
         if (value is null)
-            return new DashboardDataExplorerNode(label, "null", "null", Array.Empty<DashboardDataExplorerNode>());
+            return new DashboardDataExplorerNode(label, path, "null", "null", Array.Empty<DashboardDataExplorerNode>());
 
         var children = new List<DashboardDataExplorerNode>();
         foreach (var prop in value.GetType().GetProperties(BindingFlags.Instance | BindingFlags.Public))
@@ -136,22 +162,28 @@ public static class DashboardDataExplorerModel
                 continue;
             }
 
-            children.Add(ValueNode(prop.Name, propValue));
+            var childPath = JoinPath(path, prop.Name);
+            children.Add(ValueNode(prop.Name, childPath, propValue));
         }
 
-        return new DashboardDataExplorerNode(label, TypeName(value), null, children);
+        return new DashboardDataExplorerNode(label, path, TypeName(value), null, children);
     }
 
-    private static DashboardDataExplorerNode ValueNode(string name, object? value)
+    private static DashboardDataExplorerNode ValueNode(string name, string path, object? value)
     {
         if (value is DashboardJsArray jsArray)
         {
             var items = EnumerateJsArray(jsArray);
             return new DashboardDataExplorerNode(
                 name,
+                path,
                 $"array ({items.Count})",
                 null,
-                items.Select((item, index) => ObjectOrValueNode($"[{index}]", item)).ToList());
+                items.Select((item, index) =>
+                {
+                    var segment = $"[{index}]";
+                    return ObjectOrValueNode(segment, JoinPath(path, segment), item);
+                }).ToList());
         }
 
         if (value is IDictionary dictionary)
@@ -160,10 +192,11 @@ public static class DashboardDataExplorerModel
             foreach (DictionaryEntry entry in dictionary)
             {
                 var key = entry.Key?.ToString() ?? string.Empty;
-                children.Add(ObjectOrValueNode(key, entry.Value));
+                var segment = FormatPathSegment(key);
+                children.Add(ObjectOrValueNode(key, JoinPath(path, segment), entry.Value));
             }
 
-            return new DashboardDataExplorerNode(name, $"object ({children.Count})", null, children);
+            return new DashboardDataExplorerNode(name, path, $"object ({children.Count})", null, children);
         }
 
         if (value is not null and not string and IEnumerable enumerable and not JToken)
@@ -171,26 +204,33 @@ public static class DashboardDataExplorerModel
             var list = enumerable.Cast<object?>().ToList();
             return new DashboardDataExplorerNode(
                 name,
+                path,
                 $"array ({list.Count})",
                 null,
-                list.Select((item, index) => ObjectOrValueNode($"[{index}]", item)).ToList());
+                list.Select((item, index) =>
+                {
+                    var segment = $"[{index}]";
+                    return ObjectOrValueNode(segment, JoinPath(path, segment), item);
+                }).ToList());
         }
 
         if (value is not null && !IsLeaf(value))
-            return ObjectNode(name, value);
+            return ObjectNode(name, path, value);
 
-        return new DashboardDataExplorerNode(name, TypeName(value), FormatValue(value), Array.Empty<DashboardDataExplorerNode>());
+        return new DashboardDataExplorerNode(
+            name, path, TypeName(value), FormatValue(value), Array.Empty<DashboardDataExplorerNode>());
     }
 
-    private static DashboardDataExplorerNode ObjectOrValueNode(string label, object? value)
+    private static DashboardDataExplorerNode ObjectOrValueNode(string label, string path, object? value)
     {
         if (value is null || IsLeaf(value))
-            return new DashboardDataExplorerNode(label, TypeName(value), FormatValue(value), Array.Empty<DashboardDataExplorerNode>());
+            return new DashboardDataExplorerNode(
+                label, path, TypeName(value), FormatValue(value), Array.Empty<DashboardDataExplorerNode>());
 
         if (value is IDictionary or DashboardJsArray or (IEnumerable and not string))
-            return ValueNode(label, value);
+            return ValueNode(label, path, value);
 
-        return ObjectNode(label, value);
+        return ObjectNode(label, path, value);
     }
 
     private static bool IsLeaf(object value) =>
@@ -213,17 +253,22 @@ public sealed class DashboardDataExplorerNode
 {
     public DashboardDataExplorerNode(
         string name,
+        string path,
         string type,
         string? value,
         IReadOnlyList<DashboardDataExplorerNode> children)
     {
         Name = name;
+        Path = path;
         Type = type;
         Value = value;
         Children = children;
     }
 
     public string Name { get; }
+
+    /// <summary>Paste-ready JS path, e.g. <c>fig.runSessions[0].applicationVersion</c>.</summary>
+    public string Path { get; }
 
     public string Type { get; }
 

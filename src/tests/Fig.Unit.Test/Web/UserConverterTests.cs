@@ -46,13 +46,25 @@ public class UserConverterTests
     }
 
     [Test]
-    public void ConvertForUpdate_ShouldSendPasswordChangeRequirement_WhenAutoApplied()
+    public void ConvertForRegistration_ShouldSendPasswordChangeRequirement_WhenUnchecked()
     {
         var model = CreateUserModel();
-        model.PasswordChangeRequired = true;
-        model.PasswordChangeRequiredAutoApplied = true;
+        model.Password = "a strong password for registration!";
+        model.PasswordChangeRequired = false;
 
-        var result = _sut.ConvertForUpdate(model);
+        var result = _sut.ConvertForRegistration(model);
+
+        Assert.That(result.PasswordChangeRequired, Is.False);
+    }
+
+    [Test]
+    public void ConvertForRegistration_ShouldSendPasswordChangeRequirement_WhenChecked()
+    {
+        var model = CreateUserModel();
+        model.Password = "a strong password for registration!";
+        model.PasswordChangeRequired = true;
+
+        var result = _sut.ConvertForRegistration(model);
 
         Assert.That(result.PasswordChangeRequired, Is.True);
     }

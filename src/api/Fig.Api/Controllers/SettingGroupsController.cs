@@ -19,7 +19,7 @@ public class SettingGroupsController : ControllerBase
         _settingGroupService = settingGroupService;
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet]
     public async Task<IActionResult> GetAllGroups()
     {
@@ -27,7 +27,7 @@ public class SettingGroupsController : ControllerBase
         return Ok(groups);
     }
 
-    [Authorize(Role.Administrator, Role.User, Role.ReadOnly)]
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
     [HttpGet("{id}")]
     public async Task<IActionResult> GetGroup(Guid id)
     {

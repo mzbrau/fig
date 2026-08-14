@@ -8,15 +8,75 @@ public class DashboardKpiInput
 
     public object? Trend { get; set; }
 
+    /// <summary>normal | info | success | warning | danger</summary>
     public string? Variant { get; set; }
+
+    /// <summary>When set with <see cref="Denominator"/>, displayed as numerator/denominator instead of <see cref="Value"/>.</summary>
+    public object? Numerator { get; set; }
+
+    public object? Denominator { get; set; }
+
+    public string? Subtitle { get; set; }
+
+    /// <summary>Radzen Material icon name; null/empty hides the icon.</summary>
+    public string? Icon { get; set; }
+}
+
+public class DashboardCardRow
+{
+    public string? Key { get; set; }
+
+    public object? Value { get; set; }
+}
+
+public class DashboardCardItem
+{
+    public string? Title { get; set; }
+
+    public object? Value { get; set; }
+
+    /// <summary>normal | info | success | warning | danger</summary>
+    public string? Variant { get; set; }
+
+    /// <summary>Radzen Material icon name; null/empty hides the icon.</summary>
+    public string? Icon { get; set; }
+
+    public IReadOnlyList<DashboardCardRow> Rows { get; set; } =
+        Array.Empty<DashboardCardRow>();
+}
+
+public class DashboardCardsInput
+{
+    public IReadOnlyList<DashboardCardItem> Cards { get; set; } =
+        Array.Empty<DashboardCardItem>();
 }
 
 public class DashboardTextInput
 {
+    public IReadOnlyList<DashboardTextLine> Lines { get; set; } = Array.Empty<DashboardTextLine>();
+
+    /// <summary>Legacy single-line text; preferred shape is <see cref="Lines"/>.</summary>
     public string? Text { get; set; }
 
-    /// <summary>heading | body | muted</summary>
+    /// <summary>Legacy variant (heading|body|muted); mapped to size when Lines is empty.</summary>
     public string? Variant { get; set; }
+}
+
+public class DashboardTextLine
+{
+    public string? Text { get; set; }
+
+    /// <summary>xs | sm | md | lg | xl | xxl</summary>
+    public string? Size { get; set; }
+
+    /// <summary>Any CSS color.</summary>
+    public string? Color { get; set; }
+
+    /// <summary>left | center | right</summary>
+    public string? Align { get; set; }
+
+    /// <summary>normal | bold</summary>
+    public string? Weight { get; set; }
 }
 
 public class DashboardBadgeInput

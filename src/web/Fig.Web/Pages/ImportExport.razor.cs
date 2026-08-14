@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Options;
 using Microsoft.JSInterop;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Radzen;
 using Radzen.Blazor;
 
@@ -1089,17 +1090,29 @@ public partial class ImportExport : IDisposable
 
     private static List<DashboardDataContract> ParseDashboardImport(string json)
     {
-        var wrapped = JsonConvert.DeserializeObject<DashboardDefinitionExport>(json);
-        if (wrapped?.Dashboards is { Count: > 0 })
-            return wrapped.Dashboards;
+        var token = JToken.Parse(json);
 
-        var list = JsonConvert.DeserializeObject<List<DashboardDataContract>>(json);
-        if (list is { Count: > 0 })
-            return list;
+        if (token is JObject obj &&
+            (obj["dashboards"] is not null || obj["Dashboards"] is not null))
+        {
+            var wrapped = obj.ToObject<DashboardDefinitionExport>();
+            if (wrapped?.Dashboards is { Count: > 0 })
+                return wrapped.Dashboards;
+        }
 
-        var single = JsonConvert.DeserializeObject<DashboardDataContract>(json);
-        if (single is not null && !string.IsNullOrWhiteSpace(single.Name))
-            return [single];
+        if (token is JArray)
+        {
+            var list = token.ToObject<List<DashboardDataContract>>();
+            if (list is { Count: > 0 })
+                return list;
+        }
+
+        if (token is JObject)
+        {
+            var single = token.ToObject<DashboardDataContract>();
+            if (single is not null && !string.IsNullOrWhiteSpace(single.Name))
+                return [single];
+        }
 
         return [];
     }

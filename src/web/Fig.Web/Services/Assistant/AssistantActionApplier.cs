@@ -156,7 +156,11 @@ public sealed class AssistantActionApplier : IAssistantActionApplier
             {
                 var componentId = RequiredParameter(action, "componentId");
                 var script = RequiredParameter(action, "script");
-                _dashboardActionQueue.EnqueueInlineScriptUpdate(componentId, script);
+                Guid? dashboardId = null;
+                var dashboardIdText = GetParameter(action, "dashboardId");
+                if (!string.IsNullOrWhiteSpace(dashboardIdText) && Guid.TryParse(dashboardIdText, out var parsed))
+                    dashboardId = parsed;
+                _dashboardActionQueue.EnqueueInlineScriptUpdate(componentId, script, dashboardId);
                 return AppliedKind.DraftWithDashboard;
             }
 

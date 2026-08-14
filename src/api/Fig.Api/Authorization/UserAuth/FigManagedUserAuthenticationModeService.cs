@@ -33,7 +33,7 @@ public class FigManagedUserAuthenticationModeService : IUserAuthenticationModeSe
             return null;
 
         var user = await _userService.GetById(tokenData.UserId);
-        user.PasswordChangeRequired = tokenData.PasswordChangeRequired;
+        user.PasswordChangeRequired = tokenData.PasswordChangeRequired && user.PasswordChangeRequired;
         return user;
     }
 }

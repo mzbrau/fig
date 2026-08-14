@@ -119,6 +119,10 @@ public class DashboardHtmlExporter
             case "keyvalue":
                 RenderKeyValue(sb, DashboardComponentDataBinder.ToKeyValue(data, component.Config));
                 break;
+            case "cards":
+                RenderCards(sb, DashboardComponentDataBinder.ToCards(data),
+                    DashboardComponentDataBinder.ReadCardStyle(component.Config));
+                break;
             case "bar":
                 RenderChart(sb, chartScripts, ref chartIndex, "bar",
                     DashboardComponentDataBinder.ToChartPoints(data),
@@ -127,7 +131,8 @@ public class DashboardHtmlExporter
             case "donut":
                 RenderChart(sb, chartScripts, ref chartIndex, "doughnut",
                     DashboardComponentDataBinder.ToChartPoints(data),
-                    DashboardComponentDataBinder.ReadLegendPositionCss(component.Config));
+                    DashboardComponentDataBinder.ReadLegendPositionCss(component.Config),
+                    DashboardComponentDataBinder.ReadChartSize(component.Config));
                 break;
             default:
                 sb.AppendLine($"<div class=\"error\">Unknown type '{Html(component.Type)}'</div>");
@@ -138,20 +143,126 @@ public class DashboardHtmlExporter
     private static void RenderKpi(StringBuilder sb, DashboardKpiInput input)
     {
         var variant = string.IsNullOrWhiteSpace(input.Variant) ? "" : $" kpi--{Html(input.Variant)}";
-        sb.AppendLine($"<div class=\"kpi{variant}\">");
+        var hasIcon = !string.IsNullOrWhiteSpace(input.Icon);
+        var iconClass = hasIcon ? " kpi--has-icon" : "";
+        sb.AppendLine($"<div class=\"kpi{variant}{iconClass}\">");
+        if (hasIcon)
+            sb.AppendLine($"<div class=\"kpi__icon\">{Html(input.Icon)}</div>");
         if (!string.IsNullOrWhiteSpace(input.Label))
             sb.AppendLine($"<div class=\"kpi__label\">{Html(input.Label)}</div>");
-        sb.AppendLine($"<div class=\"kpi__value\">{Html(FormatValue(input.Value))}</div>");
-        if (input.Trend is not null)
+        sb.AppendLine($"<div class=\"kpi__value\">{Html(FormatKpiValue(input))}</div>");
+        if (!string.IsNullOrWhiteSpace(input.Subtitle))
+            sb.AppendLine($"<div class=\"kpi__subtitle\">{Html(input.Subtitle)}</div>");
+        else if (input.Trend is not null)
             sb.AppendLine($"<div class=\"kpi__trend\">{Html(FormatValue(input.Trend))}</div>");
+        sb.AppendLine("</div>");
+    }
+
+    private static string FormatKpiValue(DashboardKpiInput input)
+    {
+        if (input.Numerator is not null && input.Denominator is not null)
+            return $"{FormatValue(input.Numerator)}/{FormatValue(input.Denominator)}";
+        return FormatValue(input.Value);
+    }
+
+    private static void RenderCards(StringBuilder sb, DashboardCardsInput input, string style)
+    {
+        if (input.Cards.Count == 0)
+        {
+            sb.AppendLine("<div class=\"empty\">No cards</div>");
+            return;
+        }
+
+        var styleClass = string.Equals(style, "extraWide", StringComparison.OrdinalIgnoreCase)
+            ? " cards--extraWide"
+            : string.Equals(style, "wide", StringComparison.OrdinalIgnoreCase)
+                ? " cards--wide"
+                : " cards--compact";
+        sb.AppendLine($"<div class=\"cards{styleClass}\">");
+        foreach (var card in input.Cards)
+        {
+            var variant = string.IsNullOrWhiteSpace(card.Variant) ? "" : $" card--{Html(card.Variant)}";
+            var hasIcon = !string.IsNullOrWhiteSpace(card.Icon);
+            var iconClass = hasIcon ? " card--has-icon" : "";
+            sb.AppendLine($"<div class=\"card{variant}{iconClass}\">");
+            if (hasIcon)
+                sb.AppendLine($"<div class=\"card__icon\">{Html(card.Icon)}</div>");
+            if (!string.IsNullOrWhiteSpace(card.Title))
+                sb.AppendLine($"<div class=\"card__title\">{Html(card.Title)}</div>");
+            sb.AppendLine($"<div class=\"card__value\">{Html(FormatValue(card.Value))}</div>");
+            if (card.Rows.Count > 0)
+            {
+                sb.AppendLine("<dl class=\"card__rows\">");
+                foreach (var row in card.Rows)
+                {
+                    sb.AppendLine("<div class=\"card__row\">");
+                    sb.AppendLine($"<dt>{Html(row.Key)}</dt>");
+                    var rowValue = FormatValue(row.Value);
+                    sb.AppendLine($"<dd title=\"{Html(rowValue)}\">{Html(rowValue)}</dd>");
+                    sb.AppendLine("</div>");
+                }
+
+                sb.AppendLine("</dl>");
+            }
+
+            sb.AppendLine("</div>");
+        }
+
         sb.AppendLine("</div>");
     }
 
     private static void RenderText(StringBuilder sb, DashboardTextInput input)
     {
-        var variant = string.IsNullOrWhiteSpace(input.Variant) ? "body" : input.Variant!;
-        sb.AppendLine($"<p class=\"text text--{Html(variant)}\">{Html(input.Text)}</p>");
+        var lines = input.Lines;
+        if (lines.Count == 0 && !string.IsNullOrWhiteSpace(input.Text))
+        {
+            var size = (input.Variant ?? string.Empty).Trim().ToLowerInvariant() switch
+            {
+                "heading" => "xl",
+                "muted" => "sm",
+                _ => "md"
+            };
+            lines = [new DashboardTextLine { Text = input.Text, Size = size }];
+        }
+
+        if (lines.Count == 0)
+        {
+            sb.AppendLine("<div class=\"text\"></div>");
+            return;
+        }
+
+        sb.AppendLine("<div class=\"text\">");
+        foreach (var line in lines)
+        {
+            var size = NormalizeTextSize(line.Size);
+            var align = NormalizeTextAlign(line.Align);
+            var weight = string.Equals(line.Weight, "bold", StringComparison.OrdinalIgnoreCase) ? "bold" : "normal";
+            var style = string.IsNullOrWhiteSpace(line.Color) ? string.Empty : $" style=\"color:{Html(line.Color)}\"";
+            sb.AppendLine(
+                $"<div class=\"text__line text__line--{size} text__line--align-{align} text__line--weight-{weight}\"{style}>{Html(line.Text)}</div>");
+        }
+
+        sb.AppendLine("</div>");
     }
+
+    private static string NormalizeTextSize(string? size) =>
+        (size ?? "md").Trim().ToLowerInvariant() switch
+        {
+            "xs" => "xs",
+            "sm" => "sm",
+            "lg" => "lg",
+            "xl" => "xl",
+            "xxl" => "xxl",
+            _ => "md"
+        };
+
+    private static string NormalizeTextAlign(string? align) =>
+        (align ?? "left").Trim().ToLowerInvariant() switch
+        {
+            "center" => "center",
+            "right" => "right",
+            _ => "left"
+        };
 
     private static void RenderBadge(StringBuilder sb, DashboardBadgeInput input)
     {
@@ -197,7 +308,13 @@ public class DashboardHtmlExporter
         sb.AppendLine("<ul class=\"list\">");
         foreach (var item in input.Items)
         {
-            sb.AppendLine("<li>");
+            var variant = string.IsNullOrWhiteSpace(item.Variant)
+                ? "normal"
+                : item.Variant.Trim().ToLowerInvariant();
+            if (variant is "success" or "warning" or "danger" or "info")
+                sb.AppendLine($"<li class=\"list--{Html(variant)}\">");
+            else
+                sb.AppendLine("<li>");
             sb.AppendLine($"<div>{Html(item.Text)}</div>");
             if (!string.IsNullOrWhiteSpace(item.Secondary))
                 sb.AppendLine($"<div class=\"secondary\">{Html(item.Secondary)}</div>");
@@ -215,12 +332,13 @@ public class DashboardHtmlExporter
             return;
         }
 
-        sb.AppendLine("<div class=\"kv-card\">");
-        if (!string.IsNullOrWhiteSpace(input.StatusIcon))
+        var hasStatus = !string.IsNullOrWhiteSpace(input.StatusIcon);
+        sb.AppendLine(hasStatus ? "<div class=\"kv-card kv-card--has-status\">" : "<div class=\"kv-card\">");
+        if (hasStatus)
         {
-            var color = string.IsNullOrWhiteSpace(input.StatusColor) ? "#6c757d" : input.StatusColor!;
+            var color = string.IsNullOrWhiteSpace(input.StatusColor) ? "#9aa0a6" : input.StatusColor!;
             sb.AppendLine(
-                $"<div class=\"kv__status\" style=\"background-color:{Html(color)};\" title=\"{Html(input.StatusIcon)}\">{Html(input.StatusIcon)}</div>");
+                $"<div class=\"kv__status\" style=\"--dash-status-accent:{Html(color)};\" title=\"{Html(input.StatusIcon)}\">{Html(input.StatusIcon)}</div>");
         }
 
         sb.AppendLine("<dl class=\"kv\">");
@@ -242,14 +360,20 @@ public class DashboardHtmlExporter
         ref int chartIndex,
         string chartType,
         IReadOnlyList<DashboardChartPoint> points,
-        string legendPosition = "right")
+        string legendPosition = "right",
+        string chartSize = "large")
     {
         chartIndex++;
         var canvasId = $"chart_{chartIndex}";
-        sb.AppendLine($"<canvas id=\"{canvasId}\" height=\"180\"></canvas>");
+        var canvasHeight = string.Equals(chartSize, "small", StringComparison.OrdinalIgnoreCase) ? 120 : 180;
+        sb.AppendLine($"<canvas id=\"{canvasId}\" height=\"{canvasHeight}\"></canvas>");
 
-        var labels = JsonConvert.SerializeObject(points.Select(p => p.Label ?? string.Empty).ToList());
-        var values = JsonConvert.SerializeObject(points.Select(p => p.Value).ToList());
+        var labels = JsonConvert.SerializeObject(
+            points.Select(p => p.Label ?? string.Empty).ToList(),
+            ScriptJsonSettings);
+        var values = JsonConvert.SerializeObject(
+            points.Select(p => p.Value).ToList(),
+            ScriptJsonSettings);
         var hidden = string.Equals(legendPosition, "hidden", StringComparison.OrdinalIgnoreCase);
         var position = string.Equals(legendPosition, "bottom", StringComparison.OrdinalIgnoreCase)
             ? "bottom"
@@ -295,8 +419,28 @@ public class DashboardHtmlExporter
 
     private static string Html(string? value) => WebUtility.HtmlEncode(value ?? string.Empty);
 
+    private static readonly JsonSerializerSettings ScriptJsonSettings = new()
+    {
+        StringEscapeHandling = StringEscapeHandling.EscapeHtml
+    };
+
     private const string Css = """
-        :root { color-scheme: dark; }
+        :root {
+          color-scheme: dark;
+          --dash-success: #8fd18f;
+          --dash-warning: #f5c57a;
+          --dash-danger: #e89996;
+          --dash-info: #8ed3e8;
+          --dash-success-bg: rgba(92, 184, 92, 0.2);
+          --dash-warning-bg: rgba(240, 173, 78, 0.2);
+          --dash-danger-bg: rgba(217, 83, 79, 0.2);
+          --dash-info-bg: rgba(91, 192, 222, 0.2);
+          --dash-status-size: 2rem;
+          --dash-status-icon: 1.15rem;
+          --dash-status-inset: 0.35rem;
+          --dash-item-bg: rgba(255, 255, 255, 0.03);
+          --dash-item-border: rgba(255, 255, 255, 0.06);
+        }
         * { box-sizing: border-box; }
         body {
           margin: 0;
@@ -325,18 +469,121 @@ public class DashboardHtmlExporter
         }
         .title { font-size: 0.85rem; font-weight: 600; opacity: 0.85; margin-bottom: 0.5rem; }
         .empty, .error { opacity: 0.75; }
-        .error { color: #f0ad4e; }
-        .kpi { display: flex; flex-direction: column; gap: 0.25rem; }
-        .kpi__label { opacity: 0.75; font-size: 0.85rem; }
-        .kpi__value { font-size: 2rem; font-weight: 700; }
-        .kpi__trend { font-size: 0.85rem; opacity: 0.8; }
-        .kpi--success .kpi__value { color: #5cb85c; }
-        .kpi--warning .kpi__value { color: #f0ad4e; }
-        .kpi--danger .kpi__value { color: #d9534f; }
-        .kpi--info .kpi__value { color: #5bc0de; }
-        .text--heading { font-size: 1.25rem; font-weight: 600; margin: 0; }
-        .text--body { margin: 0; }
-        .text--muted { margin: 0; opacity: 0.65; }
+        .error { color: var(--dash-warning); }
+        .kpi__icon, .card__icon, .kv__status {
+          position: absolute;
+          top: var(--dash-status-inset); right: var(--dash-status-inset);
+          width: var(--dash-status-size); height: var(--dash-status-size);
+          border-radius: 50%;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(255,255,255,0.12);
+          font-size: var(--dash-status-icon);
+          line-height: 0;
+          overflow: hidden;
+          padding: 0; margin: 0;
+          box-sizing: border-box;
+        }
+        .kpi {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          gap: 0.25rem;
+        }
+        .kpi--has-icon { padding-right: calc(var(--dash-status-size) + var(--dash-status-inset)); }
+        .kpi__label { opacity: 0.8; font-size: 0.85rem; }
+        .kpi__value { font-size: 2.35rem; font-weight: 700; line-height: 1.1; }
+        .kpi__subtitle, .kpi__trend { font-size: 0.85rem; opacity: 0.85; }
+        .kpi--success .kpi__value { color: var(--dash-success); }
+        .kpi--warning .kpi__value { color: var(--dash-warning); }
+        .kpi--danger .kpi__value { color: var(--dash-danger); }
+        .kpi--info .kpi__value { color: var(--dash-info); }
+        .kpi--success .kpi__icon { color: var(--dash-success); background: var(--dash-success-bg); }
+        .kpi--warning .kpi__icon { color: var(--dash-warning); background: var(--dash-warning-bg); }
+        .kpi--danger .kpi__icon { color: var(--dash-danger); background: var(--dash-danger-bg); }
+        .kpi--info .kpi__icon { color: var(--dash-info); background: var(--dash-info-bg); }
+        .cards {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+          gap: 0.5rem;
+        }
+        .cards--wide {
+          grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+          gap: 0.75rem;
+        }
+        .cards--extraWide {
+          grid-template-columns: repeat(auto-fill, minmax(24rem, 1fr));
+          gap: 0.9rem;
+        }
+        .card {
+          position: relative;
+          display: flex;
+          flex-direction: column;
+          gap: 0.2rem;
+          padding: 0.5rem 0.65rem;
+          border-radius: 0.35rem;
+          background: var(--dash-item-bg);
+          border: 1px solid var(--dash-item-border);
+          min-width: 0;
+        }
+        .cards--wide .card {
+          gap: 0.35rem;
+          padding: 0.75rem 0.9rem;
+        }
+        .cards--extraWide .card {
+          gap: 0.4rem;
+          padding: 0.85rem 1rem;
+        }
+        .card--has-icon { padding-right: calc(var(--dash-status-size) + var(--dash-status-inset)); }
+        .cards--wide .card--has-icon { padding-right: calc(var(--dash-status-size) + var(--dash-status-inset) + 0.25rem); }
+        .cards--extraWide .card--has-icon { padding-right: calc(var(--dash-status-size) + var(--dash-status-inset) + 0.35rem); }
+        .card__title { font-size: 0.85rem; font-weight: 600; opacity: 0.8; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .cards--wide .card__title { font-size: 1rem; }
+        .cards--extraWide .card__title { font-size: 1.05rem; }
+        .card__value { font-size: 1.65rem; font-weight: 700; line-height: 1.15; }
+        .cards--wide .card__value { font-size: 2rem; }
+        .cards--extraWide .card__value { font-size: 2.15rem; }
+        .card__rows { margin: 0.35rem 0 0; display: flex; flex-direction: column; gap: 0.2rem; }
+        .cards--wide .card__rows { margin-top: 0.5rem; gap: 0.3rem; }
+        .cards--extraWide .card__rows { margin-top: 0.55rem; gap: 0.35rem; }
+        .card__row { display: grid; grid-template-columns: minmax(0,0.9fr) minmax(0,1.6fr); gap: 0.4rem; align-items: start; font-size: 0.75rem; }
+        .cards--wide .card__row { gap: 0.55rem; font-size: 0.85rem; }
+        .cards--extraWide .card__row { grid-template-columns: minmax(0,0.8fr) minmax(0,2fr); gap: 0.65rem; font-size: 0.9rem; }
+        .card__row dt { margin: 0; font-weight: 700; opacity: 0.85; }
+        .card__row dd {
+          margin: 0;
+          text-align: right;
+          overflow: hidden;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          line-clamp: 2;
+          white-space: normal;
+          overflow-wrap: anywhere;
+          word-break: break-word;
+          opacity: 0.9;
+        }
+        .card--success .card__value { color: var(--dash-success); }
+        .card--warning .card__value { color: var(--dash-warning); }
+        .card--danger .card__value { color: var(--dash-danger); }
+        .card--info .card__value { color: var(--dash-info); }
+        .card--success .card__icon { color: var(--dash-success); background: var(--dash-success-bg); }
+        .card--warning .card__icon { color: var(--dash-warning); background: var(--dash-warning-bg); }
+        .card--danger .card__icon { color: var(--dash-danger); background: var(--dash-danger-bg); }
+        .card--info .card__icon { color: var(--dash-info); background: var(--dash-info-bg); }
+        .text { display: flex; flex-direction: column; gap: 0.15rem; }
+        .text__line { margin: 0; line-height: 1.25; word-break: break-word; }
+        .text__line--xs { font-size: 0.75rem; }
+        .text__line--sm { font-size: 0.85rem; opacity: 0.8; }
+        .text__line--md { font-size: 1rem; }
+        .text__line--lg { font-size: 1.25rem; }
+        .text__line--xl { font-size: 1.6rem; font-weight: 600; }
+        .text__line--xxl { font-size: 2.4rem; font-weight: 700; letter-spacing: -0.02em; }
+        .text__line--align-left { text-align: left; }
+        .text__line--align-center { text-align: center; }
+        .text__line--align-right { text-align: right; }
+        .text__line--weight-normal { font-weight: 400; }
+        .text__line--weight-bold { font-weight: 700; }
         .badge {
           display: inline-block;
           padding: 0.2rem 0.55rem;
@@ -345,10 +592,10 @@ public class DashboardHtmlExporter
           font-weight: 600;
           background: rgba(255,255,255,0.08);
         }
-        .badge--info { background: rgba(91,192,222,0.25); color: #5bc0de; }
-        .badge--success { background: rgba(92,184,92,0.25); color: #5cb85c; }
-        .badge--warning { background: rgba(240,173,78,0.25); color: #f0ad4e; }
-        .badge--danger { background: rgba(217,83,79,0.25); color: #d9534f; }
+        .badge--info { background: var(--dash-info-bg); color: var(--dash-info); }
+        .badge--success { background: var(--dash-success-bg); color: var(--dash-success); }
+        .badge--warning { background: var(--dash-warning-bg); color: var(--dash-warning); }
+        .badge--danger { background: var(--dash-danger-bg); color: var(--dash-danger); }
         .badge--muted { opacity: 0.7; }
         .table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         .table th, .table td {
@@ -362,14 +609,23 @@ public class DashboardHtmlExporter
         }
         .table th { opacity: 0.8; }
         .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
-        .list li { padding: 0.35rem 0.5rem; border-radius: 0.35rem; background: rgba(255,255,255,0.03); }
+        .list li {
+          padding: 0.35rem 0.5rem;
+          border-radius: 0.35rem;
+          background: var(--dash-item-bg);
+          border-left: 3px solid transparent;
+        }
+        .list li.list--success { border-left-color: var(--dash-success); }
+        .list li.list--warning { border-left-color: var(--dash-warning); }
+        .list li.list--danger { border-left-color: var(--dash-danger); }
+        .list li.list--info { border-left-color: var(--dash-info); }
         .secondary { font-size: 0.8rem; opacity: 0.7; }
-        .kv-card { position: relative; padding-right: 2.75rem; }
+        .kv-card { position: relative; }
+        .kv-card--has-status { padding-right: calc(var(--dash-status-size) + var(--dash-status-inset)); }
         .kv__status {
-          position: absolute; top: 0; right: 0;
-          min-width: 2.25rem; height: 2.25rem; padding: 0 0.4rem;
-          border-radius: 999px; display: flex; align-items: center; justify-content: center;
-          font-size: 0.75rem; font-weight: 700; color: #fff;
+          color: var(--dash-status-accent, #9aa0a6);
+          background: color-mix(in srgb, var(--dash-status-accent, #9aa0a6) 25%, transparent);
+          font-weight: 700;
         }
         .kv { margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
         .kv__row { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1.4fr); gap: 0.75rem; }

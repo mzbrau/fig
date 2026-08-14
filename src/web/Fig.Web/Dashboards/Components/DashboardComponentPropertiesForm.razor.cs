@@ -7,13 +7,26 @@ namespace Fig.Web.Dashboards.Components;
 
 public partial class DashboardComponentPropertiesForm
 {
-    private static readonly string[] BindingModes = ["inline", "preset", "namedTransform"];
+    public const string CustomSuggestionValue = "__custom__";
 
     private static readonly IReadOnlyList<FormDropDownOption> LegendPositionOptions =
     [
         new("right", "Right"),
         new("bottom", "Bottom"),
         new("hidden", "Hidden")
+    ];
+
+    private static readonly IReadOnlyList<FormDropDownOption> CardStyleOptions =
+    [
+        new("compact", "Compact"),
+        new("wide", "Wide"),
+        new("extraWide", "Extra wide")
+    ];
+
+    private static readonly IReadOnlyList<FormDropDownOption> ChartSizeOptions =
+    [
+        new("large", "Large"),
+        new("small", "Small")
     ];
 
     [Parameter] public DashboardComponentInstanceDataContract? Component { get; set; }
@@ -30,14 +43,32 @@ public partial class DashboardComponentPropertiesForm
 
     [Parameter] public bool ShowConfigJson { get; set; } = true;
 
+    /// <summary>
+    /// When true, renders a compact two-column layout used by the component edit dialog.
+    /// </summary>
+    [Parameter] public bool DenseLayout { get; set; }
+
+    /// <summary>
+    /// When false, continuous typing (config JSON) raises <see cref="OnMutated"/> with
+    /// <c>needsReEvaluate: false</c> so the host can defer preview updates until blur/Evaluate.
+    /// Discrete controls (dropdowns, title, layout) still request re-evaluate.
+    /// </summary>
+    [Parameter] public bool ReEvaluateOnMutate { get; set; } = true;
+
+    [Parameter] public bool ShowExpectedShape { get; set; }
+
+    [Parameter] public string? ExpectedScriptShape { get; set; }
+
     [Parameter] public string? PreviewText { get; set; }
 
     [Parameter] public string? PreviewError { get; set; }
 
     [Parameter] public EventCallback OnEvaluate { get; set; }
 
-    [Parameter] public IReadOnlyList<DashboardTransformDataContract> Transforms { get; set; } =
-        Array.Empty<DashboardTransformDataContract>();
+    /// <summary>
+    /// Raised when a suggested script is applied so hosts that use Monaco can refresh the editor.
+    /// </summary>
+    [Parameter] public EventCallback<string> OnSuggestedScriptApplied { get; set; }
 
     /// <summary>
     /// Raised after any in-place mutation. <c>NeedsReEvaluate</c> is true when the canvas/preview
@@ -47,27 +78,56 @@ public partial class DashboardComponentPropertiesForm
 
     [Inject] private DashboardComponentRegistry ComponentRegistry { get; set; } = null!;
 
-    private IEnumerable<FormDropDownOption> PresetOptions
+    private IReadOnlyList<DashboardComponentPreset> PresetsForType =>
+        Component is null
+            ? Array.Empty<DashboardComponentPreset>()
+            : ComponentRegistry.PresetsFor(Component.Type).ToList();
+
+    private IEnumerable<FormDropDownOption> SuggestedScriptOptions
+    {
+        get
+        {
+            var options = PresetsForType
+                .Select(p => new FormDropDownOption(p.Id, p.DisplayName))
+                .ToList();
+            options.Add(new FormDropDownOption(CustomSuggestionValue, "(custom)"));
+            return options;
+        }
+    }
+
+    private string SelectedSuggestionId
     {
         get
         {
             if (Component is null)
-                return Array.Empty<FormDropDownOption>();
+                return CustomSuggestionValue;
 
-            return ComponentRegistry.PresetsFor(Component.Type)
-                .Select(p => new FormDropDownOption(p.Id, p.DisplayName))
-                .Prepend(new FormDropDownOption(string.Empty, "(none)"))
-                .ToList();
+            var script = NormalizeScript(Component.DataBinding.InlineScript);
+            var match = PresetsForType.FirstOrDefault(p =>
+                string.Equals(NormalizeScript(p.Script), script, StringComparison.Ordinal));
+            return match?.Id ?? CustomSuggestionValue;
         }
     }
 
-    private IEnumerable<FormDropDownOption> TransformOptions =>
-        Transforms
-            .Select(t => new FormDropDownOption(
-                t.Id,
-                string.IsNullOrWhiteSpace(t.Name) ? t.Id : $"{t.Name} ({t.Id})"))
-            .Prepend(new FormDropDownOption(string.Empty, "(none)"))
-            .ToList();
+    /// <summary>
+    /// Applies a registry preset script to the component binding. Used by the suggested-script dropdown
+    /// and covered by unit tests.
+    /// </summary>
+    public static void ApplySuggestedScript(
+        DashboardComponentInstanceDataContract component,
+        DashboardComponentPreset preset)
+    {
+        ArgumentNullException.ThrowIfNull(component);
+        ArgumentNullException.ThrowIfNull(preset);
+
+        component.DataBinding ??= new DashboardDataBindingDataContract();
+        component.DataBinding.InlineScript = preset.Script;
+        if (preset.DefaultConfig is not null)
+            component.Config = preset.DefaultConfig.DeepClone() as JObject ?? component.Config;
+    }
+
+    private static string NormalizeScript(string? script) =>
+        (script ?? string.Empty).Replace("\r\n", "\n").Trim();
 
     private string GetConfigString(string key) =>
         Component?.Config?[key]?.ToString() ?? string.Empty;
@@ -86,14 +146,18 @@ public partial class DashboardComponentPropertiesForm
     private async Task OnConfigJsonChanged(string value)
     {
         ConfigJson = value;
-        await ConfigJsonChanged.InvokeAsync(value);
         if (Component is null)
             return;
 
         try
         {
             Component.Config = JObject.Parse(string.IsNullOrWhiteSpace(value) ? "{}" : value);
-            await NotifyMutated(needsReEvaluate: true);
+            if (ReEvaluateOnMutate)
+            {
+                await ConfigJsonChanged.InvokeAsync(value);
+                await NotifyMutated(needsReEvaluate: true);
+            }
+            // Dialog mode: keep local + Component.Config synced; notify parent on blur.
         }
         catch (JsonException)
         {
@@ -101,34 +165,31 @@ public partial class DashboardComponentPropertiesForm
         }
     }
 
-    private async Task OnBindingModeChanged(string mode)
+    private async Task OnConfigJsonBlur()
     {
-        if (Component is null)
+        if (ReEvaluateOnMutate)
             return;
-        Component.DataBinding.Mode = mode;
+
+        await ConfigJsonChanged.InvokeAsync(ConfigJson);
         await NotifyMutated(needsReEvaluate: true);
     }
 
-    private async Task OnPresetChanged(string presetId)
+    private async Task OnSuggestedScriptChanged(string suggestionId)
     {
         if (Component is null)
             return;
-        Component.DataBinding.PresetId = string.IsNullOrWhiteSpace(presetId) ? null : presetId;
-        var preset = ComponentRegistry.GetPreset(presetId);
-        if (preset?.DefaultConfig is not null)
-        {
-            Component.Config = preset.DefaultConfig.DeepClone() as JObject ?? Component.Config;
-            await SyncConfigJsonAsync();
-        }
 
-        await NotifyMutated(needsReEvaluate: true);
-    }
-
-    private async Task OnTransformIdChanged(string transformId)
-    {
-        if (Component is null)
+        if (string.IsNullOrWhiteSpace(suggestionId) ||
+            string.Equals(suggestionId, CustomSuggestionValue, StringComparison.Ordinal))
             return;
-        Component.DataBinding.TransformId = string.IsNullOrWhiteSpace(transformId) ? null : transformId;
+
+        var preset = ComponentRegistry.GetPreset(suggestionId);
+        if (preset is null)
+            return;
+
+        ApplySuggestedScript(Component, preset);
+        await SyncConfigJsonAsync();
+        await OnSuggestedScriptApplied.InvokeAsync(preset.Script);
         await NotifyMutated(needsReEvaluate: true);
     }
 
@@ -137,7 +198,7 @@ public partial class DashboardComponentPropertiesForm
         if (Component is null)
             return;
         Component.DataBinding.InlineScript = script;
-        await NotifyMutated(needsReEvaluate: true);
+        await NotifyMutated(needsReEvaluate: ReEvaluateOnMutate);
     }
 
     private async Task OnCellXChanged(int value)
@@ -191,6 +252,30 @@ public partial class DashboardComponentPropertiesForm
             _ => "right"
         };
         return SetConfigString("legendPosition", normalized);
+    }
+
+    private string GetCardStyle() =>
+        DashboardComponentDataBinder.ReadCardStyle(Component?.Config);
+
+    private Task OnCardStyleChanged(string value)
+    {
+        var normalized = string.Equals(value, "extraWide", StringComparison.OrdinalIgnoreCase)
+            ? "extraWide"
+            : string.Equals(value, "wide", StringComparison.OrdinalIgnoreCase)
+                ? "wide"
+                : "compact";
+        return SetConfigString("cardStyle", normalized);
+    }
+
+    private string GetChartSize() =>
+        DashboardComponentDataBinder.ReadChartSize(Component?.Config);
+
+    private Task OnChartSizeChanged(string value)
+    {
+        var normalized = string.Equals(value, "small", StringComparison.OrdinalIgnoreCase)
+            ? "small"
+            : "large";
+        return SetConfigString("chartSize", normalized);
     }
 
     private async Task SyncConfigJsonAsync()

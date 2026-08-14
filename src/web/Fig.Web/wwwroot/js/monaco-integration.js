@@ -197,6 +197,16 @@ window.monacoIntegration = {
                 // Fix context menu positioning in dialogs
                 fixedOverflowWidgets: true
             };
+
+            // Dashboard inline scripts: ensure member completions open on '.'
+            if (language === 'javascript') {
+                editorOptions.suggestOnTriggerCharacters = true;
+                editorOptions.quickSuggestions = {
+                    other: true,
+                    comments: false,
+                    strings: false
+                };
+            }
             
             // Additional configuration for small editors to fix cursor visibility
             if (isSmallEditor) {
@@ -234,6 +244,30 @@ window.monacoIntegration = {
                     }
                 }, 10);
             });
+
+            // Store initial disposables for cleanup
+            const disposables = [contentChangeDisposable];
+
+            // Force member suggest after typing '.' for dashboard JS scripts
+            if (language === 'javascript') {
+                const suggestOnDotDisposable = editor.onDidChangeModelContent((e) => {
+                    if (!e || !e.changes || e.changes.length === 0) {
+                        return;
+                    }
+                    const change = e.changes[0];
+                    if (change.text !== '.') {
+                        return;
+                    }
+                    setTimeout(() => {
+                        try {
+                            editor.trigger('keyboard', 'editor.action.triggerSuggest', {});
+                        } catch (error) {
+                            console.error('Error triggering suggest after dot:', error);
+                        }
+                    }, 0);
+                });
+                disposables.push(suggestOnDotDisposable);
+            }
             
             // Add click listener to ensure focus and cursor visibility
             const mouseDownDisposable = editor.onMouseDown(() => {
@@ -258,8 +292,8 @@ window.monacoIntegration = {
             this.editors.set(elementId, editor);
             this.editorMetadata.set(elementId, { isDialog, modelUri: modelUri.toString() });
             
-            // Store initial disposables for cleanup
-            this.editorDisposables.set(elementId, [contentChangeDisposable, mouseDownDisposable]);
+            disposables.push(mouseDownDisposable);
+            this.editorDisposables.set(elementId, disposables);
             
             // Set up JSON schema validation if provided
             if (options.jsonSchema && options.language === 'json') {
@@ -368,9 +402,12 @@ window.monacoIntegration = {
             module: monaco.languages.typescript.ModuleKind.ESNext,
             noLib: false
         });
+        defaults.setEagerModelSync(true);
+        // 1108 = top-level return is invalid in normal JS; dashboard scripts are function bodies.
         defaults.setDiagnosticsOptions({
             noSemanticValidation: false,
-            noSyntaxValidation: false
+            noSyntaxValidation: false,
+            diagnosticCodesToIgnore: [1108]
         });
 
         if (!this._figDashboardExtraLibs) {
@@ -417,6 +454,31 @@ window.monacoIntegration = {
             }
             this.editorDisposables.get(elementId).push(disposable);
             
+            return disposable;
+        }
+        return null;
+    },
+
+    /**
+     * Subscribe to Monaco text blur (leaving the editor). Used to defer evaluate until the user
+     * finishes typing rather than on every keystroke.
+     */
+    onDidBlurEditorText(elementId, dotNetObjectReference, methodName) {
+        const editor = this.editors.get(elementId);
+        if (editor && dotNetObjectReference && methodName) {
+            const disposable = editor.onDidBlurEditorText(() => {
+                try {
+                    dotNetObjectReference.invokeMethodAsync(methodName);
+                } catch (error) {
+                    console.error('Error invoking .NET blur method:', error);
+                }
+            });
+
+            if (!this.editorDisposables.has(elementId)) {
+                this.editorDisposables.set(elementId, []);
+            }
+            this.editorDisposables.get(elementId).push(disposable);
+
             return disposable;
         }
         return null;

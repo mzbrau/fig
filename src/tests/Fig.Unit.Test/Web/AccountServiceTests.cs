@@ -1,3 +1,4 @@
+using System.Net.Http;
 using System.Text;
 using Fig.Common.Events;
 using Fig.Contracts.Authentication;
@@ -53,7 +54,7 @@ public class AccountServiceTests
         var userId = Guid.NewGuid();
         var user = CreateAuthenticatedUser(userId, CreateJwt(DateTimeOffset.UtcNow.AddMinutes(5)), true);
         _localStorageService.Setup(a => a.GetItem<AuthenticatedUserModel>("user")).ReturnsAsync(user);
-        _httpService.Setup(a => a.Put($"/users/{userId}", It.IsAny<object?>(), null)).Returns(Task.CompletedTask);
+        _httpService.Setup(a => a.PutOrThrow($"/users/{userId}", It.IsAny<object?>(), null)).Returns(Task.CompletedTask);
 
         await _sut.Initialize();
         await _sut.Update(userId, new UpdateUserRequestDataContract { Password = "new-password!" });
@@ -70,7 +71,7 @@ public class AccountServiceTests
         var userId = Guid.NewGuid();
         var user = CreateAuthenticatedUser(userId, CreateJwt(DateTimeOffset.UtcNow.AddMinutes(5)), true);
         _localStorageService.Setup(a => a.GetItem<AuthenticatedUserModel>("user")).ReturnsAsync(user);
-        _httpService.Setup(a => a.Put($"/users/{userId}", It.IsAny<object?>(), null)).Returns(Task.CompletedTask);
+        _httpService.Setup(a => a.PutOrThrow($"/users/{userId}", It.IsAny<object?>(), null)).Returns(Task.CompletedTask);
 
         await _sut.Initialize();
         await _sut.Update(userId, new UpdateUserRequestDataContract
@@ -90,6 +91,27 @@ public class AccountServiceTests
     }
 
     [Test]
+    public void Update_ShouldNotLogout_WhenPutFails()
+    {
+        var userId = Guid.NewGuid();
+        var user = CreateAuthenticatedUser(userId, CreateJwt(DateTimeOffset.UtcNow.AddMinutes(5)), true);
+        _localStorageService.Setup(a => a.GetItem<AuthenticatedUserModel>("user")).ReturnsAsync(user);
+        _httpService.Setup(a => a.PutOrThrow($"/users/{userId}", It.IsAny<object?>(), null))
+            .ThrowsAsync(new HttpRequestException("update failed"));
+
+        Assert.ThrowsAsync<HttpRequestException>(async () =>
+        {
+            await _sut.Initialize();
+            await _sut.Update(userId, new UpdateUserRequestDataContract { Password = "new-password!" });
+        });
+
+        Assert.That(_sut.AuthenticatedUser, Is.Not.Null);
+        Assert.That(_sut.AuthenticatedUser!.PasswordChangeRequired, Is.True);
+        _localStorageService.Verify(a => a.RemoveItem("user"), Times.Never);
+        _eventDistributor.Verify(a => a.PublishAsync(EventConstants.LogoutEvent), Times.Never);
+    }
+
+    [Test]
     public async Task Initialize_ShouldLogoutForcedPasswordChangeUser_WhenTokenExpired()
     {
         var user = CreateAuthenticatedUser(Guid.NewGuid(), CreateJwt(DateTimeOffset.UtcNow.AddMinutes(-5)), true);
@@ -100,6 +122,35 @@ public class AccountServiceTests
         Assert.That(_sut.AuthenticatedUser, Is.Null);
         _localStorageService.Verify(a => a.RemoveItem("user"), Times.Once);
         _notificationHistoryService.Verify(a => a.Clear(), Times.Once);
+    }
+
+    [Test]
+    public async Task Initialize_ShouldKeepNonAdminUser_WhenTokenIsValid()
+    {
+        var user = CreateAuthenticatedUser(Guid.NewGuid(), CreateJwt(DateTimeOffset.UtcNow.AddMinutes(30)), false);
+        user.Role = Role.Dashboard;
+        _localStorageService.Setup(a => a.GetItem<AuthenticatedUserModel>("user")).ReturnsAsync(user);
+
+        await _sut.Initialize();
+
+        Assert.That(_sut.AuthenticatedUser, Is.Not.Null);
+        Assert.That(_sut.AuthenticatedUser!.Id, Is.EqualTo(user.Id));
+        _localStorageService.Verify(a => a.RemoveItem("user"), Times.Never);
+        _httpService.Verify(a => a.Get<object>("/users", It.IsAny<bool>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Initialize_ShouldLogoutNonAdminUser_WhenTokenExpired()
+    {
+        var user = CreateAuthenticatedUser(Guid.NewGuid(), CreateJwt(DateTimeOffset.UtcNow.AddMinutes(-5)), false);
+        user.Role = Role.User;
+        _localStorageService.Setup(a => a.GetItem<AuthenticatedUserModel>("user")).ReturnsAsync(user);
+
+        await _sut.Initialize();
+
+        Assert.That(_sut.AuthenticatedUser, Is.Null);
+        _localStorageService.Verify(a => a.RemoveItem("user"), Times.Once);
+        _httpService.Verify(a => a.Get<object>("/users", It.IsAny<bool>()), Times.Never);
     }
 
     [Test]

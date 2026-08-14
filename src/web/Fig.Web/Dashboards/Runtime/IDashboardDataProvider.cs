@@ -13,6 +13,11 @@ public interface IDashboardDataProvider
     Task RefreshSettingsAsync();
 
     /// <summary>
+    /// Forces a reload of both status and settings caches.
+    /// </summary>
+    Task RefreshAllAsync();
+
+    /// <summary>
     /// Ensures both caches have been loaded at least once (does not force a refresh when already loaded).
     /// </summary>
     Task EnsureLoadedAsync();

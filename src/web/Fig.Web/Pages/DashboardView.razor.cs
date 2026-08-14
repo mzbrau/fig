@@ -8,6 +8,7 @@ using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Fig.Web.Utils;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Routing;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 using Radzen;
@@ -42,6 +43,16 @@ public partial class DashboardView : IDisposable
 
     private bool IsAdmin => AccountService.AuthenticatedUser?.Role == Role.Administrator;
 
+    private bool IsDashboardRole => AccountService.AuthenticatedUser?.Role == Role.Dashboard;
+
+    private bool ShowStatusBar => _wallboard || IsDashboardRole;
+
+    protected override void OnInitialized()
+    {
+        NavigationManager.LocationChanged += OnLocationChanged;
+        base.OnInitialized();
+    }
+
     protected override async Task OnParametersSetAsync()
     {
         ReadWallboardFromQuery();
@@ -74,15 +85,19 @@ public partial class DashboardView : IDisposable
     {
         var uri = new Uri(NavigationManager.Uri);
         var query = ParseQuery(uri.Query);
-        if (query.TryGetValue("wallboard", out var value))
-        {
-            _wallboard = value == "1" ||
-                         string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
-        }
-        else
-        {
-            _wallboard = false;
-        }
+        _wallboard = IsWallboardQuery(query);
+    }
+
+    private static bool IsWallboardQuery(IReadOnlyDictionary<string, string> query) =>
+        query.TryGetValue("wallboard", out var value) &&
+        (value == "1" || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase));
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        var wasWallboard = _wallboard;
+        ReadWallboardFromQuery();
+        if (wasWallboard != _wallboard)
+            InvokeAsync(StateHasChanged);
     }
 
     private async Task LoadAndEvaluate()
@@ -165,11 +180,14 @@ public partial class DashboardView : IDisposable
     {
         var uri = new Uri(NavigationManager.Uri);
         var query = ParseQuery(uri.Query);
+        var currentlyWallboard = IsWallboardQuery(query);
 
-        if (_wallboard)
+        if (currentlyWallboard)
             query.Remove("wallboard");
         else
             query["wallboard"] = "1";
+
+        _wallboard = !currentlyWallboard;
 
         var next = uri.AbsolutePath;
         if (query.Count > 0)
@@ -260,6 +278,7 @@ public partial class DashboardView : IDisposable
 
     public void Dispose()
     {
+        NavigationManager.LocationChanged -= OnLocationChanged;
         _refreshManager?.Dispose();
         _refreshManager = null;
         if (_escapeBound)

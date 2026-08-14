@@ -95,7 +95,7 @@ public class DashboardService : AuthenticatedService, IDashboardService
         }
 
         if (!string.Equals(entity.Name, dashboard.Name, StringComparison.Ordinal))
-            await ValidateName(dashboard.Name);
+            await ValidateName(dashboard.Name, excludeId: id);
 
         NormalizeDefinition(dashboard.Definition);
 
@@ -118,14 +118,15 @@ public class DashboardService : AuthenticatedService, IDashboardService
         await _dashboardRepository.DeleteDashboard(entity);
     }
 
-    private async Task ValidateName(string name)
+    private async Task ValidateName(string name, Guid? excludeId = null)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Dashboard name is required.");
 
-        var existing = await _dashboardRepository.GetDashboardByName(name.Trim());
-        if (existing is not null)
-            throw new InvalidOperationException($"A dashboard named '{name.Trim()}' already exists.");
+        var trimmed = name.Trim();
+        var existing = await _dashboardRepository.GetDashboardByName(trimmed);
+        if (existing is not null && existing.Id != excludeId)
+            throw new InvalidOperationException($"A dashboard named '{trimmed}' already exists.");
     }
 
     private static void NormalizeDefinition(DashboardDefinitionDataContract definition)
@@ -134,7 +135,6 @@ public class DashboardService : AuthenticatedService, IDashboardService
         definition.Refresh ??= new DashboardRefreshDataContract();
         definition.Refresh.SettingsSeconds = Math.Max(MinSettingsRefreshSeconds, definition.Refresh.SettingsSeconds);
         definition.Refresh.StatusSeconds = Math.Max(MinStatusRefreshSeconds, definition.Refresh.StatusSeconds);
-        definition.Transforms ??= new List<DashboardTransformDataContract>();
         definition.Components ??= new List<DashboardComponentInstanceDataContract>();
         definition.Layout ??= new List<DashboardLayoutCellDataContract>();
     }

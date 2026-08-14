@@ -14,13 +14,12 @@ public static class DashboardScriptTypings
 
     public static IReadOnlyList<DashboardScriptExtraLib> Build(
         string componentType,
-        DashboardFigRoot? fig = null,
-        IReadOnlyDictionary<string, object?>? namedTransforms = null)
+        DashboardFigRoot? fig = null)
     {
         return
         [
             new DashboardScriptExtraLib(AmbientLibPath, BuildAmbient()),
-            new DashboardScriptExtraLib(DynamicLibPath, BuildDynamic(fig, namedTransforms)),
+            new DashboardScriptExtraLib(DynamicLibPath, BuildDynamic(fig)),
             new DashboardScriptExtraLib(ExpectedLibPath, BuildExpectedResult(componentType))
         ];
     }
@@ -30,7 +29,6 @@ public static class DashboardScriptTypings
         /** Fluent array wrapper used by fig.clients / fig.runSessions (not a native JS Array). */
         interface DashboardJsArray<T = any> {
             readonly length: number;
-            readonly Count: number;
             [index: number]: T;
             filter(predicate: (item: T) => boolean): DashboardJsArray<T>;
             map<U>(selector: (item: T) => U): DashboardJsArray<U>;
@@ -78,6 +76,10 @@ public static class DashboardScriptTypings
             memoryUsageBytes: number;
             health: DashboardHealth;
             customProperties: Record<string, any>;
+            /** Approximate client rolling 24h uptime percentage (0–100), or null/undefined before first observation. */
+            uptimePercent24Hr?: number | null;
+            /** Humanized process runtime since startTimeUtc (e.g. "3 hours"). */
+            uptimeHuman: string;
         }
 
         interface DashboardClient {
@@ -112,15 +114,12 @@ public static class DashboardScriptTypings
         declare const fig: DashboardFigRoot;
         declare const helpers: DashboardJsLinq;
         declare const DashboardJsLinq: DashboardJsLinq;
-        declare const transforms: Record<string, any>;
         """;
 
-    public static string BuildDynamic(
-        DashboardFigRoot? fig,
-        IReadOnlyDictionary<string, object?>? namedTransforms)
+    public static string BuildDynamic(DashboardFigRoot? fig)
     {
         var sb = new StringBuilder();
-        sb.AppendLine("// Live keys from current fig data and named transforms");
+        sb.AppendLine("// Live keys from current fig data");
 
         var settingKeys = CollectDictionaryKeys(fig?.clients, "settings");
         var customKeys = CollectDictionaryKeys(fig?.runSessions, "customProperties");
@@ -141,28 +140,7 @@ public static class DashboardScriptTypings
                 "interface DashboardRunSession { customProperties: Partial<Record<LiveCustomPropertyKey, any>> & Record<string, any>; }");
         }
 
-        if (namedTransforms is { Count: > 0 })
-        {
-            var ids = namedTransforms.Keys
-                .Where(id => !string.IsNullOrWhiteSpace(id))
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .OrderBy(id => id, StringComparer.OrdinalIgnoreCase)
-                .ToList();
-
-            if (ids.Count > 0)
-            {
-                sb.AppendLine(
-                    $"type NamedTransformId = {string.Join(" | ", ids.Select(Quote))};");
-                sb.AppendLine("declare const transforms: Record<NamedTransformId, any> & Record<string, any>;");
-                foreach (var id in ids)
-                {
-                    if (IsValidJsIdentifier(id))
-                        sb.AppendLine($"declare const {id}: any;");
-                }
-            }
-        }
-
-        if (sb.Length == 0 || sb.ToString().Trim() == "// Live keys from current fig data and named transforms")
+        if (sb.Length == 0 || sb.ToString().Trim() == "// Live keys from current fig data")
             return "// No live keys available\n";
 
         return sb.ToString();
@@ -174,18 +152,43 @@ public static class DashboardScriptTypings
         {
             "kpi" =>
                 """
-                /** Expected inline-script return for KPI components. */
+                /** Expected inline-script return for KPI / status card components. */
                 type ExpectedScriptResult =
-                  | { value: any; label?: string; trend?: string | number; variant?: string }
+                  | {
+                      value?: any;
+                      numerator?: number | string;
+                      denominator?: number | string;
+                      label?: string;
+                      subtitle?: string;
+                      trend?: string | number;
+                      variant?: 'normal' | 'info' | 'success' | 'warning' | 'danger' | string;
+                      icon?: string;
+                    }
                   | string
                   | number
                   | boolean;
                 """,
             "text" =>
                 """
-                /** Expected inline-script return for text components. variant: heading | body | muted */
+                /** Expected inline-script return for text components. */
                 type ExpectedScriptResult =
                   | string
+                  | {
+                      lines: Array<{
+                        text: string;
+                        size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | string;
+                        color?: string;
+                        align?: 'left' | 'center' | 'right' | string;
+                        weight?: 'normal' | 'bold' | string;
+                      }>;
+                    }
+                  | Array<{
+                      text: string;
+                      size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'xxl' | string;
+                      color?: string;
+                      align?: 'left' | 'center' | 'right' | string;
+                      weight?: 'normal' | 'bold' | string;
+                    }>
                   | { text: string; variant?: 'heading' | 'body' | 'muted' | string };
                 """,
             "badge" =>
@@ -223,6 +226,17 @@ public static class DashboardScriptTypings
                       items: Array<{ key: string; value: any }>;
                     }
                   | Record<string, any>;
+                """,
+            "cards" =>
+                """
+                /** Expected inline-script return for cards components. */
+                type ExpectedScriptResult = Array<{
+                  title?: string;
+                  value: any;
+                  variant?: 'normal' | 'info' | 'success' | 'warning' | 'danger' | string;
+                  icon?: string;
+                  rows?: Array<{ key: string; value: any }>;
+                }>;
                 """,
             _ =>
                 """

@@ -1,0 +1,78 @@
+@namespace Fig.Web.Dashboards.Components.Cards
+@using Fig.Web.Dashboards.Components.Contracts
+
+@if (Input is null || Input.Cards.Count == 0)
+{
+    <div class="dashboard-empty">No cards</div>
+}
+else
+{
+    <div class="@CardsRootClass">
+        @foreach (var card in Input.Cards)
+        {
+            <div class="@CardClass(card)">
+                @if (!string.IsNullOrWhiteSpace(card.Icon))
+                {
+                    <div class="dashboard-card__icon" title="@card.Icon">
+                        <RadzenIcon Icon="@card.Icon" />
+                    </div>
+                }
+                @if (!string.IsNullOrWhiteSpace(card.Title))
+                {
+                    <div class="dashboard-card__title">@card.Title</div>
+                }
+                <div class="dashboard-card__value">@(card.Value?.ToString() ?? "—")</div>
+                @if (card.Rows.Count > 0)
+                {
+                    <dl class="dashboard-card__rows">
+                        @foreach (var row in card.Rows)
+                        {
+                            var rowValue = row.Value?.ToString() ?? "—";
+                            <div class="dashboard-card__row">
+                                <dt>@(row.Key ?? string.Empty)</dt>
+                                <dd title="@rowValue">@rowValue</dd>
+                            </div>
+                        }
+                    </dl>
+                }
+            </div>
+        }
+    </div>
+}
+
+@code {
+    [Parameter] public DashboardCardsInput? Input { get; set; }
+
+    /// <summary>compact | wide | extraWide</summary>
+    [Parameter] public string Style { get; set; } = "compact";
+
+    private string CardsRootClass =>
+        $"dashboard-cards dashboard-cards--{NormalizeStyle(Style)}";
+
+    private static string NormalizeStyle(string? style)
+    {
+        if (string.Equals(style, "extraWide", StringComparison.OrdinalIgnoreCase))
+            return "extraWide";
+        if (string.Equals(style, "wide", StringComparison.OrdinalIgnoreCase))
+            return "wide";
+        return "compact";
+    }
+
+    private static string CardClass(DashboardCardItem card)
+    {
+        var cls = $"dashboard-card dashboard-card--{NormalizeVariant(card.Variant)}";
+        if (!string.IsNullOrWhiteSpace(card.Icon))
+            cls += " dashboard-card--has-icon";
+        return cls;
+    }
+
+    private static string NormalizeVariant(string? variant)
+    {
+        var value = (variant ?? "normal").Trim().ToLowerInvariant();
+        return value switch
+        {
+            "info" or "success" or "warning" or "danger" or "normal" => value,
+            _ => "normal"
+        };
+    }
+}

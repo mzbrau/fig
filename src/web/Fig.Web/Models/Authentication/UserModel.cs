@@ -35,8 +35,6 @@ public class UserModel
 
     public bool PasswordChangeRequiredOverridden { get; set; }
 
-    public bool PasswordChangeRequiredAutoApplied { get; set; }
-
     public List<Classification> AllowedClassifications { get; set; } = 
         Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
 
@@ -67,7 +65,6 @@ public class UserModel
         _originalAllowedClassifications = AllowedClassifications.ToList();
         _originalPasswordChangeRequired = PasswordChangeRequired;
         PasswordChangeRequiredOverridden = false;
-        PasswordChangeRequiredAutoApplied = false;
     }
 
     public void Revert()
@@ -81,6 +78,5 @@ public class UserModel
             Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList();
         PasswordChangeRequired = _originalPasswordChangeRequired;
         PasswordChangeRequiredOverridden = false;
-        PasswordChangeRequiredAutoApplied = false;
     }
 }

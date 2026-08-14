@@ -29,7 +29,7 @@ public class UserConverter : IUserConverter
             LastName = user.LastName,
             Role = user.Role,
             Password = user.Password,
-            PasswordChangeRequired = user.PasswordChangeRequiredOverridden || user.PasswordChangeRequiredAutoApplied
+            PasswordChangeRequired = user.PasswordChangeRequiredOverridden
                 ? user.PasswordChangeRequired
                 : null,
             ClientFilter = user.ClientFilter,

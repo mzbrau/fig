@@ -17,12 +17,35 @@ public class DashboardScriptTypingsTests
         Assert.That(ambient, Does.Contain("runSessions"));
         Assert.That(ambient, Does.Contain("clients"));
         Assert.That(ambient, Does.Contain("declare const helpers"));
-        Assert.That(ambient, Does.Contain("declare const transforms"));
+        Assert.That(ambient, Does.Not.Contain("declare const transforms"));
         Assert.That(ambient, Does.Contain("groupBy"));
         Assert.That(ambient, Does.Contain("filter"));
         Assert.That(ambient, Does.Contain("toArray"));
         Assert.That(ambient, Does.Contain("customProperties"));
         Assert.That(ambient, Does.Contain("settings"));
+    }
+
+    [Test]
+    public void Build_IncludesExpectedResultForKpiStatusFields()
+    {
+        var expected = DashboardScriptTypings.Build("kpi")
+            .Single(l => l.FilePath == DashboardScriptTypings.ExpectedLibPath).Content;
+
+        Assert.That(expected, Does.Contain("numerator"));
+        Assert.That(expected, Does.Contain("denominator"));
+        Assert.That(expected, Does.Contain("subtitle"));
+        Assert.That(expected, Does.Contain("icon"));
+    }
+
+    [Test]
+    public void Build_IncludesExpectedResultForCards()
+    {
+        var expected = DashboardScriptTypings.Build("cards")
+            .Single(l => l.FilePath == DashboardScriptTypings.ExpectedLibPath).Content;
+
+        Assert.That(expected, Does.Contain("title"));
+        Assert.That(expected, Does.Contain("rows"));
+        Assert.That(expected, Does.Contain("variant"));
     }
 
     [Test]
@@ -52,7 +75,7 @@ public class DashboardScriptTypingsTests
     }
 
     [Test]
-    public void Build_InjectsLiveSettingCustomPropertyAndTransformIds()
+    public void Build_InjectsLiveSettingAndCustomPropertyKeys()
     {
         var fig = new DashboardFigRoot
         {
@@ -82,23 +105,14 @@ public class DashboardScriptTypingsTests
             ])
         };
 
-        var transforms = new Dictionary<string, object?>
-        {
-            ["healthySessions"] = Array.Empty<object>(),
-            ["byName"] = Array.Empty<object>()
-        };
-
-        var libs = DashboardScriptTypings.Build("list", fig, transforms);
+        var libs = DashboardScriptTypings.Build("list", fig);
         var dynamic = libs.Single(l => l.FilePath == DashboardScriptTypings.DynamicLibPath).Content;
 
         Assert.That(dynamic, Does.Contain("MySetting"));
         Assert.That(dynamic, Does.Contain("OtherSetting"));
         Assert.That(dynamic, Does.Contain("Region"));
         Assert.That(dynamic, Does.Contain("Tier"));
-        Assert.That(dynamic, Does.Contain("healthySessions"));
-        Assert.That(dynamic, Does.Contain("byName"));
-        Assert.That(dynamic, Does.Contain("declare const healthySessions"));
-        Assert.That(dynamic, Does.Contain("declare const byName"));
+        Assert.That(dynamic, Does.Not.Contain("NamedTransformId"));
     }
 
     [Test]

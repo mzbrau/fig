@@ -1,22 +1,39 @@
 @using Fig.Web.Dashboards
+@using Fig.Web.Notifications
+@using Microsoft.JSInterop
+@using Radzen
+@inject IJSRuntime JsRuntime
+@inject NotificationService NotificationService
+@inject INotificationFactory NotificationFactory
 
 <div class="dashboard-data-explorer__node" style="--depth: @Depth">
-    <button type="button" class="dashboard-data-explorer__row"
-            @onclick="Toggle"
-            disabled="@(!Node.HasChildren)">
-        <span class="dashboard-data-explorer__chevron">
-            @if (Node.HasChildren)
+    <div class="dashboard-data-explorer__row">
+        <button type="button"
+                class="dashboard-data-explorer__toggle"
+                @onclick="Toggle"
+                disabled="@(!Node.HasChildren)"
+                title="@(Node.HasChildren ? (_expanded ? "Collapse" : "Expand") : null)">
+            <span class="dashboard-data-explorer__chevron">
+                @if (Node.HasChildren)
+                {
+                    <RadzenIcon Icon="@(_expanded ? "expand_more" : "chevron_right")" />
+                }
+            </span>
+            <span class="dashboard-data-explorer__name">@Node.Name</span>
+            @if (!string.IsNullOrEmpty(Node.Value))
             {
-                <RadzenIcon Icon="@(_expanded ? "expand_more" : "chevron_right")" />
+                <span class="dashboard-data-explorer__value" title="@Node.Value">@Node.Value</span>
             }
-        </span>
-        <span class="dashboard-data-explorer__name">@Node.Name</span>
-        <span class="dashboard-data-explorer__type">@Node.Type</span>
-    </button>
-    @if (!string.IsNullOrEmpty(Node.Value))
-    {
-        <pre class="dashboard-data-explorer__value">@Node.Value</pre>
-    }
+            <span class="dashboard-data-explorer__type">@Node.Type</span>
+        </button>
+        <button type="button"
+                class="dashboard-data-explorer__copy"
+                title="@($"Copy {Node.Path}")"
+                @onclick="CopyPathAsync"
+                @onclick:stopPropagation="true">
+            <RadzenIcon Icon="content_copy" />
+        </button>
+    </div>
     @if (_expanded && Node.HasChildren)
     {
         foreach (var child in Node.Children)
@@ -49,5 +66,20 @@
         if (!Node.HasChildren)
             return;
         _expanded = !_expanded;
+    }
+
+    private async Task CopyPathAsync()
+    {
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("navigator.clipboard.writeText", Node.Path);
+            NotificationService.Notify(NotificationFactory.Success("Copied", Node.Path));
+        }
+        catch (Exception)
+        {
+            NotificationService.Notify(NotificationFactory.Warning(
+                "Copy failed",
+                "Could not write to the clipboard. Check browser permissions and try again."));
+        }
     }
 }

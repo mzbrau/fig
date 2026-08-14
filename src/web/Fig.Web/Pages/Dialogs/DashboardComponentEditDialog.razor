@@ -11,49 +11,59 @@
                                               LayoutCell="LayoutCell"
                                               ConfigJson="@_configJson"
                                               ConfigJsonChanged="@OnConfigJsonChanged"
-                                              Transforms="@TransformList"
+                                              DenseLayout="true"
+                                              ReEvaluateOnMutate="false"
                                               ShowInlineScript="false"
                                               ShowEvaluate="false"
                                               ShowConfigJson="true"
+                                              ShowExpectedShape="true"
+                                              ExpectedScriptShape="@_expectedShape"
+                                              OnSuggestedScriptApplied="@OnSuggestedScriptApplied"
                                               OnMutated="@OnFormMutated" />
 
-            @if (IsInlineMode)
-            {
-                <div class="dashboard-component-edit-dialog__expected mb-2">
-                    <label class="form-label mb-1">Expected script result</label>
-                    <p class="text-muted small mb-0">@_expectedShape</p>
+            <div class="dashboard-component-edit-dialog__monaco-wrap">
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <label class="form-label mb-0">Inline script</label>
+                    <div class="d-flex gap-1">
+                        <RadzenButton Text="Format" Icon="format_align_left" Size="ButtonSize.Small"
+                                      ButtonStyle="ButtonStyle.Secondary" Click="@FormatScriptAsync"
+                                      title="Format the JavaScript for readability" />
+                        <RadzenButton Text="Copy AI prompt" Icon="content_copy" Size="ButtonSize.Small"
+                                      ButtonStyle="ButtonStyle.Secondary" Click="@CopyAiPromptAsync"
+                                      title="Copy a prompt with data model and expected output for an external AI" />
+                    </div>
                 </div>
-
-                <label class="form-label">Inline script</label>
-                <div class="dashboard-component-edit-dialog__monaco monaco-editor-container mb-2">
+                <div class="dashboard-component-edit-dialog__monaco monaco-editor-container">
                     <div id="@_editorId" class="monaco-editor-element dashboard-component-edit-dialog__monaco-host"></div>
                 </div>
-            }
+            </div>
         </div>
 
         <div class="dashboard-component-edit-dialog__preview-pane">
             <div class="d-flex justify-content-between align-items-center mb-2">
                 <h6 class="mb-0">Live preview</h6>
                 <RadzenButton Text="Evaluate" Icon="play_arrow" Size="ButtonSize.Small"
-                              ButtonStyle="ButtonStyle.Secondary" Click="@EvaluateNow" />
+                              ButtonStyle="ButtonStyle.Secondary" Click="@EvaluateAndNotify" />
             </div>
             <div class="dashboard-component-edit-dialog__preview-host">
                 <DashboardComponentHost Component="Component" Result="_componentResult" />
             </div>
 
-            <label class="form-label mt-3">Evaluate result</label>
-            @if (!string.IsNullOrWhiteSpace(_previewError))
-            {
-                <RadzenAlert AlertStyle="AlertStyle.Warning" Text="@_previewError" class="mb-2" />
-            }
-            else if (!string.IsNullOrWhiteSpace(_previewText))
-            {
-                <pre class="dashboard-editor__preview mb-2">@_previewText</pre>
-            }
-            else
-            {
-                <p class="text-muted small mb-2">Run Evaluate to preview the binding result.</p>
-            }
+            <div class="dashboard-component-edit-dialog__eval">
+                <label class="form-label mt-2">Evaluate result</label>
+                @if (!string.IsNullOrWhiteSpace(_previewError))
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Warning" Text="@_previewError" class="mb-2" />
+                }
+                else if (!string.IsNullOrWhiteSpace(_previewText))
+                {
+                    <pre class="dashboard-editor__preview mb-2">@_previewText</pre>
+                }
+                else
+                {
+                    <p class="text-muted small mb-2">Run Evaluate to preview the binding result.</p>
+                }
+            </div>
         </div>
     </div>
 

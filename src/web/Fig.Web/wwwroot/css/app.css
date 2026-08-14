@@ -235,6 +235,15 @@ pre:hover {
     padding: 0 !important;
 }
 
+/* Dashboard component edit dialog - stretch content to fill 90vh dialog */
+.dashboard-component-edit-dialog-container .rz-dialog-content {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0;
+    overflow: hidden;
+}
+
 /* Monaco Editor context menu z-index fixes */
 .monaco-menu-container,
 .context-view {

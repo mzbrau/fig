@@ -262,9 +262,10 @@ public class AssistantActionApplierTests
             }
         ]);
 
-        var queued = dashboardQueue.DequeueAll();
+        var queued = dashboardQueue.DequeueForDashboard(dashboardId);
         Assert.That(queued, Has.Count.EqualTo(1));
         Assert.That(queued[0].ComponentId, Is.EqualTo("kpi-1"));
+        Assert.That(queued[0].DashboardId, Is.EqualTo(dashboardId));
         Assert.That(queued[0].Script, Does.Contain("fig.runSessions.length"));
         Assert.That(navigation.Navigations, Does.Contain($"/dashboards/{dashboardId}/edit"));
     }

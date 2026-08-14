@@ -135,7 +135,6 @@ else
                                                           LayoutCell="SelectedCell"
                                                           ConfigJson="@_configJson"
                                                           ConfigJsonChanged="@OnConfigJsonFromForm"
-                                                          Transforms="@(_dashboard.Definition.Transforms)"
                                                           ShowInlineScript="true"
                                                           ShowEvaluate="true"
                                                           ShowConfigJson="true"
@@ -143,34 +142,6 @@ else
                                                           PreviewError="@_previewError"
                                                           OnEvaluate="@EvaluateSelected"
                                                           OnMutated="@OnComponentFormMutated" />
-                    }
-
-                    <hr />
-                    <div class="d-flex align-items-center justify-content-between mb-2">
-                        <h5 class="mb-0">Named transforms</h5>
-                        <RadzenButton Icon="add" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Secondary"
-                                      Click="@AddTransform" title="Add transform" />
-                    </div>
-                    @foreach (var transform in _dashboard.Definition.Transforms)
-                    {
-                        var local = transform;
-                        <RadzenCard class="mb-2 p-2">
-                            <label class="form-label">Id</label>
-                            <RadzenTextBox Value="@local.Id" ValueChanged="@(v => OnTransformField(local, nameof(local.Id), v))"
-                                           Style="width:100%;" class="mb-1" />
-                            <label class="form-label">Name</label>
-                            <RadzenTextBox Value="@local.Name" ValueChanged="@(v => OnTransformField(local, nameof(local.Name), v))"
-                                           Style="width:100%;" class="mb-1" />
-                            <label class="form-label">Depends on (comma-separated ids)</label>
-                            <RadzenTextBox Value="@string.Join(", ", local.DependsOn)"
-                                           ValueChanged="@(v => OnTransformDependsOn(local, v))"
-                                           Style="width:100%;" class="mb-1" />
-                            <label class="form-label">Script</label>
-                            <RadzenTextArea Value="@local.Script" ValueChanged="@(v => OnTransformField(local, nameof(local.Script), v))"
-                                            Style="width:100%; font-family: monospace;" Rows="5" class="mb-1" />
-                            <RadzenButton Text="Remove" Icon="delete" Size="ButtonSize.Small" ButtonStyle="ButtonStyle.Danger"
-                                          Click="@(() => RemoveTransform(local))" />
-                        </RadzenCard>
                     }
                 }
             </aside>

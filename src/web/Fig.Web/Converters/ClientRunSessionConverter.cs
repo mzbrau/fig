@@ -34,7 +34,8 @@ public class ClientRunSessionConverter : IClientRunSessionConverter
                 health: new RunSessionHealthModel(
                     session.Health?.Status ?? FigHealthStatus.Unknown, 
                     session.Health?.Components is null ? [] : ConvertComponents(session.Health.Components)),
-                customProperties: ConvertCustomProperties(session.CustomProperties));
+                customProperties: ConvertCustomProperties(session.CustomProperties),
+                uptimePercent24Hr: client.UptimePercent24Hr);
     }
 
     private List<ComponentHealthModel> ConvertComponents(List<ComponentHealthDataContract> healthComponents)

@@ -1,6 +1,7 @@
 @namespace Fig.Web.Dashboards.Components
 @using Fig.Contracts.Dashboards
 @using Fig.Web.Dashboards.Components.Badge
+@using Fig.Web.Dashboards.Components.Cards
 @using Fig.Web.Dashboards.Components.Chart
 @using Fig.Web.Dashboards.Components.Contracts
 @using Fig.Web.Dashboards.Components.KeyValue
@@ -92,6 +93,8 @@
                     DashboardComponentDataBinder.ReadLegendPosition(Component?.Config));
                 builder.AddAttribute(4, nameof(DashboardDonutChart.LegendVisible),
                     DashboardComponentDataBinder.ReadLegendVisible(Component?.Config));
+                builder.AddAttribute(5, nameof(DashboardDonutChart.Size),
+                    DashboardComponentDataBinder.ReadChartSize(Component?.Config));
                 builder.CloseComponent();
                 break;
             case "table":
@@ -109,6 +112,14 @@
                 builder.OpenComponent<DashboardKeyValue>(0);
                 builder.AddAttribute(1, nameof(DashboardKeyValue.Input),
                     DashboardComponentDataBinder.ToKeyValue(data, Component?.Config));
+                builder.CloseComponent();
+                break;
+            case "cards":
+                builder.OpenComponent<DashboardCards>(0);
+                builder.AddAttribute(1, nameof(DashboardCards.Input),
+                    DashboardComponentDataBinder.ToCards(data));
+                builder.AddAttribute(2, nameof(DashboardCards.Style),
+                    DashboardComponentDataBinder.ReadCardStyle(Component?.Config));
                 builder.CloseComponent();
                 break;
             default:

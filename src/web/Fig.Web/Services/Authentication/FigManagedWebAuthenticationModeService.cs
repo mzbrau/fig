@@ -113,7 +113,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
                                                     AuthenticatedUser?.PasswordChangeRequired == true &&
                                                     passwordChanged;
 
-        await _httpService.Put($"/users/{id}", model);
+        await _httpService.PutOrThrow($"/users/{id}", model);
 
         if (id == AuthenticatedUser?.Id)
         {
@@ -138,29 +138,13 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
             await Logout();
     }
 
-    private async Task<bool> ValidateCurrentToken()
+    private Task<bool> ValidateCurrentToken()
     {
         if (AuthenticatedUser?.Token == null)
-            return false;
+            return Task.FromResult(false);
 
-        if (AuthenticatedUser.PasswordChangeRequired)
-            return !IsJwtExpired(AuthenticatedUser.Token);
-
-        try
-        {
-            var result = await _httpService.Get<object>("/users", false);
-            return result != null;
-        }
-        catch (HttpRequestException)
-        {
-            Console.WriteLine("Network issue during token validation, assuming token is valid");
-            return true;
-        }
-        catch (Exception ex)
-        {
-            Console.WriteLine($"Token validation failed: {ex.Message}");
-            return false;
-        }
+        // Non-admin roles cannot call GET /users; JWT expiry is sufficient for restore.
+        return Task.FromResult(!IsJwtExpired(AuthenticatedUser.Token));
     }
 
     private async Task LogoutSilently()

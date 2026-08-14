@@ -1,14 +1,9 @@
-using System.Text.RegularExpressions;
 using Fig.Common.NetStandard.Scripting;
 
 namespace Fig.Web.Dashboards.Runtime;
 
 public class DashboardTransformEngine
 {
-    private static readonly Regex ContainsReturnRegex = new(
-        @"\breturn\b",
-        RegexOptions.Compiled | RegexOptions.CultureInvariant);
-
     private readonly IJsEngineFactory _jsEngineFactory;
 
     public DashboardTransformEngine(IJsEngineFactory jsEngineFactory)
@@ -17,13 +12,9 @@ public class DashboardTransformEngine
     }
 
     /// <summary>
-    /// Executes a dashboard transform script against the given <paramref name="figRoot"/>.
-    /// Named transform results are available as <c>transforms</c> and, when identifiers are valid, as top-level bindings.
+    /// Executes a dashboard component script against the given <paramref name="figRoot"/>.
     /// </summary>
-    public object? ExecuteScript(
-        string? script,
-        DashboardFigRoot figRoot,
-        IReadOnlyDictionary<string, object?>? namedResults = null)
+    public object? ExecuteScript(string? script, DashboardFigRoot figRoot)
     {
         if (string.IsNullOrWhiteSpace(script))
             return null;
@@ -35,18 +26,6 @@ public class DashboardTransformEngine
         engine.SetValue("helpers", helpers);
         engine.SetValue("DashboardJsLinq", helpers);
 
-        var transforms = namedResults is null
-            ? new Dictionary<string, object?>(StringComparer.OrdinalIgnoreCase)
-            : new Dictionary<string, object?>(namedResults, StringComparer.OrdinalIgnoreCase);
-
-        engine.SetValue("transforms", transforms);
-
-        foreach (var (name, value) in transforms)
-        {
-            if (IsValidJsIdentifier(name))
-                engine.SetValue(name, value);
-        }
-
         var code = PrepareScript(script);
         return engine.Evaluate(code);
     }
@@ -54,26 +33,188 @@ public class DashboardTransformEngine
     internal static string PrepareScript(string script)
     {
         var trimmed = script.Trim();
-        if (trimmed.StartsWith("return", StringComparison.Ordinal) || ContainsReturnRegex.IsMatch(trimmed))
+        if (ContainsTopLevelReturn(trimmed))
             return $"(function(){{ {trimmed}\n}})()";
 
         return trimmed;
     }
 
-    private static bool IsValidJsIdentifier(string name)
+    /// <summary>
+    /// True when the script contains a <c>return</c> at brace depth 0 (outside strings and comments).
+    /// </summary>
+    internal static bool ContainsTopLevelReturn(string script)
     {
-        if (string.IsNullOrWhiteSpace(name))
-            return false;
-
-        if (!(char.IsLetter(name[0]) || name[0] == '_' || name[0] == '$'))
-            return false;
-
-        for (var i = 1; i < name.Length; i++)
+        var braceDepth = 0;
+        var i = 0;
+        while (i < script.Length)
         {
-            if (!(char.IsLetterOrDigit(name[i]) || name[i] == '_' || name[i] == '$'))
-                return false;
+            var c = script[i];
+
+            if (c is '"' or '\'')
+            {
+                i = SkipQuotedString(script, i);
+                continue;
+            }
+
+            if (c == '`')
+            {
+                i = SkipTemplateLiteral(script, i);
+                continue;
+            }
+
+            if (c == '/' && i + 1 < script.Length)
+            {
+                var next = script[i + 1];
+                if (next == '/')
+                {
+                    i = SkipLineComment(script, i);
+                    continue;
+                }
+
+                if (next == '*')
+                {
+                    i = SkipBlockComment(script, i);
+                    continue;
+                }
+            }
+
+            if (c == '{')
+            {
+                braceDepth++;
+                i++;
+                continue;
+            }
+
+            if (c == '}')
+            {
+                if (braceDepth > 0)
+                    braceDepth--;
+                i++;
+                continue;
+            }
+
+            if (braceDepth == 0 && IsReturnKeywordAt(script, i))
+                return true;
+
+            i++;
         }
 
+        return false;
+    }
+
+    private static bool IsReturnKeywordAt(string script, int index)
+    {
+        const string keyword = "return";
+        if (index + keyword.Length > script.Length)
+            return false;
+
+        if (!script.AsSpan(index, keyword.Length).Equals(keyword, StringComparison.Ordinal))
+            return false;
+
+        if (index > 0 && IsIdentifierPart(script[index - 1]))
+            return false;
+
+        var after = index + keyword.Length;
+        if (after < script.Length && IsIdentifierPart(script[after]))
+            return false;
+
         return true;
+    }
+
+    private static bool IsIdentifierPart(char c) =>
+        char.IsLetterOrDigit(c) || c == '_' || c == '$';
+
+    private static int SkipQuotedString(string script, int start)
+    {
+        var quote = script[start];
+        var i = start + 1;
+        while (i < script.Length)
+        {
+            var c = script[i];
+            if (c == '\\')
+            {
+                i += 2;
+                continue;
+            }
+
+            if (c == quote)
+                return i + 1;
+
+            i++;
+        }
+
+        return script.Length;
+    }
+
+    private static int SkipTemplateLiteral(string script, int start)
+    {
+        var i = start + 1;
+        while (i < script.Length)
+        {
+            var c = script[i];
+            if (c == '\\')
+            {
+                i += 2;
+                continue;
+            }
+
+            if (c == '`')
+                return i + 1;
+
+            // Nested ${...} — skip until matching brace at depth 1 from the ${
+            if (c == '$' && i + 1 < script.Length && script[i + 1] == '{')
+            {
+                i += 2;
+                var depth = 1;
+                while (i < script.Length && depth > 0)
+                {
+                    var inner = script[i];
+                    if (inner is '"' or '\'')
+                    {
+                        i = SkipQuotedString(script, i);
+                        continue;
+                    }
+
+                    if (inner == '`')
+                    {
+                        i = SkipTemplateLiteral(script, i);
+                        continue;
+                    }
+
+                    if (inner == '{')
+                        depth++;
+                    else if (inner == '}')
+                        depth--;
+                    i++;
+                }
+
+                continue;
+            }
+
+            i++;
+        }
+
+        return script.Length;
+    }
+
+    private static int SkipLineComment(string script, int start)
+    {
+        var i = start + 2;
+        while (i < script.Length && script[i] is not ('\n' or '\r'))
+            i++;
+        return i;
+    }
+
+    private static int SkipBlockComment(string script, int start)
+    {
+        var i = start + 2;
+        while (i + 1 < script.Length)
+        {
+            if (script[i] == '*' && script[i + 1] == '/')
+                return i + 2;
+            i++;
+        }
+
+        return script.Length;
     }
 }

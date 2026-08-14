@@ -43,6 +43,12 @@ public class DashboardRunSessionJsModel
     public DashboardHealthJsModel health { get; set; } = new();
 
     public Dictionary<string, object?> customProperties { get; set; } = new();
+
+    /// <summary>Approximate client rolling 24h uptime percentage (0–100), or null before first observation.</summary>
+    public double? uptimePercent24Hr { get; set; }
+
+    /// <summary>Humanized process runtime since <see cref="startTimeUtc"/> (e.g. "3 hours").</summary>
+    public string uptimeHuman { get; set; } = string.Empty;
 }
 
 public class DashboardHealthJsModel
@@ -105,7 +111,9 @@ public static class DashboardFigApiMapper
             customProperties = session.CustomProperties.ToDictionary(
                 p => p.Name,
                 p => p.Value,
-                StringComparer.OrdinalIgnoreCase)
+                StringComparer.OrdinalIgnoreCase),
+            uptimePercent24Hr = session.UptimePercent24Hr,
+            uptimeHuman = session.UptimeHuman
         };
     }
 

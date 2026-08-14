@@ -1,52 +1,12 @@
 using Fig.Common.NetStandard.Scripting;
 using Fig.Contracts.Dashboards;
+using Fig.Web.Dashboards.Components;
 using Fig.Web.Dashboards.Runtime;
 using Fig.Web.Scripting;
+using Newtonsoft.Json.Linq;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Web.Dashboards;
-
-[TestFixture]
-public class DashboardDependencyResolverTests
-{
-    private readonly DashboardDependencyResolver _resolver = new();
-
-    [Test]
-    public void ShallOrderDependenciesTopologically()
-    {
-        var order = _resolver.ResolveOrder(new[]
-        {
-            ("c", (IReadOnlyList<string>)new[] { "b" }),
-            ("a", (IReadOnlyList<string>)Array.Empty<string>()),
-            ("b", (IReadOnlyList<string>)new[] { "a" })
-        });
-
-        Assert.That(order, Is.EqualTo(new[] { "a", "b", "c" }));
-    }
-
-    [Test]
-    public void ShallDetectCycles()
-    {
-        var ex = Assert.Throws<InvalidOperationException>(() => _resolver.ResolveOrder(new[]
-        {
-            ("a", (IReadOnlyList<string>)new[] { "b" }),
-            ("b", (IReadOnlyList<string>)new[] { "a" })
-        }));
-
-        Assert.That(ex!.Message, Does.Contain("Circular"));
-    }
-
-    [Test]
-    public void ShallRejectUnknownDependency()
-    {
-        var ex = Assert.Throws<InvalidOperationException>(() => _resolver.ResolveOrder(new[]
-        {
-            ("a", (IReadOnlyList<string>)new[] { "missing" })
-        }));
-
-        Assert.That(ex!.Message, Does.Contain("unknown transform"));
-    }
-}
 
 [TestFixture]
 public class DashboardTransformEngineTests
@@ -90,15 +50,15 @@ public class DashboardTransformEngineTests
     }
 
     [Test]
-    public void ShallUseNamedTransformResults()
+    public void ShallInvokeCountMethodViaJint()
     {
-        var named = new Dictionary<string, object?>
-        {
-            ["sessionCount"] = 3
-        };
+        var result = _engine.ExecuteScript(
+            """
+            return fig.runSessions.count(s => s.name === 'Orders');
+            """,
+            SampleFig());
 
-        var result = _engine.ExecuteScript("return transforms.sessionCount;", SampleFig(), named);
-        Assert.That(Convert.ToInt32(result), Is.EqualTo(3));
+        Assert.That(Convert.ToInt32(result), Is.EqualTo(2));
     }
 
     [Test]
@@ -106,6 +66,86 @@ public class DashboardTransformEngineTests
     {
         Assert.Throws<Jint.Runtime.JavaScriptException>(
             () => _engine.ExecuteScript("return totally.broken();", SampleFig()));
+    }
+}
+
+[TestFixture]
+public class DashboardRuntimeEvaluateTests
+{
+    private sealed class FixedDataProvider : IDashboardDataProvider
+    {
+        public FixedDataProvider(DashboardFigRoot current) => Current = current;
+
+        public DashboardFigRoot Current { get; }
+
+        public DateTime? SettingsLastRefreshUtc => null;
+
+        public DateTime? StatusLastRefreshUtc => null;
+
+        public Task EnsureLoadedAsync() => Task.CompletedTask;
+
+        public Task RefreshAllAsync() => Task.CompletedTask;
+
+        public Task RefreshSettingsAsync() => Task.CompletedTask;
+
+        public Task RefreshStatusAsync() => Task.CompletedTask;
+    }
+
+    [Test]
+    public void Evaluate_UsesInlineScript()
+    {
+        var fig = new DashboardFigRoot
+        {
+            runSessions = new DashboardJsArray(new object?[]
+            {
+                new DashboardRunSessionJsModel { name = "Orders" }
+            })
+        };
+
+        var runtime = new DashboardRuntime(new DashboardTransformEngine(new JintEngineFactory()), new FixedDataProvider(fig));
+        runtime.SetDefinition(new DashboardDefinitionDataContract
+        {
+            Components =
+            [
+                new DashboardComponentInstanceDataContract
+                {
+                    Id = "kpi-1",
+                    Type = "kpi",
+                    DataBinding = new DashboardDataBindingDataContract
+                    {
+                        InlineScript = "return { value: fig.runSessions.length, label: 'Sessions' };"
+                    }
+                }
+            ]
+        });
+
+        var results = runtime.Evaluate();
+        Assert.That(results["kpi-1"].Success, Is.True);
+        Assert.That(results["kpi-1"].Data, Is.Not.Null);
+    }
+
+    [Test]
+    public void Evaluate_FailsWhenInlineScriptMissing()
+    {
+        var runtime = new DashboardRuntime(
+            new DashboardTransformEngine(new JintEngineFactory()),
+            new FixedDataProvider(new DashboardFigRoot()));
+        runtime.SetDefinition(new DashboardDefinitionDataContract
+        {
+            Components =
+            [
+                new DashboardComponentInstanceDataContract
+                {
+                    Id = "kpi-1",
+                    Type = "kpi",
+                    DataBinding = new DashboardDataBindingDataContract()
+                }
+            ]
+        });
+
+        var results = runtime.Evaluate();
+        Assert.That(results["kpi-1"].Success, Is.False);
+        Assert.That(results["kpi-1"].Error, Does.Contain("InlineScript"));
     }
 }
 
@@ -129,10 +169,73 @@ public class DashboardJsArrayTests
 public class DashboardDefinitionNormalizeTests
 {
     [Test]
-    public void PrepareScript_WrapsReturnStatements()
+    public void PrepareScript_WrapsTopLevelReturnStatements()
     {
         var prepared = DashboardTransformEngine.PrepareScript("return 1;");
         Assert.That(prepared, Does.StartWith("(function(){"));
         Assert.That(prepared, Does.EndWith("})()"));
+    }
+
+    [Test]
+    public void PrepareScript_DoesNotWrapExpressionContainingReturnInString()
+    {
+        const string script = "({ text: 'return to normal' })";
+        var prepared = DashboardTransformEngine.PrepareScript(script);
+        Assert.That(prepared, Is.EqualTo(script));
+    }
+
+    [Test]
+    public void PrepareScript_DoesNotTreatNestedFunctionReturnAsTopLevel()
+    {
+        const string script = "({ value: (function(){ return 1 })() })";
+        var prepared = DashboardTransformEngine.PrepareScript(script);
+        Assert.That(prepared, Is.EqualTo(script));
+        Assert.That(DashboardTransformEngine.ContainsTopLevelReturn(script), Is.False);
+    }
+
+    [Test]
+    public void PrepareScript_IgnoresReturnInComments()
+    {
+        const string script = "// return early\n({ value: 1 })";
+        Assert.That(DashboardTransformEngine.ContainsTopLevelReturn(script), Is.False);
+        Assert.That(DashboardTransformEngine.PrepareScript(script), Is.EqualTo(script.Trim()));
+    }
+}
+
+[TestFixture]
+public class DashboardSuggestedScriptTests
+{
+    [Test]
+    public void ApplySuggestedScript_SetsInlineScriptAndConfig()
+    {
+        var registry = new DashboardComponentRegistry();
+        var preset = registry.GetPreset("count-run-sessions");
+        Assert.That(preset, Is.Not.Null);
+
+        var component = new DashboardComponentInstanceDataContract
+        {
+            Id = "kpi-1",
+            Type = "kpi",
+            Config = new JObject { ["title"] = "Old" },
+            DataBinding = new DashboardDataBindingDataContract { InlineScript = "return null;" }
+        };
+
+        DashboardComponentPropertiesForm.ApplySuggestedScript(component, preset!);
+
+        Assert.That(component.DataBinding.InlineScript, Is.EqualTo(preset!.Script));
+        Assert.That(component.Config?["title"]?.ToString(), Is.EqualTo("Connected run sessions"));
+    }
+
+    [Test]
+    public void Registry_HasStarterPresetsForEveryComponentType()
+    {
+        var registry = new DashboardComponentRegistry();
+        foreach (var descriptor in registry.All)
+        {
+            Assert.That(
+                registry.PresetsFor(descriptor.Type).Any(),
+                Is.True,
+                $"Expected at least one suggested script for component type '{descriptor.Type}'.");
+        }
     }
 }

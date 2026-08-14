@@ -1,4 +1,6 @@
 using System.Text.RegularExpressions;
+using Fig.Common.Events;
+using Fig.Web.Events;
 using Fig.Web.Facades;
 using Fig.Web.Models.Clients;
 using Fig.Web.Models.Setting;
@@ -18,11 +20,13 @@ public class DashboardDataProvider : IDashboardDataProvider
     public DashboardDataProvider(
         IClientStatusFacade clientStatusFacade,
         ISettingClientFacade settingClientFacade,
-        IAccountService accountService)
+        IAccountService accountService,
+        IEventDistributor eventDistributor)
     {
         _clientStatusFacade = clientStatusFacade;
         _settingClientFacade = settingClientFacade;
         _accountService = accountService;
+        eventDistributor.Subscribe(EventConstants.LogoutEvent, ClearCaches);
     }
 
     public DashboardFigRoot Current { get; private set; } = new();
@@ -47,6 +51,12 @@ public class DashboardDataProvider : IDashboardDataProvider
         RebuildCurrent();
     }
 
+    public async Task RefreshAllAsync()
+    {
+        await RefreshStatusAsync();
+        await RefreshSettingsAsync();
+    }
+
     public async Task EnsureLoadedAsync()
     {
         if (StatusLastRefreshUtc is null)
@@ -54,6 +64,15 @@ public class DashboardDataProvider : IDashboardDataProvider
 
         if (SettingsLastRefreshUtc is null)
             await RefreshSettingsAsync();
+    }
+
+    private void ClearCaches()
+    {
+        _settingsCache = new();
+        _statusCache = new();
+        SettingsLastRefreshUtc = null;
+        StatusLastRefreshUtc = null;
+        Current = new DashboardFigRoot();
     }
 
     private void RebuildCurrent()

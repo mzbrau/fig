@@ -26,7 +26,8 @@ public class ClientRunSessionModel
         long memoryUsageBytes,
         DateTime lastSettingLoadUtc,
         RunSessionHealthModel health,
-        IReadOnlyList<CustomStatusPropertyModel> customProperties)
+        IReadOnlyList<CustomStatusPropertyModel> customProperties,
+        double? uptimePercent24Hr = null)
     {
         Name = name;
         Instance = instance;
@@ -50,6 +51,7 @@ public class ClientRunSessionModel
         LastSettingLoadUtc = lastSettingLoadUtc;
         Health = health;
         CustomProperties = customProperties;
+        UptimePercent24Hr = uptimePercent24Hr;
         UiCustomProperties = customProperties
             .Where(p => p.ShowInUi)
             .OrderBy(p => p.Order)
@@ -89,6 +91,12 @@ public class ClientRunSessionModel
     public DateTime StartTimeLocal => StartTimeUtc.ToLocalTime();
 
     public string UptimeHuman => (DateTime.UtcNow - StartTimeUtc).Humanize();
+
+    /// <summary>Approximate client rolling 24h uptime percentage, or null before first observation.</summary>
+    public double? UptimePercent24Hr { get; }
+
+    public string UptimePercent24HrDisplay =>
+        UptimePercent24Hr.HasValue ? $"{UptimePercent24Hr.Value:0.0}%" : "—";
 
     public string? IpAddress { get; }
 

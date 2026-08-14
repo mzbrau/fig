@@ -37,6 +37,18 @@ public class ClientStatusMap : ClassMapping<ClientStatusBusinessEntity>
             x.Type(NHibernateUtil.UtcTicks);
         });
         Property(x => x.LastRunSessionMachineName, x => x.Column("last_run_session_machine_name"));
+        Property(x => x.UptimeWindowStartUtc, x =>
+        {
+            x.Column("uptime_window_start_utc");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
+        Property(x => x.UptimeLastStateChangeUtc, x =>
+        {
+            x.Column("uptime_last_state_change_utc");
+            x.Type(NHibernateUtil.UtcTicks);
+        });
+        Property(x => x.UptimeCurrentlyUp, x => x.Column("uptime_currently_up"));
+        Property(x => x.UptimeAccumulatedMs, x => x.Column("uptime_accumulated_ms"));
         Bag(x => x.RunSessions,
             x =>
             {

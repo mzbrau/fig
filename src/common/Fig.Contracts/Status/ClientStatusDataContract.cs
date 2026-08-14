@@ -11,7 +11,8 @@ namespace Fig.Contracts.Status
             DateTime? lastSettingValueUpdate,
             ICollection<ClientRunSessionDataContract> runSessions,
             DateTime? lastRunSessionDisconnected = null,
-            string? lastRunSessionMachineName = null)
+            string? lastRunSessionMachineName = null,
+            double? uptimePercent24Hr = null)
         {
             Name = name;
             Instance = instance;
@@ -20,6 +21,7 @@ namespace Fig.Contracts.Status
             RunSessions = runSessions;
             LastRunSessionDisconnected = lastRunSessionDisconnected;
             LastRunSessionMachineName = lastRunSessionMachineName;
+            UptimePercent24Hr = uptimePercent24Hr;
         }
 
         public string Name { get; }
@@ -33,6 +35,9 @@ namespace Fig.Contracts.Status
         public DateTime? LastRunSessionDisconnected { get; }
         
         public string? LastRunSessionMachineName { get; }
+
+        /// <summary>Approximate rolling 24-hour uptime percentage (0–100), or null before first observation.</summary>
+        public double? UptimePercent24Hr { get; }
         
         public ICollection<ClientRunSessionDataContract> RunSessions { get; }
     }

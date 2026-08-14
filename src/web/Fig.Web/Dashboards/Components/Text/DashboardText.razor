@@ -1,22 +1,89 @@
 @namespace Fig.Web.Dashboards.Components.Text
 @using Fig.Web.Dashboards.Components.Contracts
 
-@{
-    var variant = (Input?.Variant ?? "body").Trim().ToLowerInvariant();
-}
-@if (variant == "heading")
+<div class="dashboard-text">
+@foreach (var line in ResolvedLines)
 {
-    <h3 class="dashboard-text dashboard-text--heading">@(Input?.Text)</h3>
+    <div class="@LineClass(line)" style="@LineStyle(line)">@(line.Text)</div>
 }
-else if (variant == "muted")
-{
-    <p class="dashboard-text dashboard-text--muted">@(Input?.Text)</p>
-}
-else
-{
-    <p class="dashboard-text dashboard-text--body">@(Input?.Text)</p>
-}
+</div>
 
 @code {
     [Parameter] public DashboardTextInput? Input { get; set; }
+
+    private IEnumerable<DashboardTextLine> ResolvedLines
+    {
+        get
+        {
+            if (Input?.Lines is { Count: > 0 })
+                return Input.Lines;
+
+            if (!string.IsNullOrWhiteSpace(Input?.Text))
+            {
+                return
+                [
+                    new DashboardTextLine
+                    {
+                        Text = Input.Text,
+                        Size = MapVariantToSize(Input.Variant)
+                    }
+                ];
+            }
+
+            return Array.Empty<DashboardTextLine>();
+        }
+    }
+
+    private static string LineClass(DashboardTextLine line)
+    {
+        var size = NormalizeSize(line.Size);
+        var align = NormalizeAlign(line.Align);
+        var weight = NormalizeWeight(line.Weight);
+        return $"dashboard-text__line dashboard-text__line--{size} dashboard-text__line--align-{align} dashboard-text__line--weight-{weight}";
+    }
+
+    private static string? LineStyle(DashboardTextLine line)
+    {
+        if (string.IsNullOrWhiteSpace(line.Color))
+            return null;
+        return $"color: {line.Color};";
+    }
+
+    private static string NormalizeSize(string? size)
+    {
+        return (size ?? "md").Trim().ToLowerInvariant() switch
+        {
+            "xs" => "xs",
+            "sm" => "sm",
+            "lg" => "lg",
+            "xl" => "xl",
+            "xxl" => "xxl",
+            _ => "md"
+        };
+    }
+
+    private static string NormalizeAlign(string? align)
+    {
+        return (align ?? "left").Trim().ToLowerInvariant() switch
+        {
+            "center" => "center",
+            "right" => "right",
+            _ => "left"
+        };
+    }
+
+    private static string NormalizeWeight(string? weight)
+    {
+        return string.Equals(weight, "bold", StringComparison.OrdinalIgnoreCase) ? "bold" : "normal";
+    }
+
+    private static string MapVariantToSize(string? variant)
+    {
+        return (variant ?? string.Empty).Trim().ToLowerInvariant() switch
+        {
+            "heading" => "xl",
+            "muted" => "sm",
+            _ => "md"
+        };
+    }
 }
