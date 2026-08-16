@@ -224,6 +224,71 @@ public class MigrateFromAttributeTests : IntegrationTestBase
     }
 
     [Test]
+    public async Task PreviewMigrateFromMigrations_ReturnsRequests_WithoutPersisting()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalIntSettings>(secret);
+        await SetSettings(ClientName, [new(nameof(OriginalIntSettings.TimeoutSeconds), new IntSettingDataContract(90))]);
+
+        var previewDefinition = new TimeSpanMigrationSettings().CreateDataContract(ClientName);
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
+        var json = JsonConvert.SerializeObject(previewDefinition, Fig.Common.NetStandard.Json.JsonSettings.FigDefault);
+        var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync("/clients/migrations/preview", content);
+        Assert.That(response.IsSuccessStatusCode, Is.True);
+        var body = await response.Content.ReadAsStringAsync();
+        var requests = JsonConvert.DeserializeObject<List<SettingMigrationRequestDataContract>>(
+            body, Fig.Common.NetStandard.Json.JsonSettings.FigDefault);
+
+        Assert.That(requests, Is.Not.Null);
+        Assert.That(requests!, Has.Count.EqualTo(1));
+        Assert.That(requests[0].SourceSettingName, Is.EqualTo(nameof(OriginalIntSettings.TimeoutSeconds)));
+        Assert.That(requests[0].TargetSettingName, Is.EqualTo(nameof(TimeSpanMigrationSettings.Timeout)));
+
+        // Preview must not persist the renamed registration.
+        var current = await GetSettingsForClient(ClientName, secret);
+        Assert.That(current.Any(s => s.Name == nameof(OriginalIntSettings.TimeoutSeconds)), Is.True);
+        Assert.That(current.Any(s => s.Name == nameof(TimeSpanMigrationSettings.Timeout)), Is.False);
+    }
+
+    [Test]
+    public async Task PreviewMigrateFromMigrations_ReturnsEmpty_WhenNoCustomMigrationMethod()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalSettings>(secret);
+
+        var previewDefinition = new RenamedSettings().CreateDataContract(ClientName);
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", secret);
+        var json = JsonConvert.SerializeObject(previewDefinition, Fig.Common.NetStandard.Json.JsonSettings.FigDefault);
+        var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync("/clients/migrations/preview", content);
+        Assert.That(response.IsSuccessStatusCode, Is.True);
+        var body = await response.Content.ReadAsStringAsync();
+        var requests = JsonConvert.DeserializeObject<List<SettingMigrationRequestDataContract>>(
+            body, Fig.Common.NetStandard.Json.JsonSettings.FigDefault);
+
+        Assert.That(requests, Is.Empty);
+    }
+
+    [Test]
+    public async Task PreviewMigrateFromMigrations_RejectsInvalidSecret()
+    {
+        var secret = GetNewSecret();
+        await RegisterSettings<OriginalIntSettings>(secret);
+
+        var previewDefinition = new TimeSpanMigrationSettings().CreateDataContract(ClientName);
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("clientSecret", GetNewSecret());
+        var json = JsonConvert.SerializeObject(previewDefinition, Fig.Common.NetStandard.Json.JsonSettings.FigDefault);
+        var content = new System.Net.Http.StringContent(json, System.Text.Encoding.UTF8, "application/json");
+        var response = await httpClient.PostAsync("/clients/migrations/preview", content);
+
+        Assert.That(response.IsSuccessStatusCode, Is.False);
+    }
+
+    [Test]
     public async Task ShallMigrateSecretValueWithCustomMigrationMethodWhenSecretStoreIsEnabled()
     {
         await SetConfiguration(CreateConfiguration(useAzureKeyVault: true));

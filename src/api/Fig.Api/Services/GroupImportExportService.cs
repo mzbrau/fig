@@ -69,7 +69,7 @@ public class GroupImportExportService : AuthenticatedService, IGroupImportExport
         }
     }
 
-    private static void ValidateImport(SettingGroupExportDataContract data, ImportType importType)
+    internal static void ValidateImport(SettingGroupExportDataContract data, ImportType importType)
     {
         if (data?.Groups == null)
             throw new ArgumentException("Import data must contain a non-null groups collection.");

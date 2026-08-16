@@ -301,7 +301,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
             throw new InvalidOperationException($"A setting group with the name '{name}' already exists.");
     }
 
-    private static void ValidateGroupedSettings(SettingGroupDataContract group)
+    internal static void ValidateGroupedSettings(SettingGroupDataContract group)
     {
         if (group.GroupedSettings == null)
             return;
@@ -350,7 +350,7 @@ public class SettingGroupService : AuthenticatedService, ISettingGroupService
         return JsonConvert.SerializeObject(groupedSettings);
     }
 
-    private static string GetLeafName(string name)
+    internal static string GetLeafName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             return string.Empty;

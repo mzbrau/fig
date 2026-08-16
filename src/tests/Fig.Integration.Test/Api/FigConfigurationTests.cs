@@ -2,9 +2,11 @@
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using Fig.Contracts.Configuration;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
 using Microsoft.AspNetCore.Http;
+using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
 
@@ -99,5 +101,75 @@ public class FigConfigurationTests : IntegrationTestBase
         Assert.That(result.IsSuccessStatusCode, Is.False);
         Assert.That((int)result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
             "Only administrators can set configuration");
+    }
+
+    [Test]
+    public async Task TestAzureKeyVault_ReturnsSuccessFromSecretStore()
+    {
+        SecretStoreMock
+            .Setup(s => s.PerformTest())
+            .ReturnsAsync(new SecretStoreTestResultDataContract(true, "Key vault ok"));
+
+        var result = await ApiClient.Put<SecretStoreTestResultDataContract>("/configuration/KeyVault", null);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Success, Is.True);
+        Assert.That(result.Message, Is.EqualTo("Key vault ok"));
+    }
+
+    [Test]
+    public async Task TestAzureKeyVault_ReturnsFailureFromSecretStore()
+    {
+        SecretStoreMock
+            .Setup(s => s.PerformTest())
+            .ReturnsAsync(new SecretStoreTestResultDataContract(false, "Key vault unavailable"));
+
+        var result = await ApiClient.Put<SecretStoreTestResultDataContract>("/configuration/KeyVault", null);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Success, Is.False);
+        Assert.That(result.Message, Is.EqualTo("Key vault unavailable"));
+    }
+
+    [Test]
+    public async Task TestAzureKeyVault_RejectsNonAdministrator()
+    {
+        var user = NewUser(username: $"cfg-kv-{GetNewSecret()[..8]}");
+        await CreateUser(user);
+        var login = await Login(user.Username, user.Password!);
+
+        using var httpClient = GetHttpClient();
+        httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {login.Token}");
+        var response = await httpClient.PutAsync("/configuration/KeyVault", null);
+        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task TestFigAssistant_ReturnsFailure_WhenNotConfigured()
+    {
+        await SetConfiguration(CreateConfiguration(enableFigAssistant: false));
+
+        var result = await ApiClient.Put<SecretStoreTestResultDataContract>("/configuration/Assistant", null);
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Success, Is.False);
+        Assert.That(result.Message, Does.Contain("not configured"));
+    }
+
+    [Test]
+    public async Task TestFigAssistant_AttemptsConnection_WhenConfigured()
+    {
+        await SetConfiguration(CreateConfiguration(
+            enableFigAssistant: true,
+            figAssistantEndpoint: "http://localhost/assistant-probe",
+            figAssistantModel: "test-model",
+            figAssistantAccessToken: "probe-token"));
+
+        var result = await ApiClient.Put<SecretStoreTestResultDataContract>("/configuration/Assistant", null);
+
+        Assert.That(result, Is.Not.Null);
+        // WebHook test client is not an LLM endpoint; expect a failed probe with a useful message.
+        Assert.That(result!.Success, Is.False);
+        Assert.That(result.Message, Is.Not.Null.And.Not.Empty);
     }
 }

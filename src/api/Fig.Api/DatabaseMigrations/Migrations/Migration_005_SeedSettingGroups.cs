@@ -111,7 +111,7 @@ public class Migration_005_SeedSettingGroups : IDatabaseMigration
         }
     }
 
-    private static string GetLeafName(string name)
+    internal static string GetLeafName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
             return string.Empty;

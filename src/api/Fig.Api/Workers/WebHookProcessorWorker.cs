@@ -89,7 +89,7 @@ public class WebHookProcessorWorker : BackgroundService
         _logger.LogInformation("WebHook processor worker stopped");
     }
 
-    private async Task ProcessWebHook(WebHookQueueItem item, CancellationToken stoppingToken)
+    internal async Task ProcessWebHook(WebHookQueueItem item, CancellationToken stoppingToken)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         
@@ -118,7 +118,7 @@ public class WebHookProcessorWorker : BackgroundService
                 var webHookClient = webHookClients.First(a => a.Id == webHook.ClientId);
                 var contract = await CreateContract(item.WebHookType, item.WebHookData, webHook, configurationRepository, webHookHealthConverter);
 
-                if (!ShouldSend(contract))
+                if (contract is null || !ShouldSend(contract))
                     continue;
                 
                 using var request = CreateRequest(webHookClient, item.WebHookType, contract);
@@ -142,7 +142,7 @@ public class WebHookProcessorWorker : BackgroundService
         return (await repository.GetClients(clientIds)).ToList();
     }
 
-    private async Task<object> CreateContract(WebHookType webHookType, object webHookData, WebHookBusinessEntity webHook, IConfigurationRepository configurationRepository, IWebHookHealthConverter webHookHealthConverter)
+    internal async Task<object?> CreateContract(WebHookType webHookType, object webHookData, WebHookBusinessEntity webHook, IConfigurationRepository configurationRepository, IWebHookHealthConverter webHookHealthConverter)
     {
         var uri = await GetUri(webHookType, configurationRepository);
         
@@ -172,10 +172,14 @@ public class WebHookProcessorWorker : BackgroundService
             data.Client.Settings.Select(a => a.Name).ToList(), RegistrationType.Updated, uri);
     }
 
-    private object CreateSettingValueChangedContract(SettingValueChangedWebHookData data, WebHookBusinessEntity webHook, Uri? uri)
+    private object? CreateSettingValueChangedContract(SettingValueChangedWebHookData data, WebHookBusinessEntity webHook, Uri? uri)
     {
+        var updatedSettings = data.Changes.Where(webHook.IsMatch).Select(a => a.Name).ToList();
+        if (updatedSettings.Count == 0)
+            return null;
+
         return new SettingValueChangedDataContract(data.Client.Name, data.Client.Instance,
-            data.Changes.Where(webHook.IsMatch).Select(a => a.Name).ToList(), data.Username, data.ChangeMessage, uri);
+            updatedSettings, data.Username, data.ChangeMessage, uri);
     }
 
     private object CreateClientConnectedContract(ClientConnectedWebHookData data, Uri? uri)
@@ -221,7 +225,7 @@ public class WebHookProcessorWorker : BackgroundService
             uri);
     }
 
-    private bool ShouldSend(object contract)
+    internal bool ShouldSend(object contract)
     {
         return contract switch
         {

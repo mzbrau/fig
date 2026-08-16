@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Net;
 using System.Net.Http;
 using Fig.Api.Assistant;
 using Fig.Api.Datalayer.Repositories;
@@ -633,11 +634,157 @@ public class AssistantReportToolTests
         Assert.That(tool!.Description, Does.Contain("running Fig.Api"));
     }
 
-    private static AssistantToolRegistry CreateRegistry(Mock<IReportExecutionService> reportExecution)
+    [Test]
+    public void RequiredString_WhenMissing_ThrowsArgumentException()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("get_setting_history", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("""{"settingName":"Items"}""", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>().With.Message.Contain("clientName"));
+    }
+
+    [Test]
+    public async Task TimeRange_UsesProvidedUtcTimesWhenCallingGetEvents()
+    {
+        var events = new Mock<IEventsService>();
+        DateTime? capturedStart = null;
+        DateTime? capturedEnd = null;
+        events.Setup(e => e.GetEventLogs(
+                It.IsAny<DateTime>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<EventLogQuery>()))
+            .Callback<DateTime, DateTime, EventLogQuery>((start, end, _) =>
+            {
+                capturedStart = start;
+                capturedEnd = end;
+            })
+            .ReturnsAsync(new Fig.Contracts.EventHistory.EventLogCollectionDataContract(
+                DateTime.UtcNow.AddDays(-30),
+                DateTime.UtcNow.AddDays(-1),
+                DateTime.UtcNow,
+                []));
+
+        var registry = CreateRegistry(new Mock<IReportExecutionService>(), events: events);
+        Assert.That(registry.TryGet("get_events", out var tool), Is.True);
+        const string argsJson = """{"startTime":"2024-01-01T00:00:00Z","endTime":"2024-01-15T12:00:00Z"}""";
+        await tool!.ExecuteAsync(argsJson, CancellationToken.None);
+
+        // JObject.Parse may coerce ISO timestamps to DateTime tokens; mirror TimeRange parsing.
+        var args = JObject.Parse(argsJson);
+        Assert.That(DateTime.TryParse(args.Value<string>("endTime"), out var expectedEnd), Is.True);
+        Assert.That(DateTime.TryParse(args.Value<string>("startTime"), out var expectedStart), Is.True);
+        Assert.That(capturedStart!.Value, Is.EqualTo(expectedStart.ToUniversalTime()));
+        Assert.That(capturedEnd!.Value, Is.EqualTo(expectedEnd.ToUniversalTime()));
+        Assert.That(capturedEnd.Value - capturedStart.Value, Is.EqualTo(TimeSpan.FromHours(14 * 24 + 12)));
+    }
+
+    [Test]
+    public async Task TimeRange_DefaultsToLast30DaysWhenOmitted()
+    {
+        var events = new Mock<IEventsService>();
+        DateTime? capturedStart = null;
+        DateTime? capturedEnd = null;
+        events.Setup(e => e.GetEventLogs(
+                It.IsAny<DateTime>(),
+                It.IsAny<DateTime>(),
+                It.IsAny<EventLogQuery>()))
+            .Callback<DateTime, DateTime, EventLogQuery>((start, end, _) =>
+            {
+                capturedStart = start;
+                capturedEnd = end;
+            })
+            .ReturnsAsync(new Fig.Contracts.EventHistory.EventLogCollectionDataContract(
+                DateTime.UtcNow.AddDays(-30),
+                DateTime.UtcNow.AddDays(-1),
+                DateTime.UtcNow,
+                []));
+
+        var registry = CreateRegistry(new Mock<IReportExecutionService>(), events: events);
+        Assert.That(registry.TryGet("get_events", out var tool), Is.True);
+        var before = DateTime.UtcNow;
+        await tool!.ExecuteAsync("{}", CancellationToken.None);
+        var after = DateTime.UtcNow;
+
+        Assert.That(capturedEnd, Is.Not.Null);
+        Assert.That(capturedStart, Is.Not.Null);
+        Assert.That(capturedEnd!.Value, Is.InRange(before.AddSeconds(-2), after.AddSeconds(2)));
+        Assert.That(capturedStart!.Value, Is.EqualTo(capturedEnd.Value.AddDays(-30)).Within(TimeSpan.FromSeconds(2)));
+    }
+
+    [Test]
+    public void ValidateActions_WhenActionsMissing_Throws()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("{}", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>().With.Message.Contain("actions"));
+    }
+
+    [Test]
+    public void ValidateActions_WhenUnsupportedType_Throws()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("propose_web_actions", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("""{"actions":[{"type":"deleteClient"}]}""", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>().With.Message.Contain("Unsupported"));
+    }
+
+    [Test]
+    public async Task FetchDoc_FetchesHttpsFigsettingsUrlAndStripsMarkup()
+    {
+        var handler = new MockHttpMessageHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                "<html><script>alert(1)</script><style>b{}</style><body><h1>Docs</h1><p>Hello&nbsp;world</p></body></html>")
+        });
+        var factory = new Mock<IHttpClientFactory>();
+        factory.Setup(f => f.CreateClient("FigAssistantDocs")).Returns(new HttpClient(handler));
+
+        var registry = CreateRegistry(new Mock<IReportExecutionService>(), httpClientFactory: factory);
+        Assert.That(registry.TryGet("fetch_fig_doc", out var tool), Is.True);
+        var result = await tool!.ExecuteAsync(
+            """{"url":"https://figsettings.com/docs/intro"}""",
+            CancellationToken.None);
+
+        Assert.That(result, Does.Contain("Docs"));
+        Assert.That(result, Does.Contain("Hello"));
+        Assert.That(result, Does.Contain("world"));
+        Assert.That(result, Does.Not.Contain("alert"));
+        Assert.That(result, Does.Not.Contain("<h1>"));
+        Assert.That(handler.LastRequestUri!.ToString(), Is.EqualTo("https://figsettings.com/docs/intro"));
+    }
+
+    [Test]
+    public void FetchDoc_RejectsNonFigsettingsHosts()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("fetch_fig_doc", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("""{"url":"https://example.com/docs"}""", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>().With.Message.Contain("figsettings.com"));
+    }
+
+    [Test]
+    public void FetchDoc_RequiresUrl()
+    {
+        var registry = CreateRegistry(new Mock<IReportExecutionService>());
+        Assert.That(registry.TryGet("fetch_fig_doc", out var tool), Is.True);
+        Assert.That(
+            async () => await tool!.ExecuteAsync("{}", CancellationToken.None),
+            Throws.Exception.TypeOf<ArgumentException>().With.Message.Contain("url"));
+    }
+
+    private static AssistantToolRegistry CreateRegistry(
+        Mock<IReportExecutionService> reportExecution,
+        Mock<IEventsService>? events = null,
+        Mock<IHttpClientFactory>? httpClientFactory = null)
     {
         return new AssistantToolRegistry(
             Mock.Of<ISettingsService>(),
-            Mock.Of<IEventsService>(),
+            events?.Object ?? Mock.Of<IEventsService>(),
             Mock.Of<IStatusService>(),
             Mock.Of<ILookupTablesService>(),
             Mock.Of<ISettingGroupService>(),
@@ -648,7 +795,27 @@ public class AssistantReportToolTests
             Mock.Of<IApiStatusService>(),
             reportExecution.Object,
             Mock.Of<IVersionHelper>(),
-            Mock.Of<IHttpClientFactory>());
+            httpClientFactory?.Object ?? Mock.Of<IHttpClientFactory>());
+    }
+
+    private sealed class MockHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly Func<HttpRequestMessage, HttpResponseMessage> _responder;
+
+        public MockHttpMessageHandler(Func<HttpRequestMessage, HttpResponseMessage> responder)
+        {
+            _responder = responder;
+        }
+
+        public Uri? LastRequestUri { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            LastRequestUri = request.RequestUri;
+            return Task.FromResult(_responder(request));
+        }
     }
 }
 

@@ -22,7 +22,7 @@ public class FileMonitor : IFileMonitor
         return true;
     }
 
-    private bool IsFileLocked(FileInfo file)
+    internal bool IsFileLocked(FileInfo file)
     {
         try
         {

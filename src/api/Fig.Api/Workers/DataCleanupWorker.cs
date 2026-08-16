@@ -12,18 +12,29 @@ public class DataCleanupWorker : BackgroundService
     private readonly ILogger<DataCleanupWorker> _logger;
     private readonly IServiceScopeFactory _serviceScopeFactory;
     private readonly IPeriodicTimer _timer;
-    
+    private readonly TimeSpan _startupDelay;
 
     public DataCleanupWorker(
         ILogger<DataCleanupWorker> logger,
         ITimerFactory timerFactory,
         IServiceScopeFactory serviceScopeFactory)
+        : this(logger, timerFactory, serviceScopeFactory, startupDelay: null, cleanupInterval: null)
+    {
+    }
+
+    internal DataCleanupWorker(
+        ILogger<DataCleanupWorker> logger,
+        ITimerFactory timerFactory,
+        IServiceScopeFactory serviceScopeFactory,
+        TimeSpan? startupDelay,
+        TimeSpan? cleanupInterval)
     {
         _logger = logger;
         _serviceScopeFactory = serviceScopeFactory;
-        var cleanupInterval = TimeSpan.FromMinutes(_random.Next(480, 720)); // Random interval between 8-12 hours
-        _logger.LogInformation("Data cleanup worker will run every {Interval} minutes", cleanupInterval.TotalMinutes);
-        _timer = timerFactory.Create(cleanupInterval); 
+        _startupDelay = startupDelay ?? TimeSpan.FromSeconds(_random.Next(30, 300)); // Random delay between 30s and 5min
+        var interval = cleanupInterval ?? TimeSpan.FromMinutes(_random.Next(480, 720)); // Random interval between 8-12 hours
+        _logger.LogInformation("Data cleanup worker will run every {Interval} minutes", interval.TotalMinutes);
+        _timer = timerFactory.Create(interval);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -31,7 +42,7 @@ public class DataCleanupWorker : BackgroundService
         _logger.LogInformation("Data cleanup worker starting");
         
         // Run cleanup on startup after a short delay
-        await Task.Delay(TimeSpan.FromSeconds(_random.Next(30, 300)), stoppingToken); // Random delay between 30s and 5min
+        await Task.Delay(_startupDelay, stoppingToken);
         await PerformCleanup();
 
         // Then run twice per day at midnight and noon UTC
@@ -41,7 +52,7 @@ public class DataCleanupWorker : BackgroundService
         }
     }
 
-    private async Task PerformCleanup()
+    internal async Task PerformCleanup()
     {
         using var scope = _serviceScopeFactory.CreateScope();
         
