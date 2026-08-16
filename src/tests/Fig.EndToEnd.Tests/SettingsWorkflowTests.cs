@@ -56,29 +56,47 @@ public class SettingsWorkflowTests : EndToEndTestBase
         var loginPage = new LoginPage(page);
         var settingsPage = new SettingsPage(page);
         var newValue = $"e2e-{Guid.NewGuid():N}".Substring(0, 20);
+        string? originalValue = null;
 
         await loginPage.Login("admin", "admin");
         await settingsPage.SelectClient("AspNetApi");
-        await settingsPage.UpdateStringSetting("AppVersion", newValue);
-        await settingsPage.SaveWithMessage("E2E update persist");
+        originalValue = await settingsPage.GetStringSettingValue("AppVersion");
 
-        await page.EvaluateAsync("() => { localStorage.clear(); sessionStorage.clear(); }");
-        await page.GotoAsync("/", new PageGotoOptions
+        try
         {
-            WaitUntil = WaitUntilState.NetworkIdle,
-            Timeout = 120_000
-        });
-        await loginPage.Login("admin", "admin");
-        await settingsPage.SelectClient("AspNetApi");
+            await settingsPage.UpdateStringSetting("AppVersion", newValue);
+            await settingsPage.SaveWithMessage("E2E update persist");
 
-        var persisted = await settingsPage.GetStringSettingValue("AppVersion");
-        Assert.That(persisted, Is.EqualTo(newValue));
+            await page.EvaluateAsync("() => { localStorage.clear(); sessionStorage.clear(); }");
+            await page.GotoAsync("/", new PageGotoOptions
+            {
+                WaitUntil = WaitUntilState.NetworkIdle,
+                Timeout = 120_000
+            });
+            await loginPage.Login("admin", "admin");
+            await settingsPage.SelectClient("AspNetApi");
 
-        await settingsPage.ClickHistory("AppVersion");
-        await Assertions.Expect(settingsPage.HistoryGrid("AppVersion"))
-            .ToContainTextAsync(newValue);
-        await Assertions.Expect(settingsPage.HistoryGrid("AppVersion"))
-            .ToContainTextAsync("admin");
+            var persisted = await settingsPage.GetStringSettingValue("AppVersion");
+            Assert.That(persisted, Is.EqualTo(newValue));
+
+            await settingsPage.ClickHistory("AppVersion");
+            await Assertions.Expect(settingsPage.HistoryGrid("AppVersion"))
+                .ToContainTextAsync(newValue);
+            await Assertions.Expect(settingsPage.HistoryGrid("AppVersion"))
+                .ToContainTextAsync("admin");
+        }
+        finally
+        {
+            if (originalValue is not null)
+            {
+                var current = await settingsPage.GetStringSettingValue("AppVersion");
+                if (!string.Equals(current, originalValue, StringComparison.Ordinal))
+                {
+                    await settingsPage.UpdateStringSetting("AppVersion", originalValue);
+                    await settingsPage.SaveWithMessage("E2E restore AppVersion");
+                }
+            }
+        }
     }
 
     [Test]

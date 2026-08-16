@@ -154,12 +154,20 @@ public class ValidatedHttpClientFactory
             SslProtocols = SslProtocols.Tls12
         };
 
-        if (IsInsecureSslEnabled())
+        if (ShouldDisableCertificateValidation(apiUri))
         {
             _logger.LogWarning(
-                "{EnvVar} is enabled; TLS certificate validation is disabled for Fig API calls",
-                InsecureSslEnvVar);
+                "{EnvVar} is enabled for localhost API URI {ApiUri}; TLS certificate validation is disabled",
+                InsecureSslEnvVar,
+                apiUri);
             httpClientHandler.ServerCertificateCustomValidationCallback = static (_, _, _, _) => true;
+        }
+        else if (IsInsecureSslEnabled())
+        {
+            _logger.LogWarning(
+                "{EnvVar} is set but ignored because API URI {ApiUri} is not localhost/loopback; TLS certificate validation remains enabled",
+                InsecureSslEnvVar,
+                apiUri);
         }
 
         var handler = new PolicyHttpMessageHandler(policyWrap)
@@ -172,6 +180,25 @@ public class ValidatedHttpClientFactory
             BaseAddress = new Uri(apiUri),
             DefaultRequestHeaders = { ExpectContinue = false }
         };
+    }
+
+    internal static bool ShouldDisableCertificateValidation(string apiUri)
+    {
+        if (!IsInsecureSslEnabled())
+            return false;
+
+        return IsLocalhostApiUri(apiUri);
+    }
+
+    internal static bool IsLocalhostApiUri(string apiUri)
+    {
+        if (!Uri.TryCreate(apiUri, UriKind.Absolute, out var uri))
+            return false;
+
+        if (uri.IsLoopback)
+            return true;
+
+        return string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase);
     }
 
     private static bool IsInsecureSslEnabled()

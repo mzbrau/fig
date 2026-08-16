@@ -8,6 +8,8 @@ Ports `7148` and `7281` must be free.
 
 ```bash
 dotnet build src/tests/Fig.EndToEnd.Tests/Fig.EndToEnd.Tests.csproj -c Release
+# On Linux, install Chromium OS dependencies first:
+pwsh src/tests/Fig.EndToEnd.Tests/bin/Release/net10.0/playwright.ps1 install-deps chromium
 pwsh src/tests/Fig.EndToEnd.Tests/bin/Release/net10.0/playwright.ps1 install chromium
 dotnet test src/tests/Fig.EndToEnd.Tests/Fig.EndToEnd.Tests.csproj -c Release --filter Category=E2E
 ```

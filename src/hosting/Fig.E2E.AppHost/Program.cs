@@ -19,13 +19,11 @@ var figWeb = builder.AddProject<Fig_Web>("fig-web", launchProfileName: "Fig.Web.
 builder.AddProject<Fig_Examples_AspNetApi>("aspnetapi-example")
     .WithEnvironment("FIG_API_URI", figApiUri)
     .WithEnvironment("FIG_INSECURE_SSL", "1")
-    .WithArgs("--secret=f984efe5b49b40ffaf53428cec9530b8")
     .WaitFor(figApi);
 
 builder.AddProject<Fig_Examples_DisplayScript>("displayscript-example")
     .WithEnvironment("FIG_API_URI", figApiUri)
     .WithEnvironment("FIG_INSECURE_SSL", "1")
-    .WithArgs("--secret=be633c90474448c382c47045b2e172d5xx")
     .WaitFor(figApi);
 
 builder.Build().Run();
