@@ -89,7 +89,7 @@ public class WebHookProcessorWorker : BackgroundService
         _logger.LogInformation("WebHook processor worker stopped");
     }
 
-    private async Task ProcessWebHook(WebHookQueueItem item, CancellationToken stoppingToken)
+    internal async Task ProcessWebHook(WebHookQueueItem item, CancellationToken stoppingToken)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         
@@ -142,7 +142,7 @@ public class WebHookProcessorWorker : BackgroundService
         return (await repository.GetClients(clientIds)).ToList();
     }
 
-    private async Task<object> CreateContract(WebHookType webHookType, object webHookData, WebHookBusinessEntity webHook, IConfigurationRepository configurationRepository, IWebHookHealthConverter webHookHealthConverter)
+    internal async Task<object> CreateContract(WebHookType webHookType, object webHookData, WebHookBusinessEntity webHook, IConfigurationRepository configurationRepository, IWebHookHealthConverter webHookHealthConverter)
     {
         var uri = await GetUri(webHookType, configurationRepository);
         
@@ -221,7 +221,7 @@ public class WebHookProcessorWorker : BackgroundService
             uri);
     }
 
-    private bool ShouldSend(object contract)
+    internal bool ShouldSend(object contract)
     {
         return contract switch
         {

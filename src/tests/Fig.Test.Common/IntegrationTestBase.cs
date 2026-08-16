@@ -5,7 +5,10 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Fig.Api;
+using Fig.Api.Assistant;
 using Fig.Api.Secrets;
+using Fig.Contracts.Assistant;
+using Fig.Contracts.Diagnostics;
 using Fig.Client.ConfigurationProvider;
 using Fig.Client.Configuration;
 using Fig.Client.ExtensionMethods;
@@ -76,6 +79,7 @@ public abstract class IntegrationTestBase
 
     protected readonly ConfigReloader<ApiSettings> ConfigReloader = new();
     protected readonly Mock<ISecretStore> SecretStoreMock = new();
+    protected readonly Mock<ILlmClient> LlmClientMock = new();
     protected static string UserName => ApiClient.AdminUserName;
     protected readonly List<WebApplication> ConfigProviderApps = new();
     protected readonly List<IConfigurationRoot> ConfigRoots = new();
@@ -131,6 +135,7 @@ public abstract class IntegrationTestBase
             {
                 services.AddSingleton<IHttpClientFactory>(new CustomHttpClientFactory(WebHookClient));
                 services.AddScoped<ISecretStore>(a => SecretStoreMock.Object);
+                services.AddScoped<ILlmClient>(_ => LlmClientMock.Object);
                 if (configuration is not null)
                     services.Configure<ApiSettings>(configuration.GetSection("ApiSettings"));
                 // PostConfigure runs after ALL Configure actions, guaranteeing these values
@@ -144,8 +149,27 @@ public abstract class IntegrationTestBase
             });
         });
 
+        ConfigureDefaultLlmClientMock();
         ApiClient = new ApiClient(_app);
         await ApiClient.Authenticate();
+    }
+
+    private void ConfigureDefaultLlmClientMock()
+    {
+        LlmClientMock
+            .Setup(c => c.StreamChatAsync(
+                It.IsAny<IReadOnlyList<Newtonsoft.Json.Linq.JObject>>(),
+                It.IsAny<IReadOnlyCollection<IAssistantTool>>(),
+                It.IsAny<CancellationToken>(),
+                It.IsAny<double?>()))
+            .Returns(StreamLlmText("Hello from test assistant."));
+    }
+
+    private static async IAsyncEnumerable<LlmStreamChunk> StreamLlmText(string text)
+    {
+        yield return new LlmStreamChunk { Text = text };
+        yield return new LlmStreamChunk { FinishReason = "stop" };
+        await Task.CompletedTask;
     }
 
     [OneTimeTearDown]
@@ -244,6 +268,8 @@ public abstract class IntegrationTestBase
         SecretStoreMock.Reset();
         SecretStoreMock.Setup(a => a.GetSecrets(It.IsAny<List<string>>()))
             .ReturnsAsync([]);
+        LlmClientMock.Reset();
+        ConfigureDefaultLlmClientMock();
     }
 
     [TearDown]
@@ -1089,6 +1115,56 @@ public abstract class IntegrationTestBase
     protected async Task ResetConfiguration()
     {
         await SetConfiguration(CreateConfiguration(enableTimeMachine: false));
+    }
+
+    protected async Task<AssistantStatusDataContract> GetAssistantStatus(string? tokenOverride = null)
+    {
+        var result = await ApiClient.Get<AssistantStatusDataContract>("/assistant/status", tokenOverride: tokenOverride);
+        if (result is null)
+            throw new ApplicationException("Expected non-null assistant status");
+        return result;
+    }
+
+    protected async Task<HttpResponseMessage> PostAssistantChat(
+        AssistantChatRequestDataContract request,
+        string? tokenOverride = null,
+        bool validateSuccess = true)
+    {
+        return await ApiClient.Post<HttpResponseMessage>(
+                   "/assistant/chat",
+                   request,
+                   authenticate: true,
+                   tokenOverride: tokenOverride,
+                   validateSuccess: validateSuccess)
+               ?? throw new ApplicationException("Expected non-null assistant chat response");
+    }
+
+    protected async Task<HttpResponseMessage> PostWebClientLoadTiming(
+        WebClientLoadTimingDataContract timing,
+        string? tokenOverride = null,
+        bool validateSuccess = true)
+    {
+        return await ApiClient.Post<HttpResponseMessage>(
+                   "/diagnostics/web-client-load",
+                   timing,
+                   authenticate: true,
+                   tokenOverride: tokenOverride,
+                   validateSuccess: validateSuccess)
+               ?? throw new ApplicationException("Expected non-null diagnostics response");
+    }
+
+    protected async Task<HttpResponseMessage> PostWebClientSaveTiming(
+        WebClientSaveTimingDataContract timing,
+        string? tokenOverride = null,
+        bool validateSuccess = true)
+    {
+        return await ApiClient.Post<HttpResponseMessage>(
+                   "/diagnostics/web-client-save",
+                   timing,
+                   authenticate: true,
+                   tokenOverride: tokenOverride,
+                   validateSuccess: validateSuccess)
+               ?? throw new ApplicationException("Expected non-null diagnostics response");
     }
 
     protected async Task EnableTimeMachine()

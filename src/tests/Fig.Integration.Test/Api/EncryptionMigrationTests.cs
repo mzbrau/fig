@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Fig.Api.Datalayer.Repositories;
@@ -359,6 +360,24 @@ public class EncryptionMigrationTests : IntegrationTestBase
         var requestUri = $"/encryptionmigration";
 
         return await ApiClient.Put<HttpResponseMessage>(requestUri, null);
+    }
+
+    [Test]
+    public async Task GetStatus_ReturnsRotationStatus()
+    {
+        var status = await ApiClient.Get<Fig.Contracts.ApiSecret.ApiSecretRotationStatusDataContract>(
+            "/encryptionmigration/status");
+
+        Assert.That(status, Is.Not.Null);
+        Assert.That(status!.Status, Is.Not.Null.And.Not.Empty);
+        Assert.That(status.KeyOrder, Is.Not.Null.And.Not.Empty);
+        Assert.That(status.IsRotationConfigured, Is.False);
+    }
+
+    [Test]
+    public async Task GetStatus_RejectsUnauthenticated()
+    {
+        await ApiClient.GetAndVerify("/encryptionmigration/status", HttpStatusCode.Unauthorized, authenticate: false);
     }
 
     private async Task<string?> CorruptSettingValue(string clientName, string settingName)

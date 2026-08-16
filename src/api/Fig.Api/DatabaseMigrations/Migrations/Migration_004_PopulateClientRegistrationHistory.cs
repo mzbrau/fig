@@ -111,7 +111,7 @@ public class Migration_004_PopulateClientRegistrationHistory : IDatabaseMigratio
         }
     }
     
-    private static string? GetDefaultValueAsString(SettingBusinessEntity setting)
+    internal static string? GetDefaultValueAsString(SettingBusinessEntity setting)
     {
         if (setting.DefaultValue == null)
             return null;
@@ -126,7 +126,7 @@ public class Migration_004_PopulateClientRegistrationHistory : IDatabaseMigratio
         }
     }
     
-    private static string GetClientVersion(SettingClientBusinessEntity client)
+    internal static string GetClientVersion(SettingClientBusinessEntity client)
     {
         // Client version is stored in RunSessions - get the most recent one if available
         // ApplicationVersion represents the client application's version at runtime

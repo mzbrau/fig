@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Fig.Test.Common;
 using NUnit.Framework;
@@ -23,5 +24,12 @@ public class ApiStatusTests : IntegrationTestBase
         Assert.That(statuses.Count, Is.AtLeast(1));
         Assert.That(statuses.All(a => a.Hostname == Environment.MachineName), "Status should be from this api");
         Assert.That(statuses.All(a => a.LastSeen > (DateTime.UtcNow - TimeSpan.FromMinutes(2))), "Expired apis should have been removed");
+        Assert.That(statuses.All(a => !string.IsNullOrWhiteSpace(a.Version)), "Version should be populated");
+    }
+
+    [Test]
+    public async Task ShallRejectUnauthenticatedApiStatusRequest()
+    {
+        await ApiClient.GetAndVerify("/apistatus", HttpStatusCode.Unauthorized, authenticate: false);
     }
 }

@@ -131,7 +131,7 @@ public sealed class OpenAiCompatibleLlmClient : ILlmClient
         }
     }
 
-    private static JObject ToToolDefinition(IAssistantTool tool)
+    internal static JObject ToToolDefinition(IAssistantTool tool)
     {
         return new JObject
         {
@@ -145,6 +145,6 @@ public sealed class OpenAiCompatibleLlmClient : ILlmClient
         };
     }
 
-    private static string Truncate(string value, int maximum) =>
+    internal static string Truncate(string value, int maximum) =>
         value.Length <= maximum ? value : value.Substring(0, maximum) + "...";
 }

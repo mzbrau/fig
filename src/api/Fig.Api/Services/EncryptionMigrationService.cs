@@ -660,7 +660,7 @@ public class EncryptionMigrationService : AuthenticatedService, IEncryptionMigra
         return 1;
     }
 
-    private async Task ValidateActiveApiHosts()
+    internal async Task ValidateActiveApiHosts()
     {
         var activeApis = await _apiStatusRepository.GetAllActive();
         _logger.LogInformation("Validating {ActiveApiCount} active API host(s) before encryption migration", activeApis.Count);

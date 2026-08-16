@@ -119,7 +119,7 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
             classifications);
     }
 
-    private static string? ExtractBearerToken(HttpContext context)
+    internal static string? ExtractBearerToken(HttpContext context)
     {
         var authHeader = context.Request.Headers["Authorization"].FirstOrDefault();
         if (string.IsNullOrWhiteSpace(authHeader))
@@ -164,7 +164,7 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
         return null;
     }
 
-    private static List<Classification>? ResolveAllowedClassifications(
+    internal static List<Classification>? ResolveAllowedClassifications(
         ClaimsPrincipal principal,
         Role role,
         KeycloakAuthenticationSettings settings)
@@ -229,7 +229,7 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
         return principal.Claims.FirstOrDefault(a => a.Type == claimType)?.Value;
     }
 
-    private static bool IsValidRegex(string regexPattern)
+    internal static bool IsValidRegex(string regexPattern)
     {
         try
         {

@@ -1309,7 +1309,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return await _settingClientRepository.GetClient(clientName, null);
     }
     
-    private async Task EnsureRevertScheduledAfterPartialApply(
+    internal async Task EnsureRevertScheduledAfterPartialApply(
         string clientName,
         string? instance,
         SettingValueUpdatesDataContract updatedSettings,
@@ -1367,7 +1367,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         await _eventLogRepository.Add(_eventLogFactory.ChangesScheduled(clientName, instance, AuthenticatedUser?.Username, updatedSettings, executeAt, isRevert, false));
     }
     
-    private List<SettingDataContract> FilterChangedOverrides(
+    internal List<SettingDataContract> FilterChangedOverrides(
         List<SettingDataContract> overrides, 
         SettingClientBusinessEntity? existingClient)
     {
@@ -1391,7 +1391,7 @@ public class SettingsService : AuthenticatedService, ISettingsService
         return changedOverrides;
     }
     
-    private bool HasValueChanged(SettingBusinessEntity existingSetting, SettingDataContract newOverride)
+    internal bool HasValueChanged(SettingBusinessEntity existingSetting, SettingDataContract newOverride)
     {
         // Convert the data contract to business entity and serialize it (same approach used in UpdateSettingValues)
         var businessEntity = _settingConverter.Convert(newOverride, existingSetting);
