@@ -77,11 +77,11 @@ public class ConfigFileImporter : BackgroundService
 
             if (text.TryParseJson(TypeNameHandling.Objects, out FigDataExportDataContract? fullImportData) && !IsValueOnlyImport(fullImportData?.ImportType))
             {
-                Import(fullImportData, path);
+                await Import(fullImportData, path);
             }
             else if (text.TryParseJson(TypeNameHandling.Objects, out FigValueOnlyDataExportDataContract? valueOnlyImportData))
             {
-                ImportValueOnly(valueOnlyImportData, path);
+                await ImportValueOnly(valueOnlyImportData, path);
             }
             else
             {
@@ -105,7 +105,7 @@ public class ConfigFileImporter : BackgroundService
         }
     }
 
-    private void Import(FigDataExportDataContract? importData, string path)
+    private async Task Import(FigDataExportDataContract? importData, string path)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
@@ -113,7 +113,13 @@ public class ConfigFileImporter : BackgroundService
             throw new InvalidOperationException("Unable to find ImportExport service");
 
         SetImportingUser(importExportService);
-        importExportService.Import(importData, ImportMode.FileLoad);
+        var result = await importExportService.Import(importData, ImportMode.FileLoad);
+        if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+        {
+            _logger.LogError("Import of full settings file {Path} failed: {ErrorMessage}", path, result.ErrorMessage);
+            return;
+        }
+
         _logger.LogInformation("Import of full settings file {Path} completed successfully", path);
     }
 
@@ -129,7 +135,7 @@ public class ConfigFileImporter : BackgroundService
             Enum.GetValues(typeof(Classification)).Cast<Classification>().ToList()));
     }
 
-    private void ImportValueOnly(FigValueOnlyDataExportDataContract? importData, string path)
+    private async Task ImportValueOnly(FigValueOnlyDataExportDataContract? importData, string path)
     {
         using var scope = _serviceScopeFactory.CreateScope();
         var importExportService = scope.ServiceProvider.GetService<IImportExportService>();
@@ -137,7 +143,13 @@ public class ConfigFileImporter : BackgroundService
             throw new InvalidOperationException("Unable to find ImportExport service");
         
         SetImportingUser(importExportService);
-        importExportService.ValueOnlyImport(importData, ImportMode.FileLoad);
+        var result = await importExportService.ValueOnlyImport(importData, ImportMode.FileLoad);
+        if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
+        {
+            _logger.LogError("Import of value only file {Path} failed: {ErrorMessage}", path, result.ErrorMessage);
+            return;
+        }
+
         _logger.LogInformation("Import of value only file {Path} completed successfully", path);
     }
 
