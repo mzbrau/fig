@@ -31,7 +31,7 @@ public class SessionCleanupWorkerTests
         var timerFactory = new Mock<ITimerFactory>();
         timerFactory.Setup(t => t.Create(It.IsAny<TimeSpan>())).Returns(new StubPeriodicTimer());
 
-        var worker = new SessionCleanupWorker(
+        using var worker = new SessionCleanupWorker(
             NullLogger<SessionCleanupWorker>.Instance,
             timerFactory.Object,
             serviceProvider.GetRequiredService<IServiceScopeFactory>(),
@@ -43,7 +43,7 @@ public class SessionCleanupWorkerTests
         try
         {
             await cleanedUp.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            sessionCleanupService.Verify(s => s.RemoveExpiredSessionsAsync(), Times.AtLeastOnce);
+            sessionCleanupService.Verify(s => s.RemoveExpiredSessionsAsync(), Times.Once);
         }
         finally
         {

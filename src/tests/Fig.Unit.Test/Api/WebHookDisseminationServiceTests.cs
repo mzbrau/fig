@@ -128,14 +128,19 @@ public class WebHookDisseminationServiceTests
     {
         var client = new SettingClientBusinessEntity { Name = "Billing", Settings = [] };
         var matching = CreateWebHook(WebHookType.SettingValueChanged, "Billing", settingRegex: ".*");
+        var changes = new List<ChangedSetting>
+        {
+            new("Timeout", null, null, false, null, false)
+        };
 
         _webHookRepository.Setup(r => r.GetWebHooksByType(WebHookType.SettingValueChanged))
             .ReturnsAsync(new List<WebHookBusinessEntity> { matching });
 
-        await _sut.SettingValueChanged([], client, "user", "msg");
+        await _sut.SettingValueChanged(changes, client, "user", "msg");
 
         Assert.That(_queued, Has.Count.EqualTo(1));
         Assert.That(_queued[0].WebHookType, Is.EqualTo(WebHookType.SettingValueChanged));
+        Assert.That(((SettingValueChangedWebHookData)_queued[0].WebHookData).Changes, Is.SameAs(changes));
     }
 
     [Test]

@@ -31,7 +31,7 @@ public class DataCleanupWorkerTests
         var timerFactory = new Mock<ITimerFactory>();
         timerFactory.Setup(t => t.Create(It.IsAny<TimeSpan>())).Returns(new StubPeriodicTimer());
 
-        var worker = new DataCleanupWorker(
+        using var worker = new DataCleanupWorker(
             NullLogger<DataCleanupWorker>.Instance,
             timerFactory.Object,
             serviceProvider.GetRequiredService<IServiceScopeFactory>(),
@@ -43,7 +43,7 @@ public class DataCleanupWorkerTests
         try
         {
             await cleanedUp.Task.WaitAsync(TimeSpan.FromSeconds(2));
-            cleanupService.Verify(s => s.PerformCleanupAsync(), Times.AtLeastOnce);
+            cleanupService.Verify(s => s.PerformCleanupAsync(), Times.Once);
         }
         finally
         {

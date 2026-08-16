@@ -165,16 +165,15 @@ public class SettingGroupServiceTests
         _settingGroupRepository.Setup(r => r.GetAllGroups())
             .ReturnsAsync(new List<SettingGroupBusinessEntity> { keepGroup, emptyAfterRemoval });
 
-        SettingGroupBusinessEntity? updated = null;
+        var updates = new List<SettingGroupBusinessEntity>();
         _settingGroupRepository
             .Setup(r => r.UpdateGroup(It.IsAny<SettingGroupBusinessEntity>()))
-            .Callback<SettingGroupBusinessEntity>(e => updated = e)
+            .Callback<SettingGroupBusinessEntity>(e => updates.Add(e))
             .Returns(Task.CompletedTask);
 
         await _sut.RemoveClientFromGroups("ClientA");
 
-        Assert.That(updated, Is.Not.Null);
-        Assert.That(updated!.Name, Is.EqualTo("Keep"));
+        var updated = updates.Single(u => u.Name == "Keep");
         Assert.That(Deserialize(updated.GroupSettingsJson).Single().SourceSettings.Single().ClientName,
             Is.EqualTo("ClientB"));
         _settingGroupRepository.Verify(r => r.DeleteGroup(emptyAfterRemoval), Times.Once);

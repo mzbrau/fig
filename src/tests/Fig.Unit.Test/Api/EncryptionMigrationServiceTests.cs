@@ -60,7 +60,7 @@ public class EncryptionMigrationServiceTests
     }
 
     [Test]
-    public async Task ValidateActiveApiHosts_Succeeds_WhenNoHostsHaveConfigurationError()
+    public void ValidateActiveApiHosts_Succeeds_WhenNoHostsHaveConfigurationError()
     {
         var apiStatusRepository = new Mock<IApiStatusRepository>();
         apiStatusRepository

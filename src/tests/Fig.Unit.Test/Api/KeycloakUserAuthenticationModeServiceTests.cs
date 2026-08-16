@@ -112,6 +112,12 @@ public class KeycloakUserAuthenticationModeServiceTests
     public void ResolveRole_ShouldPreferAdministratorOverLowerRoles()
     {
         var settings = CreateSettings(roleClaimPaths: ["groups", "realm_access.roles"]);
+        var userOnlyToken = CreateToken(payload =>
+        {
+            payload["groups"] = new[] { $"/fig/{Role.User}" };
+        });
+        Assert.That(KeycloakUserAuthenticationModeService.ResolveRole(userOnlyToken, settings), Is.EqualTo(Role.User));
+
         var token = CreateToken(payload =>
         {
             payload["groups"] = new[] { $"/fig/{Role.User}" };

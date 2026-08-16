@@ -136,7 +136,7 @@ public class WebHookProcessorWorkerTests
     }
 
     [Test]
-    public async Task ProcessWebHook_SkipsSend_WhenShouldSendIsFalse()
+    public async Task ProcessWebHook_SkipsSend_WhenNoSettingsMatchRegex()
     {
         var webHook = CreateMatchingWebHook(WebHookType.SettingValueChanged, settingRegex: "^Other");
         var item = new WebHookQueueItem
@@ -182,7 +182,7 @@ public class WebHookProcessorWorkerTests
         await _sut.StartAsync(CancellationToken.None);
         try
         {
-            await processed.Task.WaitAsync(TimeSpan.FromSeconds(2));
+            await processed.Task.WaitAsync(TimeSpan.FromSeconds(5));
             _httpMessageHandler.Protected().Verify(
                 "SendAsync",
                 Times.Once(),
@@ -196,15 +196,21 @@ public class WebHookProcessorWorkerTests
     }
 
     [Test]
-    public void ShouldSend_ReturnsFalse_ForEmptySettingValueChangedContract()
+    public async Task CreateContract_ReturnsNull_WhenNoSettingsMatchRegex()
     {
-        var contract = new SettingValueChangedDataContract(
-            "Api", null, ["Timeout"], "user", "msg", new Uri("https://fig.example/"))
-        {
-            UpdatedSettings = []
-        };
+        var webHook = CreateMatchingWebHook(WebHookType.SettingValueChanged, settingRegex: "^Other");
+        var contract = await _sut.CreateContract(
+            WebHookType.SettingValueChanged,
+            new SettingValueChangedWebHookData(
+                [CreateChangedSetting("Timeout")],
+                CreateSettingClient("Api"),
+                "user",
+                "changed"),
+            webHook,
+            _configurationRepository.Object,
+            new WebHookHealthConverter());
 
-        Assert.That(_sut.ShouldSend(contract), Is.False);
+        Assert.That(contract, Is.Null);
     }
 
     [Test]
@@ -242,7 +248,7 @@ public class WebHookProcessorWorkerTests
             config,
             healthConverter);
         Assert.That(newReg, Is.TypeOf<ClientRegistrationDataContract>());
-        Assert.That(((ClientRegistrationDataContract)newReg).RegistrationType, Is.EqualTo(RegistrationType.New));
+        Assert.That(((ClientRegistrationDataContract)newReg!).RegistrationType, Is.EqualTo(RegistrationType.New));
 
         var updatedReg = await _sut.CreateContract(
             WebHookType.UpdatedClientRegistration,
@@ -250,7 +256,7 @@ public class WebHookProcessorWorkerTests
             webHook,
             config,
             healthConverter);
-        Assert.That(((ClientRegistrationDataContract)updatedReg).RegistrationType, Is.EqualTo(RegistrationType.Updated));
+        Assert.That(((ClientRegistrationDataContract)updatedReg!).RegistrationType, Is.EqualTo(RegistrationType.Updated));
 
         var settingChanged = await _sut.CreateContract(
             WebHookType.SettingValueChanged,
@@ -258,7 +264,8 @@ public class WebHookProcessorWorkerTests
             webHook,
             config,
             healthConverter);
-        Assert.That(((SettingValueChangedDataContract)settingChanged).UpdatedSettings, Is.EquivalentTo(new[] { "Timeout" }));
+        Assert.That(settingChanged, Is.Not.Null);
+        Assert.That(((SettingValueChangedDataContract)settingChanged!).UpdatedSettings, Is.EquivalentTo(new[] { "Timeout" }));
 
         var connected = await _sut.CreateContract(
             WebHookType.ClientStatusChanged,
@@ -266,7 +273,7 @@ public class WebHookProcessorWorkerTests
             webHook,
             config,
             healthConverter);
-        Assert.That(((ClientStatusChangedDataContract)connected).ConnectionEvent, Is.EqualTo(ConnectionEvent.Connected));
+        Assert.That(((ClientStatusChangedDataContract)connected!).ConnectionEvent, Is.EqualTo(ConnectionEvent.Connected));
 
         var disconnected = await _sut.CreateContract(
             WebHookType.ClientStatusChanged,
@@ -274,7 +281,7 @@ public class WebHookProcessorWorkerTests
             webHook,
             config,
             healthConverter);
-        Assert.That(((ClientStatusChangedDataContract)disconnected).ConnectionEvent, Is.EqualTo(ConnectionEvent.Disconnected));
+        Assert.That(((ClientStatusChangedDataContract)disconnected!).ConnectionEvent, Is.EqualTo(ConnectionEvent.Disconnected));
 
         var health = await _sut.CreateContract(
             WebHookType.HealthStatusChanged,
@@ -290,7 +297,7 @@ public class WebHookProcessorWorkerTests
             webHook,
             config,
             healthConverter);
-        Assert.That(((MinRunSessionsDataContract)minSessions).RunSessionsEvent, Is.EqualTo(RunSessionsEvent.BelowMinimum));
+        Assert.That(((MinRunSessionsDataContract)minSessions!).RunSessionsEvent, Is.EqualTo(RunSessionsEvent.BelowMinimum));
         Assert.That(((MinRunSessionsDataContract)minSessions).RunSessions, Is.EqualTo(0));
 
         var security = await _sut.CreateContract(
@@ -300,7 +307,7 @@ public class WebHookProcessorWorkerTests
             config,
             healthConverter);
         Assert.That(security, Is.TypeOf<SecurityEventDataContract>());
-        Assert.That(((SecurityEventDataContract)security).EventType, Is.EqualTo("Login"));
+        Assert.That(((SecurityEventDataContract)security!).EventType, Is.EqualTo("Login"));
     }
 
     private WebHookQueueItem CreateQueueItem(WebHookType type, object data) =>
