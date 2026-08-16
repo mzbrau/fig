@@ -58,8 +58,11 @@ public class AppRouteView : RouteView
             return;
         }
 
-        var dashboardsDisabled = ConfigurationFacade?.WebFeaturesLoaded == true &&
-                                 !ConfigurationFacade.AllowDisplayScripts;
+        var configurationFacade = ConfigurationFacade;
+        var featuresLoaded = configurationFacade?.WebFeaturesLoaded == true;
+        var allowDisplayScripts = configurationFacade?.AllowDisplayScripts == true;
+        var dashboardsEnabled = featuresLoaded && allowDisplayScripts;
+        var dashboardsDisabled = featuresLoaded && !allowDisplayScripts;
         var isDashboardPath = NavigationManager is not null && IsDashboardPath(NavigationManager.Uri);
 
         if (dashboardsDisabled && isDashboardPath && NavigationManager is not null)
@@ -69,13 +72,13 @@ public class AppRouteView : RouteView
         }
 
         // Dashboard role may only visit dashboards-related pages (and account/login/manage).
-        // When dashboards are disabled, they may stay on home (/) for the disabled message.
+        // When dashboards are disabled (or features not yet loaded), they may stay on home (/).
         if (AccountService?.AuthenticatedUser?.Role == Role.Dashboard &&
             NavigationManager is not null &&
             !isDashboardOnlyPage &&
-            !IsDashboardAllowedPath(NavigationManager.Uri, dashboardsEnabled: !dashboardsDisabled))
+            !IsDashboardAllowedPath(NavigationManager.Uri, dashboardsEnabled))
         {
-            NavigationManager.NavigateTo(dashboardsDisabled ? "/" : "/dashboards");
+            NavigationManager.NavigateTo(dashboardsEnabled ? "/dashboards" : "/");
             return;
         }
         

@@ -48,8 +48,8 @@
         _busy = true;
         try
         {
-            await ConfigurationFacade.EnableDisplayScripts();
-            DialogService.Close(true);
+            if (await ConfigurationFacade.EnableDisplayScripts())
+                DialogService.Close(true);
         }
         finally
         {

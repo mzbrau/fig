@@ -133,7 +133,7 @@ public class DashboardService : AuthenticatedService, IDashboardService
         if (!configuration.AllowDisplayScripts)
         {
             throw new UnauthorizedAccessException(
-                "Dashboards are disabled because JavaScript execution is turned off. Enable Allow JavaScript in Fig configuration.");
+                "Dashboards are disabled because JavaScript execution is turned off. Enable \"Allow JavaScript\" in Fig configuration.");
         }
     }
 

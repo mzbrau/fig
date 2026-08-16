@@ -79,12 +79,23 @@ public class ConfigurationFacade : IConfigurationFacade
         }
     }
 
-    public async Task EnableDisplayScripts()
+    public async Task<bool> EnableDisplayScripts()
     {
-        await LoadConfiguration();
+        var result = await _httpService.Get<FigConfigurationDataContract>("configuration");
+        if (result == null)
+        {
+            _notificationService.Notify(_notificationFactory.Failure(
+                "Failure",
+                "Could not load configuration, so JavaScript was not enabled."));
+            return false;
+        }
+
+        ConfigurationModel = _figConfigurationConverter.Convert(result);
+        _lastSavedModel = ConfigurationModel.Clone();
         ConfigurationModel.AllowDisplayScripts = true;
         await SaveConfiguration();
         await LoadWebFeatures();
+        return true;
     }
 
     public async Task MigrateEncryptedData()

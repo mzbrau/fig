@@ -41,6 +41,7 @@ public interface IConfigurationFacade
 
     /// <summary>
     /// Enables JavaScript for an administrator (sets AllowDisplayScripts and saves full configuration).
+    /// Returns false if the current configuration could not be loaded.
     /// </summary>
-    Task EnableDisplayScripts();
+    Task<bool> EnableDisplayScripts();
 }

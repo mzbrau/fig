@@ -33,7 +33,7 @@
             <div class="navbar-nav fig-navbar-links">
                 @if (IsDashboardRole)
                 {
-                    <NavLink href="@(DashboardsEnabled ? "dashboards" : "")" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
+                    <NavLink href="@(DashboardsEnabled ? "dashboards" : "/")" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
                         <img src="images/fig_logo_name_right_white_299x135.png" width="90" height="40" />
                     </NavLink>
                     @if (DashboardsEnabled)
@@ -234,8 +234,7 @@ else
         ConfigurationFacade.WebFeaturesChanged += OnWebFeaturesChanged;
         NavigationManager.LocationChanged += OnLocationChanged;
 
-        if (LoggedIn)
-            await ConfigurationFacade.LoadWebFeatures();
+        await EnsureAuthenticatedSessionReady();
 
         await base.OnInitializedAsync();
     }
@@ -244,15 +243,28 @@ else
     {
         await base.OnAfterRenderAsync(firstRender);
         if (firstRender)
-        {
-            await TryOpenJavascriptDisabledDialog();
-            await TryOpenReleaseHighlights();
-        }
+            await EnsureAuthenticatedSessionReady();
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
-        InvokeAsync(StateHasChanged);
+        InvokeAsync(async () =>
+        {
+            await EnsureAuthenticatedSessionReady();
+            StateHasChanged();
+        });
+    }
+
+    private async Task EnsureAuthenticatedSessionReady()
+    {
+        if (!LoggedIn)
+            return;
+
+        if (!ConfigurationFacade.WebFeaturesLoaded)
+            await ConfigurationFacade.LoadWebFeatures();
+
+        await TryOpenJavascriptDisabledDialog();
+        await TryOpenReleaseHighlights();
     }
 
     private void OnWebFeaturesChanged() => OnNotificationChanged();
