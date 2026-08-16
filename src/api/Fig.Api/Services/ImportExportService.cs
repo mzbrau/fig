@@ -148,7 +148,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ThrowIfNoAccess(client);
         
         if (data?.ImportType != ImportType.UpdateValues && data?.ImportType != ImportType.UpdateValuesInitOnly)
-            throw new NotSupportedException(
+            throw new InvalidImportException(
                 $"Value only imports only support {nameof(ImportType.UpdateValues)} import type");
         
         if (!data.Clients.Any())
@@ -335,7 +335,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
                 break;
             }
             default:
-                throw new NotSupportedException($"Import type {data.ImportType} not supported for full imports");
+                throw new InvalidImportException($"Import type {data.ImportType} not supported for full imports");
         }
 
         if (result.ImportedClients.Count > 0)

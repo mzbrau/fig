@@ -13,7 +13,7 @@ public static class ImportResultStatus
         if (result is null)
             return ("Import failed (see notification for details).", false);
 
-        if (result.ErrorMessage != null)
+        if (!string.IsNullOrWhiteSpace(result.ErrorMessage))
             return ($"Import failed: {result.ErrorMessage}", false);
 
         return ("Import completed successfully.", true);

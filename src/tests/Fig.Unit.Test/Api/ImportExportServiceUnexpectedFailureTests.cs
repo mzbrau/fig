@@ -2,6 +2,7 @@ using Fig.Api;
 using Fig.Api.Converters;
 using Fig.Api.DataImport;
 using Fig.Api.Datalayer.Repositories;
+using Fig.Api.Exceptions;
 using Fig.Api.Services;
 using Fig.Api.Utils;
 using Fig.Client.Abstractions.Data;
@@ -79,7 +80,7 @@ public class ImportExportServiceUnexpectedFailureTests
 
         Assert.That(
             async () => await _sut.Import(data, ImportMode.Api),
-            Throws.TypeOf<NotSupportedException>());
+            Throws.TypeOf<InvalidImportException>());
 
         _eventLogFactory.Verify(
             f => f.DataImportFailed(

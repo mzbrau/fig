@@ -88,9 +88,13 @@ public class ConfigFileImporter : BackgroundService
                 throw new InvalidDataException("JSON file could not be deserialized");
             }
         }
-        catch (Exception ex)
+        catch (InvalidDataException ex)
         {
             _logger.LogError(ex, "Invalid file for fig import: {Path}", path);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Import of fig file {Path} failed", path);
         }
         finally
         {

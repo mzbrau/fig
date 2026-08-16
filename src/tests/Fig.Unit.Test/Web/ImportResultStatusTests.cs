@@ -38,6 +38,20 @@ public class ImportResultStatusTests
         Assert.That(message, Is.EqualTo("Import completed successfully."));
     }
 
+    [TestCase(null)]
+    [TestCase("")]
+    [TestCase("   ")]
+    public void DescribeGroupImport_BlankErrorMessage_IsSuccess(string? errorMessage)
+    {
+        var (message, succeeded) = ImportResultStatus.DescribeGroupImport(new ImportResultDataContract
+        {
+            ErrorMessage = errorMessage
+        });
+
+        Assert.That(succeeded, Is.True);
+        Assert.That(message, Is.EqualTo("Import completed successfully."));
+    }
+
     [Test]
     public void DescribeSettingsImportHttpFailure_MentionsNotification()
     {
