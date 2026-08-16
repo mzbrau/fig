@@ -54,6 +54,33 @@ public class ReleaseHighlightsCoordinatorTests
     }
 
     [Test]
+    public async Task ShallShowAllSeededHighlightsOnInitial40Launch()
+    {
+        _versionHelper.Setup(x => x.GetVersion()).Returns("4.0.0.0");
+
+        var result = await _sut.GetAutoOpenDialog();
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(result!.Items.Count, Is.EqualTo(25));
+        Assert.That(result.StartIndex, Is.EqualTo(0));
+        Assert.That(result.Items.Select(x => x.ReleaseVersion).Distinct(),
+            Is.EquivalentTo(new[] { "3.0", "3.1", "3.3", "3.4", "3.5", "3.6", "3.7", "4.0" }));
+        Assert.That(result.Items.Where(x => x.ReleaseVersion == "4.0").Select(x => x.FeatureKey),
+            Is.EqualTo(new[]
+            {
+                "4.0-dashboards",
+                "4.0-fig-assistant",
+                "4.0-reports",
+                "4.0-keycloak-authentication",
+                "4.0-custom-status-properties",
+                "4.0-offline-appsettings",
+                "4.0-registration-checksum",
+                "4.0-instance-override",
+                "4.0-change-dialog-context-menu"
+            }));
+    }
+
+    [Test]
     public async Task ShallResumeAtFirstUnseenHighlightWithinIncompleteVersion()
     {
         _httpService.Setup(x => x.Get<ReleaseHighlightProgressDataContract>("releasehighlights", false))
@@ -138,6 +165,8 @@ public class ReleaseHighlightsCoordinatorTests
     [Test]
     public async Task ShallExposeReadMoreLinksWhenCatalogProvidesThem()
     {
+        _versionHelper.Setup(x => x.GetVersion()).Returns("4.0.0.0");
+
         var manualDialog = await _sut.GetManualRecallDialog();
         Assert.That(manualDialog, Is.Not.Null);
 
@@ -145,6 +174,9 @@ public class ReleaseHighlightsCoordinatorTests
         var informationTextItem = manualDialog.Items.Single(x => x.FeatureKey == "3.5-information-text");
         var migrateFromItem = manualDialog.Items.Single(x => x.FeatureKey == "3.6-migrate-from-attribute");
         var monacoEditorItem = manualDialog.Items.Single(x => x.FeatureKey == "3.0-monaco-json-editor");
+        var dashboardsItem = manualDialog.Items.Single(x => x.FeatureKey == "4.0-dashboards");
+        var figAssistantItem = manualDialog.Items.Single(x => x.FeatureKey == "4.0-fig-assistant");
+        var changeDialogItem = manualDialog.Items.Single(x => x.FeatureKey == "4.0-change-dialog-context-menu");
 
         Assert.That(providerLookupItem.ReadMoreUrl,
             Is.EqualTo("https://www.figsettings.com/docs/features/provider-defined-lookup-tables"));
@@ -153,6 +185,11 @@ public class ReleaseHighlightsCoordinatorTests
         Assert.That(migrateFromItem.ReadMoreUrl,
             Is.EqualTo("https://www.figsettings.com/docs/features/settings-management/migrate-from"));
         Assert.That(monacoEditorItem.ReadMoreUrl, Is.Null);
+        Assert.That(dashboardsItem.ReadMoreUrl,
+            Is.EqualTo("https://www.figsettings.com/docs/features/dashboards"));
+        Assert.That(figAssistantItem.ReadMoreUrl,
+            Is.EqualTo("https://www.figsettings.com/docs/features/fig-assistant"));
+        Assert.That(changeDialogItem.ReadMoreUrl, Is.Null);
     }
 
     [Test]
