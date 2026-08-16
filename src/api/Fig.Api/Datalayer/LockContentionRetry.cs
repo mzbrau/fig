@@ -17,6 +17,8 @@ public static class LockContentionRetry
         int baseDelayMs = DefaultBaseDelayMs,
         Action<Exception, int>? onRetry = null)
     {
+        Validate(maxAttempts, baseDelayMs);
+
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
@@ -53,6 +55,8 @@ public static class LockContentionRetry
         Action<Exception, int>? onRetry = null,
         CancellationToken cancellationToken = default)
     {
+        Validate(maxAttempts, baseDelayMs);
+
         for (var attempt = 1; attempt <= maxAttempts; attempt++)
         {
             try
@@ -81,5 +85,14 @@ public static class LockContentionRetry
             await action(ct).ConfigureAwait(false);
             return true;
         }, maxAttempts, baseDelayMs, onRetry, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void Validate(int maxAttempts, int baseDelayMs)
+    {
+        if (maxAttempts < 1)
+            throw new ArgumentOutOfRangeException(nameof(maxAttempts), maxAttempts, "maxAttempts must be at least 1.");
+
+        if (baseDelayMs < 0)
+            throw new ArgumentOutOfRangeException(nameof(baseDelayMs), baseDelayMs, "baseDelayMs must be non-negative.");
     }
 }

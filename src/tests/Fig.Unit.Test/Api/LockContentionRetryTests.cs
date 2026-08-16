@@ -86,6 +86,24 @@ public class LockContentionRetryTests
     }
 
     [Test]
+    public void Execute_ThrowsArgumentOutOfRange_WhenMaxAttemptsInvalid()
+    {
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            LockContentionRetry.Execute(() => 1, maxAttempts: 0, baseDelayMs: 1));
+
+        Assert.That(ex!.ParamName, Is.EqualTo("maxAttempts"));
+    }
+
+    [Test]
+    public void Execute_ThrowsArgumentOutOfRange_WhenBaseDelayMsNegative()
+    {
+        var ex = Assert.Throws<ArgumentOutOfRangeException>(() =>
+            LockContentionRetry.Execute(() => 1, maxAttempts: 3, baseDelayMs: -1));
+
+        Assert.That(ex!.ParamName, Is.EqualTo("baseDelayMs"));
+    }
+
+    [Test]
     public void LockRetryDbCommand_ExecuteNonQuery_RetriesOnBusy()
     {
         var attempts = 0;

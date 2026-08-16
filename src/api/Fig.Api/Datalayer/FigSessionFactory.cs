@@ -115,7 +115,7 @@ public class FigSessionFactory : IFigSessionFactory
     private string GetDriverClass(string? connectionString)
     {
         return IsSqlLite(connectionString)
-            ? "Fig.Api.Datalayer.RetryingSQLiteDriver, Fig.Api"
+            ? typeof(RetryingSQLiteDriver).AssemblyQualifiedName!
             : "NHibernate.Driver.MicrosoftDataSqlClientDriver";
     }
     
