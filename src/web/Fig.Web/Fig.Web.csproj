@@ -49,6 +49,7 @@
 
     <ItemGroup>
       <Folder Include="wwwroot\images\release-highlights\3.0\" />
+      <Folder Include="wwwroot\images\release-highlights\4.0\" />
     </ItemGroup>
 
 
