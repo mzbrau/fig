@@ -9,7 +9,7 @@ namespace Fig.Unit.Test.Web.Dashboards;
 [TestFixture]
 public class DashboardComponentDataBinderTests
 {
-    private readonly DashboardTransformEngine _engine = new(new JintEngineFactory());
+    private readonly DashboardTransformEngine _engine = DashboardTestHelpers.CreateTransformEngine();
 
     private static DashboardFigRoot SampleFig()
     {

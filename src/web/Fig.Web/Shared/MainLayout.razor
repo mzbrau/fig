@@ -5,6 +5,7 @@
 @using Fig.Web.Notifications
 @using Fig.Web.Pages.Dialogs
 @using Fig.Web.ReleaseHighlights
+@using Fig.Web.Javascript
 @using Fig.Web.Components.Assistant
 @using Microsoft.Extensions.Options
 @using Fig.Web.Facades
@@ -20,6 +21,8 @@
 @inject INotificationHistoryService NotificationHistoryService
 @inject IDisplayScriptStatusService DisplayScriptStatusService
 @inject IReleaseHighlightsCoordinator ReleaseHighlightsCoordinator
+@inject IConfigurationFacade ConfigurationFacade
+@inject IJavascriptDisabledDialogCoordinator JavascriptDisabledDialogCoordinator
 
 @if (AccountService.IsInitialized)
 {
@@ -30,10 +33,13 @@
             <div class="navbar-nav fig-navbar-links">
                 @if (IsDashboardRole)
                 {
-                    <NavLink href="dashboards" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
+                    <NavLink href="@(DashboardsEnabled ? "dashboards" : "")" Match="NavLinkMatch.All" class="nav-item nav-link py-0 px-3">
                         <img src="images/fig_logo_name_right_white_299x135.png" width="90" height="40" />
                     </NavLink>
-                    <NavLink href="dashboards" class="nav-item nav-link">Dashboards</NavLink>
+                    @if (DashboardsEnabled)
+                    {
+                        <NavLink href="dashboards" class="nav-item nav-link">Dashboards</NavLink>
+                    }
                 }
                 else
                 {
@@ -68,7 +74,10 @@
                         <NavLink href="reports" class="nav-item nav-link">Reports</NavLink>
                     }
                     <NavLink href="lookuptables" class="nav-item nav-link">Lookup Tables</NavLink>
-                    <NavLink href="dashboards" class="nav-item nav-link">Dashboards</NavLink>
+                    @if (DashboardsEnabled)
+                    {
+                        <NavLink href="dashboards" class="nav-item nav-link">Dashboards</NavLink>
+                    }
                 }
             </div>
 
@@ -189,8 +198,11 @@ else
     
     private bool LoggedIn => AccountService?.AuthenticatedUser != null;
     private bool IsDashboardRole => AccountService?.AuthenticatedUser?.Role == Role.Dashboard;
+    private bool DashboardsEnabled => ConfigurationFacade.AllowDisplayScripts;
     private Guid? _releaseHighlightsCheckedUserId;
     private bool _releaseHighlightsDialogOpen;
+    private Guid? _javascriptDisabledCheckedUserId;
+    private bool _javascriptDisabledDialogOpen;
 
     private bool IsWallboardMode
     {
@@ -219,7 +231,12 @@ else
         EventDistributor.Subscribe(EventConstants.LogoutEvent, OnLogout);
         NotificationHistoryService.OnChange += OnNotificationChanged;
         DisplayScriptStatusService.OnChange += OnDisplayScriptStatusChanged;
+        ConfigurationFacade.WebFeaturesChanged += OnWebFeaturesChanged;
         NavigationManager.LocationChanged += OnLocationChanged;
+
+        if (LoggedIn)
+            await ConfigurationFacade.LoadWebFeatures();
+
         await base.OnInitializedAsync();
     }
 
@@ -227,13 +244,18 @@ else
     {
         await base.OnAfterRenderAsync(firstRender);
         if (firstRender)
+        {
+            await TryOpenJavascriptDisabledDialog();
             await TryOpenReleaseHighlights();
+        }
     }
 
     private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
     {
         InvokeAsync(StateHasChanged);
     }
+
+    private void OnWebFeaturesChanged() => OnNotificationChanged();
 
     private void OnNotificationChanged()
     {
@@ -373,9 +395,47 @@ else
             new DialogOptions() { Resizable = true, Draggable = true, Style = "width: 750px; background: #1e1e1e;"});
     }
 
+    private async Task TryOpenJavascriptDisabledDialog()
+    {
+        if (_javascriptDisabledDialogOpen ||
+            AccountService?.AuthenticatedUser?.Role != Role.Administrator ||
+            AccountService.AuthenticatedUser.Id is not Guid userId ||
+            _javascriptDisabledCheckedUserId == userId)
+        {
+            return;
+        }
+
+        if (!await JavascriptDisabledDialogCoordinator.ShouldAutoOpen())
+        {
+            _javascriptDisabledCheckedUserId = userId;
+            return;
+        }
+
+        _javascriptDisabledCheckedUserId = userId;
+        _javascriptDisabledDialogOpen = true;
+        try
+        {
+            await DialogService.OpenAsync<JavascriptDisabledDialog>(
+                "JavaScript is disabled",
+                null,
+                new DialogOptions
+                {
+                    Width = "520px",
+                    CloseDialogOnOverlayClick = false,
+                    CloseDialogOnEsc = true,
+                    Style = "background: #1e1e1e;"
+                });
+        }
+        finally
+        {
+            _javascriptDisabledDialogOpen = false;
+        }
+    }
+
     private async Task TryOpenReleaseHighlights()
     {
-        if (_releaseHighlightsDialogOpen ||
+        if (_javascriptDisabledDialogOpen ||
+            _releaseHighlightsDialogOpen ||
             AccountService?.AuthenticatedUser?.Role != Role.Administrator ||
             AccountService.AuthenticatedUser.Id is not Guid userId ||
             _releaseHighlightsCheckedUserId == userId)
@@ -410,6 +470,8 @@ else
     {
         _releaseHighlightsCheckedUserId = null;
         _releaseHighlightsDialogOpen = false;
+        _javascriptDisabledCheckedUserId = null;
+        _javascriptDisabledDialogOpen = false;
         ReleaseHighlightsCoordinator.ResetSession();
     }
 
@@ -419,6 +481,7 @@ else
         EventDistributor.Unsubscribe(EventConstants.LogoutEvent, OnLogout);
         NotificationHistoryService.OnChange -= OnNotificationChanged;
         DisplayScriptStatusService.OnChange -= OnDisplayScriptStatusChanged;
+        ConfigurationFacade.WebFeaturesChanged -= OnWebFeaturesChanged;
         NavigationManager.LocationChanged -= OnLocationChanged;
     }
 }

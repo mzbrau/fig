@@ -25,6 +25,21 @@ public class ConfigurationController : ControllerBase
         return Ok(config);
     }
 
+    /// <summary>
+    /// Lightweight feature flags for Fig.Web (all authenticated web roles).
+    /// Does not expose full administrator configuration.
+    /// </summary>
+    [Authorize(Role.Administrator, Role.User, Role.ReadOnly, Role.Dashboard)]
+    [HttpGet("features")]
+    public async Task<IActionResult> GetWebFeatures()
+    {
+        var config = await _configurationService.GetConfiguration();
+        return Ok(new FigWebFeaturesDataContract
+        {
+            AllowDisplayScripts = config.AllowDisplayScripts
+        });
+    }
+
     [Authorize(Role.Administrator)]
     [HttpPut]
     public async Task<IActionResult> UpdateConfiguration([FromBody] FigConfigurationDataContract config)

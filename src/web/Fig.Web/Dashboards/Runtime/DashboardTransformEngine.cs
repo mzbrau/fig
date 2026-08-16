@@ -1,14 +1,17 @@
 using Fig.Common.NetStandard.Scripting;
+using Fig.Web.Facades;
 
 namespace Fig.Web.Dashboards.Runtime;
 
 public class DashboardTransformEngine
 {
     private readonly IJsEngineFactory _jsEngineFactory;
+    private readonly IConfigurationFacade _configurationFacade;
 
-    public DashboardTransformEngine(IJsEngineFactory jsEngineFactory)
+    public DashboardTransformEngine(IJsEngineFactory jsEngineFactory, IConfigurationFacade configurationFacade)
     {
         _jsEngineFactory = jsEngineFactory;
+        _configurationFacade = configurationFacade;
     }
 
     /// <summary>
@@ -18,6 +21,10 @@ public class DashboardTransformEngine
     {
         if (string.IsNullOrWhiteSpace(script))
             return null;
+
+        if (!_configurationFacade.AllowDisplayScripts)
+            throw new InvalidOperationException(
+                "Dashboard scripts cannot run because JavaScript execution is disabled.");
 
         using var engine = _jsEngineFactory.CreateEngine();
         var helpers = new DashboardJsLinq();

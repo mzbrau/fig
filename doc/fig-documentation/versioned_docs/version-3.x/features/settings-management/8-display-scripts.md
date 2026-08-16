@@ -267,7 +267,7 @@ public string ApiUrl { get; set; } = "https://api.example.com";
 
 There are a number of security features related to this feature:
 
-1. Display scripts are disabled by default and must be enabled in the Fig settings by an administrator. If a client uses display scripts and they are disabled, a notification will be shown to let the user know that some features might not work.
+1. Display scripts (and the Dashboards feature, which also runs JavaScript) are disabled by default and must be enabled via **Allow JavaScript** in Fig configuration by an administrator. If a client uses display scripts and they are disabled, a notification will be shown to let the user know that some features might not work.
 2. Display scripts will be executed within the Web Assembly sandbox. Web assembly within the browser has a limited interface which for example restricts access to the users local computer. This limits the potential for any malicious activity.
 3. Display scripts are executed within the Jint runtime engine sandbox. The engine where the scripts are executed has a very limited context. The only available objects are the settings for that client and the only method is the log method. There are no libraries or packages available and only vanilla javascript code is permitted. This further limits what can be written.
 4. Display scripts cannot execute for longer than 5 seconds. In testing, most execute in under 300ms.

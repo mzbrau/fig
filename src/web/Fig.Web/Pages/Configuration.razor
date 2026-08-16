@@ -58,10 +58,10 @@
             </RadzenCard>
 
             <RadzenCard class="m-3">
-                <h3 class="h5">Allow Display Scripts</h3>
-                <p>Display scripts provide flexibility when configuring the behavior of the settings for a specific client.</p>
-                <p>They should be quite safe as it has limited scope and runs within the web assembly sandbox but it does involve executing code that has been written by a third party</p>
-                <p>and as a result, if you don't trust all the registering clients, disabling this feature eliminates the possibility for misuse.</p>
+                <h3 class="h5">Allow JavaScript</h3>
+                <p>This setting controls all JavaScript execution in Fig.Web, including settings display scripts and the Dashboards feature (which relies on scripts for data bindings).</p>
+                <p>Scripts run with limited scope inside the web assembly sandbox (via Jint), but they still execute code that may have been written by a third party.</p>
+                <p>If you do not trust all registering clients, leave this disabled to eliminate that risk. When disabled, display scripts are not delivered and Dashboards are unavailable.</p>
                 <div class="p-1">
                     <RadzenSwitch @bind-Value="ConfigurationModel.AllowDisplayScripts" Change="OnConfigurationValueChanged"/>
                 </div>

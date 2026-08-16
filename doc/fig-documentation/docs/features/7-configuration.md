@@ -33,11 +33,11 @@ Fig supports loading export from an import directory. This is a useful feature w
 
 However, depending on the level of access to the import directory, it may impose a security risk as imports can be configured to remove existing clients and settings.
 
-### Allow Display Scripts
+### Allow JavaScript
 
-Display scripts provide flexibility when configuring the behavior of the settings for a specific client.
+This setting controls all JavaScript execution in Fig.Web, including settings display scripts and the Dashboards feature (which relies on scripts for data bindings).
 
-They should be quite safe as it has limited scope and runs within the web-assembly sandbox but it does involve executing code that has been written by a third party and as a result, if you don't trust all the registering clients, disabling this feature eliminates the possibility for misuse.
+Scripts run with limited scope inside the web-assembly sandbox (via Jint), but they still execute code that may have been written by a third party. If you do not trust all registering clients, leave this disabled to eliminate that risk. When disabled, display scripts are not delivered and Dashboards are unavailable.
 
 ### Enable Time Machine
 

@@ -264,7 +264,7 @@
                 </div>
             </RadzenCard>
 
-            <RadzenCard class="m-3">
+            <RadzenCard class="m-3" Visible="@ConfigurationFacade.AllowDisplayScripts">
                 <h3 class="h5">Dashboard Export</h3>
                 <p>Export all dashboard definitions as JSON. Live data and secrets are not included.</p>
                 <div class="p-2">
@@ -273,7 +273,7 @@
                 </div>
             </RadzenCard>
 
-            <RadzenCard class="m-3">
+            <RadzenCard class="m-3" Visible="@ConfigurationFacade.AllowDisplayScripts">
                 <h3 class="h5">Dashboard Import</h3>
                 <p>Import dashboard definitions from a JSON file. Each dashboard is created as new (never overwrites). Name collisions are renamed with " (imported)".</p>
                 <div class="p-2">

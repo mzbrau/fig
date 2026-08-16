@@ -11,7 +11,7 @@ namespace Fig.Unit.Test.Web.Dashboards;
 [TestFixture]
 public class DashboardTransformEngineTests
 {
-    private readonly DashboardTransformEngine _engine = new(new JintEngineFactory());
+    private readonly DashboardTransformEngine _engine = DashboardTestHelpers.CreateTransformEngine();
 
     private static DashboardFigRoot SampleFig()
     {
@@ -67,6 +67,16 @@ public class DashboardTransformEngineTests
         Assert.Throws<Jint.Runtime.JavaScriptException>(
             () => _engine.ExecuteScript("return totally.broken();", SampleFig()));
     }
+
+    [Test]
+    public void ShallRefuseScriptExecutionWhenJavascriptDisabled()
+    {
+        var engine = DashboardTestHelpers.CreateTransformEngine(allowDisplayScripts: false);
+
+        Assert.That(
+            () => engine.ExecuteScript("return 1;", SampleFig()),
+            Throws.InvalidOperationException.With.Message.Contains("disabled"));
+    }
 }
 
 [TestFixture]
@@ -102,7 +112,7 @@ public class DashboardRuntimeEvaluateTests
             })
         };
 
-        var runtime = new DashboardRuntime(new DashboardTransformEngine(new JintEngineFactory()), new FixedDataProvider(fig));
+        var runtime = new DashboardRuntime(DashboardTestHelpers.CreateTransformEngine(), new FixedDataProvider(fig));
         runtime.SetDefinition(new DashboardDefinitionDataContract
         {
             Components =
@@ -128,7 +138,7 @@ public class DashboardRuntimeEvaluateTests
     public void Evaluate_FailsWhenInlineScriptMissing()
     {
         var runtime = new DashboardRuntime(
-            new DashboardTransformEngine(new JintEngineFactory()),
+            DashboardTestHelpers.CreateTransformEngine(),
             new FixedDataProvider(new DashboardFigRoot()));
         runtime.SetDefinition(new DashboardDefinitionDataContract
         {

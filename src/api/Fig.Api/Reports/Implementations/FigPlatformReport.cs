@@ -117,7 +117,7 @@ public class FigPlatformReport : ReportBase<FigPlatformParameters, FigPlatformRe
             new() { Flag = "Allow Client Overrides", Value = Flag(config.AllowClientOverrides) },
             new() { Flag = "Client Overrides Regex", Value = config.ClientOverridesRegex ?? string.Empty },
             new() { Flag = "Use Azure Key Vault", Value = Flag(config.UseAzureKeyVault) },
-            new() { Flag = "Allow Display Scripts", Value = Flag(config.AllowDisplayScripts) },
+            new() { Flag = "Allow JavaScript", Value = Flag(config.AllowDisplayScripts) },
             new() { Flag = "Enable Time Machine", Value = Flag(config.EnableTimeMachine) },
             new() { Flag = "Allow Migrate From Migrations", Value = Flag(config.AllowMigrateFromMigrations) },
             new() { Flag = "Timeline Duration Days", Value = config.TimelineDurationDays.ToString() },
