@@ -9,9 +9,9 @@
 
 
 
-<link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.8d460b06.css">
-<script src="/assets/js/runtime~main.f2bb9f48.js" defer="defer"></script>
-<script src="/assets/js/main.2fa99b91.js" defer="defer"></script>
+<link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.17c59dc6.css">
+<script src="/assets/js/runtime~main.59c3cf43.js" defer="defer"></script>
+<script src="/assets/js/main.5fac1b27.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
 <svg style="display: none;"><defs>
@@ -43,60 +43,13 @@
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="how-to-export-a-container-image">How to export a container image<a href="#how-to-export-a-container-image" class="hash-link" aria-label="Direct link to How to export a container image" title="Direct link to How to export a container image" translate="no">​</a></h2>
 <p><a href="https://stackoverflow.com/a/46526598" target="_blank" rel="noopener noreferrer" class="">https://stackoverflow.com/a/46526598</a></p>
 <div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">docker export $(docker ps -lq) -o fig.web.tar</span><br></span></code></pre></div></div>
-<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="can-i-run-this-on-an-apple-silicon-m1m2-mac">Can I run this on an Apple Silicon (M1/M2) Mac?<a href="#can-i-run-this-on-an-apple-silicon-m1m2-mac" class="hash-link" aria-label="Direct link to Can I run this on an Apple Silicon (M1/M2) Mac?" title="Direct link to Can I run this on an Apple Silicon (M1/M2) Mac?" translate="no">​</a></h2>
-<p>Yes, the easiest way to run fig is by using containers, these run on Apple silicon as well as any other processor. However, if you want to build the solution on an M1/M2 Mac, follow these steps:</p>
-<ol>
-<li class="">Clone the code</li>
-<li class="">Copy <code>libSQLite.Interop.dll</code> from the <code>external</code> folder to  <code>/usr/local/lib</code> (it may need to be created)</li>
-<li class="">You should be up and running.</li>
-</ol>
-<p>If you want to do everything from scratch, follow the steps below:</p>
-<ol>
-<li class="">
-<p>Clone the code</p>
-</li>
-<li class="">
-<p>From the <a href="https://system.data.sqlite.org/index.html/doc/trunk/www/downloads.wiki" target="_blank" rel="noopener noreferrer" class="">SQLite download page</a>, download the sql lite source code. At time of writing, this was <a href="https://system.data.sqlite.org/downloads/1.0.116.0/sqlite-netFx-source-1.0.116.0.zip" target="_blank" rel="noopener noreferrer" class="">sqlite-netFx-source-1.0.116.0.zip</a></p>
-</li>
-<li class="">
-<p>Unzip</p>
-</li>
-<li class="">
-<p>Open /Setup/compile-interop-assembly-release.sh in a text editor.</p>
-</li>
-<li class="">
-<p>Change the architecture from <code>x86_64</code> to <code>arm64</code> (or <code>arm64e</code> if you are running macOS earlier than Ventura). It should look like this</p>
-</li>
-<li class="">
-<div class="language-sh codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-sh codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">if [[ &quot;$OSTYPE&quot; == &quot;darwin&quot;* ]]; then</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  libname=libSQLite.Interop.dylib</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  # NOTE: No longer works in 10.14+</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  # gccflags=&quot;-arch i386 -arch x86_64&quot;</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  gccflags=&quot;-arch arm64&quot;</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">else</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  libname=libSQLite.Interop.so</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">  gccflags=&quot;&quot;</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">fi</span><br></span></code></pre></div></div>
-</li>
-<li class="">
-<p>In the terminal Execute the following</p>
-</li>
-<li class="">
-<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">cd Setup</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">sh compile-interop-assembly-release.sh</span><br></span></code></pre></div></div>
-</li>
-<li class="">
-<p>It will create this file: <code>/bin/2013/Release/bin/SQLite.Interop.dll</code></p>
-</li>
-<li class="">
-<p>Create the directory <code>/usr/local/lib</code> (if it didn&#x27;t already exist) and copy <code>SQLite.Interop.dll</code> to that directory.</p>
-</li>
-<li class="">
-<p>Rename it to <code>libSQLite.Interop.dll</code></p>
-</li>
-<li class="">
-<p>In the terminal, return to the base directory and build the project using the following command:</p>
-</li>
-<li class="">
-<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet build -c Release SQLite.NET.NetStandard20.sln</span><br></span></code></pre></div></div>
-</li>
-<li class="">
-<p>Add a reference the file which now has been created at <code>/bin/NetStandard20/ReleaseNetStandard20/bin/netstandard2.0/System.Data.SQLite.dll</code> to the Fig.Api project (you can move it first to a more appropriate location)</p>
-</li>
-</ol>
+<h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="can-i-run-this-on-an-apple-silicon-m1m2m3m4-mac">Can I run this on an Apple Silicon (M1/M2/M3/M4) Mac?<a href="#can-i-run-this-on-an-apple-silicon-m1m2m3m4-mac" class="hash-link" aria-label="Direct link to Can I run this on an Apple Silicon (M1/M2/M3/M4) Mac?" title="Direct link to Can I run this on an Apple Silicon (M1/M2/M3/M4) Mac?" translate="no">​</a></h2>
+<p>Yes. Containers work on Apple Silicon, and building the solution locally also works without extra SQLite setup.</p>
+<p>Fig.Api uses <strong>System.Data.SQLite 2.x</strong> with native SQLite from the <strong>SourceGear.sqlite3</strong> NuGet package, which includes <code>osx-arm64</code> binaries (<code>libe_sqlite3.dylib</code>). No hand-built interop libraries or copies under <code>/usr/local/lib</code> are required.</p>
+<div class="language-text codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-text codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet build</span><br></span><span class="token-line" style="color:#F8F8F2"><span class="token plain">dotnet run --project src/api/Fig.Api</span><br></span></code></pre></div></div>
+<p>Or use the Aspire AppHost under <code>src/hosting/Fig.AppHost</code>.</p>
 <h1>References</h1>
 <p><a href="https://daniel-vetter86.medium.com/building-a-ci-cd-pipeline-with-asp-net-core-github-actions-docker-and-a-linux-server-3fc5271ebbe4" target="_blank" rel="noopener noreferrer" class="">https://daniel-vetter86.medium.com/building-a-ci-cd-pipeline-with-asp-net-core-github-actions-docker-and-a-linux-server-3fc5271ebbe4</a></p>
-<p><a href="https://chrissainty.com/containerising-blazor-applications-with-docker-containerising-a-blazor-webassembly-app/" target="_blank" rel="noopener noreferrer" class="">https://chrissainty.com/containerising-blazor-applications-with-docker-containerising-a-blazor-webassembly-app/</a></p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href="https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/docs/faqs.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/next/powershell"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Powershell Module</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#how-to-build-and-run-containers-locally" class="table-of-contents__link toc-highlight">How to build and run containers locally?</a></li><li><a href="#how-to-export-a-container-image" class="table-of-contents__link toc-highlight">How to export a container image</a></li><li><a href="#can-i-run-this-on-an-apple-silicon-m1m2-mac" class="table-of-contents__link toc-highlight">Can I run this on an Apple Silicon (M1/M2) Mac?</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro">Quick Start</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/overview">Overview</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/features">Features</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/facebook/docusaurus" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Fig, Inc. Built with Docusaurus.</div></div></div></footer></div>
+<p><a href="https://chrissainty.com/containerising-blazor-applications-with-docker-containerising-a-blazor-webassembly-app/" target="_blank" rel="noopener noreferrer" class="">https://chrissainty.com/containerising-blazor-applications-with-docker-containerising-a-blazor-webassembly-app/</a></p></div><footer class="theme-doc-footer docusaurus-mt-lg"><div class="row margin-top--sm theme-doc-footer-edit-meta-row"><div class="col noPrint_WFHX"><a href="https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/docs/faqs.md" target="_blank" rel="noopener noreferrer" class="theme-edit-this-page"><svg fill="currentColor" height="20" width="20" viewBox="0 0 40 40" class="iconEdit_Z9Sw" aria-hidden="true"><g><path d="m34.5 11.7l-3 3.1-6.3-6.3 3.1-3q0.5-0.5 1.2-0.5t1.1 0.5l3.9 3.9q0.5 0.4 0.5 1.1t-0.5 1.2z m-29.5 17.1l18.4-18.5 6.3 6.3-18.4 18.4h-6.3v-6.2z"></path></g></svg>Edit this page</a></div><div class="col lastUpdated_JAkA"></div></div></footer></article><nav class="docusaurus-mt-lg pagination-nav" aria-label="Docs pages"><a class="pagination-nav__link pagination-nav__link--prev" href="/docs/next/powershell"><div class="pagination-nav__sublabel">Previous</div><div class="pagination-nav__label">Powershell Module</div></a></nav></div></div><div class="col col--3"><div class="tableOfContents_bqdL thin-scrollbar theme-doc-toc-desktop"><ul class="table-of-contents table-of-contents__left-border"><li><a href="#how-to-build-and-run-containers-locally" class="table-of-contents__link toc-highlight">How to build and run containers locally?</a></li><li><a href="#how-to-export-a-container-image" class="table-of-contents__link toc-highlight">How to export a container image</a></li><li><a href="#can-i-run-this-on-an-apple-silicon-m1m2m3m4-mac" class="table-of-contents__link toc-highlight">Can I run this on an Apple Silicon (M1/M2/M3/M4) Mac?</a></li></ul></div></div></div></div></main></div></div></div><footer class="theme-layout-footer footer footer--dark"><div class="container container-fluid"><div class="row footer__links"><div class="theme-layout-footer-column col footer__col"><div class="footer__title">Documentation</div><ul class="footer__items clean-list"><li class="footer__item"><a class="footer__link-item" href="/docs/intro">Quick Start</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/overview">Overview</a></li><li class="footer__item"><a class="footer__link-item" href="/docs/category/features">Features</a></li></ul></div><div class="theme-layout-footer-column col footer__col"><div class="footer__title">More</div><ul class="footer__items clean-list"><li class="footer__item"><a href="https://github.com/facebook/docusaurus" target="_blank" rel="noopener noreferrer" class="footer__link-item">GitHub<svg width="13.5" height="13.5" aria-label="(opens in new tab)" class="iconExternalLink_nPIU"><use href="#theme-svg-external-link"></use></svg></a></li></ul></div></div><div class="footer__bottom text--center"><div class="footer__copyright">Copyright © 2026 Fig, Inc. Built with Docusaurus.</div></div></div></footer></div>
 </body>
 </html>
