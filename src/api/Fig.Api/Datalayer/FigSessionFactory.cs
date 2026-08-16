@@ -115,7 +115,7 @@ public class FigSessionFactory : IFigSessionFactory
     private string GetDriverClass(string? connectionString)
     {
         return IsSqlLite(connectionString)
-            ? "NHibernate.Driver.SQLite20Driver"
+            ? typeof(RetryingSQLiteDriver).AssemblyQualifiedName!
             : "NHibernate.Driver.MicrosoftDataSqlClientDriver";
     }
     
