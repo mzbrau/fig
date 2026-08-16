@@ -24,8 +24,17 @@ serviceCollection.Configure<Settings>(configuration);
 
 var serviceProvider = serviceCollection.BuildServiceProvider();
 
-var settings = serviceProvider.GetRequiredService<IOptionsMonitor<Settings>>();
+_ = serviceProvider.GetRequiredService<IOptionsMonitor<Settings>>();
 
-//Console.WriteLine(settings.CurrentValue.ServiceUsername);
+Console.WriteLine("DisplayScriptExample registered with Fig. Waiting until cancelled...");
 
-Console.ReadKey();
+var exit = new ManualResetEventSlim(false);
+Console.CancelKeyPress += (_, eventArgs) =>
+{
+    eventArgs.Cancel = true;
+    exit.Set();
+};
+
+AppDomain.CurrentDomain.ProcessExit += (_, _) => exit.Set();
+
+exit.Wait();

@@ -17,6 +17,7 @@ namespace Fig.Client.ConfigurationProvider;
 public class ValidatedHttpClientFactory
 {
     internal const string TimeoutEnvVar = "FIG_API_REQUEST_TIMEOUT_SECONDS";
+    internal const string InsecureSslEnvVar = "FIG_INSECURE_SSL";
     
     private readonly ILogger<ValidatedHttpClientFactory> _logger;
     private readonly TimeSpan _requestTimeout;
@@ -148,12 +149,22 @@ public class ValidatedHttpClientFactory
         ServicePoint servicePoint = ServicePointManager.FindServicePoint(new Uri(apiUri));
         servicePoint.ConnectionLeaseTimeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
 
+        var httpClientHandler = new HttpClientHandler
+        {
+            SslProtocols = SslProtocols.Tls12
+        };
+
+        if (IsInsecureSslEnabled())
+        {
+            _logger.LogWarning(
+                "{EnvVar} is enabled; TLS certificate validation is disabled for Fig API calls",
+                InsecureSslEnvVar);
+            httpClientHandler.ServerCertificateCustomValidationCallback = static (_, _, _, _) => true;
+        }
+
         var handler = new PolicyHttpMessageHandler(policyWrap)
         {
-            InnerHandler = new HttpClientHandler
-            {
-                SslProtocols = SslProtocols.Tls12
-            }
+            InnerHandler = httpClientHandler
         };
         
         return new HttpClient(handler)
@@ -161,6 +172,13 @@ public class ValidatedHttpClientFactory
             BaseAddress = new Uri(apiUri),
             DefaultRequestHeaders = { ExpectContinue = false }
         };
+    }
+
+    private static bool IsInsecureSslEnabled()
+    {
+        var value = Environment.GetEnvironmentVariable(InsecureSslEnvVar);
+        return string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
     }
 
     private TimeSpan? ReadTimeoutFromEnvironmentVariable()

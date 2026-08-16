@@ -13,7 +13,8 @@
                  style="background-color: @Setting.CategoryColor">
             </div>
             
-            <div class="expand-collapse-icon @(_showExpandIcon && Setting.IsCompactView ? "visible" : "hidden")" 
+            <div class="expand-collapse-icon @(_showExpandIcon && Setting.IsCompactView ? "visible" : "hidden")"
+                 data-test-id="@($"{Setting.Name}_expand")"
                  @onclick="@(ToggleSettingCompactView)" @onclick:stopPropagation="true">
                 <RadzenIcon Icon="unfold_more" />
             </div>
@@ -72,6 +73,7 @@ else
     <div class="transition-visible @(Setting.Hidden ? "transition-collapsed" : "show") @(Setting.ShouldAnimateVisibilityChanges ? "" : "no-animation")" 
          style="@GetIndentStyle()"
          id="@($"{Setting.Parent.Name}-{Setting.Parent.Instance}-{Setting.Name}")"
+         data-test-id="@($"{Setting.Name}_card")"
          @onmouseover="ShowExpandIcon" @onmouseout="HideExpandIcon">
         <RadzenCard class="position-relative custom-card">
             <div class="colored-line" @ref="_categoryLine"
@@ -154,21 +156,24 @@ else
                         <!-- Undo Changes Button -->
                         <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
                             <RadzenButton Click="@(() => Setting.UndoChanges())" Disabled="@Setting.IsNotDirty" Icon="restart_alt"
+                                          data-test-id="@($"{Setting.Name}_undo")"
                                           ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Undo unsaved changes"))" />
                         </div>
                         <!-- Reset to Default Button -->
                         <div class="px-1 @(Setting.IsGroupManaged || IsReadOnlyUser ? "collapse" : "")">
                             <RadzenButton Click="@(() => Setting.ResetToDefault())" Disabled="@Setting.ResetToDefaultDisabled" Icon="settings_backup_restore"
+                                          data-test-id="@($"{Setting.Name}_reset")"
                                           ButtonStyle="ButtonStyle.Warning" MouseEnter="@(args => ShowTooltip(args, "Reset to default value"))" />
                         </div>
                         <!-- Show History Button -->
                         <div class="px-1 pr-1">
                             <RadzenButton Click="@(() => Setting.ShowHistory())" Icon="history" ButtonStyle="ButtonStyle.Light"
+                                          data-test-id="@($"{Setting.Name}_history")"
                                           MouseEnter="@(args => ShowTooltip(args, "Toggle setting history details"))" />
                         </div>
                     </div>
                     <!-- Modified Badge (displayed below buttons) -->
-                    <div class="@(!Setting.IsDirty ? "collapse" : "") mt-1">
+                    <div class="@(!Setting.IsDirty ? "collapse" : "") mt-1" data-test-id="@($"{Setting.Name}_modified")">
                         <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="Modified" class="position-absolute top-0 end-0 m-1"
                                      MouseEnter="@(args => ShowTooltip(args, "This setting has unsaved changes"))" />
                     </div>
@@ -262,10 +267,10 @@ else
                     </ul>
                 </div>
             </div>
-            <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "collapse")">
+            <div class="p-1 transition-visible @(Setting.IsHistoryVisible ? "show" : "collapse")" data-test-id="@($"{Setting.Name}_history_panel")">
                 <hr/>
                 <h3>History</h3>
-                <div class="@(Setting.Parent.IsGroup ? "collapse" : "")">
+                <div class="@(Setting.Parent.IsGroup ? "collapse" : "")" data-test-id="@($"{Setting.Name}_history_grid")">
                     <RadzenDataGrid AllowFiltering="false" AllowColumnResize="true" FilterMode="FilterMode.Advanced" PageSize="3" AllowPaging="true"
                                     Data="@Setting.History" TItem="SettingHistoryModel" ColumnWidth="300px">
                         <Columns>

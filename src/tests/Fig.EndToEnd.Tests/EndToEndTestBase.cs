@@ -5,38 +5,35 @@ namespace Fig.EndToEnd.Tests;
 
 public abstract class EndToEndTestBase
 {
-    private IPlaywright _playwright = null!;
-    private IBrowser _browser = null!;
-    
-    [OneTimeSetUp]
-    public async Task FixtureSetup()
+    private IBrowserContext? _context;
+
+    protected string WebBaseUrl =>
+        Environment.GetEnvironmentVariable("FIG_E2E_WEB_URL")?.TrimEnd('/')
+        ?? AspireFixture.WebBaseUrl;
+
+    [TearDown]
+    public async Task TearDownContext()
     {
-        _playwright = await Playwright.CreateAsync();
-        _browser = await _playwright.Chromium.LaunchAsync(new BrowserTypeLaunchOptions
-        {
-            Headless = true,
-        });
+        if (_context is not null)
+            await _context.DisposeAsync();
     }
-    
-    [OneTimeTearDown]
-    public async Task FixtureTearDown()
-    {
-        _playwright.Dispose();
-        await _browser.DisposeAsync();
-    }
-    
+
     protected async Task<IPage> GetPage()
     {
-        var options = new BrowserNewContextOptions
+        _context = await AspireFixture.Browser.NewContextAsync(new BrowserNewContextOptions
         {
-            IgnoreHTTPSErrors = true
-        };
-        
-        var context = await _browser.NewContextAsync(options);
+            IgnoreHTTPSErrors = true,
+            BaseURL = WebBaseUrl,
+            ViewportSize = new ViewportSize { Width = 1440, Height = 900 }
+        });
 
-        // Open new page
-        var page = await context.NewPageAsync();
-        await page.GotoAsync("https://localhost:7148/");
+        _context.SetDefaultTimeout(60_000);
+        var page = await _context.NewPageAsync();
+        await page.GotoAsync("/", new PageGotoOptions
+        {
+            WaitUntil = WaitUntilState.NetworkIdle,
+            Timeout = 120_000
+        });
 
         return page;
     }

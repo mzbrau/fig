@@ -145,7 +145,7 @@
             <p class="mb-1">Optional message describing the change.</p>
             @if (ChangeDetails != null)
             {
-                <RadzenTextArea @bind-Value="@ChangeDetails.Message" Rows="3" Class="w-100"/>
+                <RadzenTextArea @bind-Value="@ChangeDetails.Message" Rows="3" Class="w-100" data-test-id="ChangeMessage"/>
             }
         </div>
     </div>
@@ -212,9 +212,10 @@
 
     <div class="row">
         <div class="col">
-            <RadzenButton Text="Save" Disabled="@(!CanSave)" Click="() => SaveChanges()" Class="mr-1"/>
+            <RadzenButton Text="Save" Disabled="@(!CanSave)" Click="() => SaveChanges()" Class="mr-1"
+                          data-test-id="ChangeMessageConfirm"/>
             <RadzenButton Text="Cancel" Click="() => DialogService.Close(false)" ButtonStyle="ButtonStyle.Secondary"
-                          Class="mr-1"/>
+                          Class="mr-1" data-test-id="ChangeMessageCancel"/>
         </div>
     </div>
 </div>

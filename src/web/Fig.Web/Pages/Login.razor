@@ -26,12 +26,12 @@
             <RadzenTemplateForm TItem="LoginModel" Data=@_loginModel>
                 <div class="form-group">
                     <label for="username" class="white-text">Username</label>
-                    <RadzenTextBox AutoComplete="true" Name="Username" @bind-Value=@_loginModel.Username Style="width: 100%"/>
+                    <RadzenTextBox AutoComplete="true" Name="Username" data-test-id="Username" @bind-Value=@_loginModel.Username Style="width: 100%"/>
                     <RadzenRequiredValidator Component="Username" Text="Username is required" class="validator" />
                 </div>
                 <div class="form-group">
                     <label for="password" class="white-text">Password</label>
-                    <RadzenPassword AutoComplete="true" Name="Password" @bind-Value=@_loginModel.Password Style="width: 100%" />
+                    <RadzenPassword AutoComplete="true" Name="Password" data-test-id="Password" @bind-Value=@_loginModel.Password Style="width: 100%" />
                     <RadzenRequiredValidator Component="Password" Text="Password is required" class="validator" />
                 </div>
                 <div class="form-group">

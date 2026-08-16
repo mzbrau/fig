@@ -48,7 +48,7 @@ jobs:
         dotnet build --configuration Release --no-restore ./src /p:ErrorLog=build.sarif 2>&1 | tee build.log
 
     - name: Test
-      run: dotnet test --no-build --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" ./src 
+      run: dotnet test --no-build --no-restore --verbosity normal --logger "trx;LogFileName=test-results.trx" --filter "FullyQualifiedName!~Fig.EndToEnd.Tests" ./src 
 
     - name: Publish test report
       uses: mzbrau/actions-insights@v1
