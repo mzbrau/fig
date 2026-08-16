@@ -10,6 +10,7 @@ public class SettingsPage : PageObjectModel
 
     public async Task SelectClient(string clientName)
     {
+        await DismissJavascriptDisabledDialogIfPresent();
         var client = Page.Locator($"[data-test-id=\"{clientName}\"]");
         await client.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
         await client.ClickAsync();
@@ -122,5 +123,23 @@ public class SettingsPage : PageObjectModel
         {
             Timeout = 30_000
         });
+    }
+
+    private async Task DismissJavascriptDisabledDialogIfPresent()
+    {
+        var mask = Page.Locator(".rz-dialog-mask");
+        if (await mask.CountAsync() > 0 && await mask.First.IsVisibleAsync())
+        {
+            var dismissButton = Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = "Dismiss" });
+            if (await dismissButton.CountAsync() > 0)
+            {
+                await dismissButton.ClickAsync();
+                await mask.First.WaitForAsync(new LocatorWaitForOptions
+                {
+                    State = WaitForSelectorState.Hidden,
+                    Timeout = 10_000
+                });
+            }
+        }
     }
 }
