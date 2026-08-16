@@ -215,7 +215,7 @@ public class KeycloakUserAuthenticationModeService : IUserAuthenticationModeServ
                 return [];
 
             return jToken.Type == JTokenType.Array
-                ? jToken.Values<string>().Where(a => !string.IsNullOrWhiteSpace(a))
+                ? jToken.Values<string?>().Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!)
                 : [jToken.ToString()];
         }
         catch (JsonException)

@@ -290,10 +290,12 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
             return null;
         }
 
-        var classifications = values
-            .Where(a => Enum.TryParse<Classification>(a, true, out _))
-            .Select(a => Enum.Parse<Classification>(a, true))
-            .ToList();
+        var classifications = new List<Classification>();
+        foreach (var value in values)
+        {
+            if (value != null && Enum.TryParse<Classification>(value, true, out var classification))
+                classifications.Add(classification);
+        }
 
         return classifications.Count == 0 ? null : classifications;
     }
@@ -327,7 +329,7 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
                 return [];
 
             return jToken.Type == JTokenType.Array
-                ? jToken.Values<string>().Where(a => !string.IsNullOrWhiteSpace(a))
+                ? jToken.Values<string?>().Where(a => !string.IsNullOrWhiteSpace(a)).Select(a => a!)
                 : [jToken.ToString()];
         }
         catch (JsonException)
