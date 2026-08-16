@@ -2,7 +2,7 @@
 
 @if (!Setting.IsValid)
 {
-    <div class="setting-annotation setting-warning">
+    <div class="setting-annotation setting-warning" data-test-id="@($"{Setting.Name}_validation")">
         <RadzenIcon Icon="close" class="annotation-icon" />
         <span>@Setting.ValidationExplanation</span>
     </div>
@@ -10,7 +10,7 @@
 
 @if (!string.IsNullOrWhiteSpace(Setting.InformationText))
 {
-    <div class="setting-annotation setting-info">
+    <div class="setting-annotation setting-info" data-test-id="@($"{Setting.Name}_info")">
         <RadzenIcon Icon="info" class="annotation-icon" />
         <span class="info-text">@Setting.InformationText</span>
     </div>

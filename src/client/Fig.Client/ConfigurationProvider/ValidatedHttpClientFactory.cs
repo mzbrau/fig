@@ -17,6 +17,7 @@ namespace Fig.Client.ConfigurationProvider;
 public class ValidatedHttpClientFactory
 {
     internal const string TimeoutEnvVar = "FIG_API_REQUEST_TIMEOUT_SECONDS";
+    internal const string InsecureSslEnvVar = "FIG_INSECURE_SSL";
     
     private readonly ILogger<ValidatedHttpClientFactory> _logger;
     private readonly TimeSpan _requestTimeout;
@@ -148,12 +149,30 @@ public class ValidatedHttpClientFactory
         ServicePoint servicePoint = ServicePointManager.FindServicePoint(new Uri(apiUri));
         servicePoint.ConnectionLeaseTimeout = (int)TimeSpan.FromMinutes(15).TotalMilliseconds;
 
+        var httpClientHandler = new HttpClientHandler
+        {
+            SslProtocols = SslProtocols.Tls12
+        };
+
+        if (ShouldDisableCertificateValidation(apiUri))
+        {
+            _logger.LogWarning(
+                "{EnvVar} is enabled for localhost API URI {ApiUri}; TLS certificate validation is disabled",
+                InsecureSslEnvVar,
+                apiUri);
+            httpClientHandler.ServerCertificateCustomValidationCallback = static (_, _, _, _) => true;
+        }
+        else if (IsInsecureSslEnabled())
+        {
+            _logger.LogWarning(
+                "{EnvVar} is set but ignored because API URI {ApiUri} is not localhost/loopback; TLS certificate validation remains enabled",
+                InsecureSslEnvVar,
+                apiUri);
+        }
+
         var handler = new PolicyHttpMessageHandler(policyWrap)
         {
-            InnerHandler = new HttpClientHandler
-            {
-                SslProtocols = SslProtocols.Tls12
-            }
+            InnerHandler = httpClientHandler
         };
         
         return new HttpClient(handler)
@@ -161,6 +180,32 @@ public class ValidatedHttpClientFactory
             BaseAddress = new Uri(apiUri),
             DefaultRequestHeaders = { ExpectContinue = false }
         };
+    }
+
+    internal static bool ShouldDisableCertificateValidation(string apiUri)
+    {
+        if (!IsInsecureSslEnabled())
+            return false;
+
+        return IsLocalhostApiUri(apiUri);
+    }
+
+    internal static bool IsLocalhostApiUri(string apiUri)
+    {
+        if (!Uri.TryCreate(apiUri, UriKind.Absolute, out var uri))
+            return false;
+
+        if (uri.IsLoopback)
+            return true;
+
+        return string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsInsecureSslEnabled()
+    {
+        var value = Environment.GetEnvironmentVariable(InsecureSslEnvVar);
+        return string.Equals(value, "1", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(value, "true", StringComparison.OrdinalIgnoreCase);
     }
 
     private TimeSpan? ReadTimeoutFromEnvironmentVariable()

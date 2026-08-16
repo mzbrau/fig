@@ -18,12 +18,14 @@ public class ValidatedHttpClientFactoryTests
     {
         _loggerMock = new Mock<ILogger<ValidatedHttpClientFactory>>();
         Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, null);
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.InsecureSslEnvVar, null);
     }
 
     [TearDown]
     public void TearDown()
     {
         Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.TimeoutEnvVar, null);
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.InsecureSslEnvVar, null);
     }
 
     [Test]
@@ -436,5 +438,47 @@ public class ValidatedHttpClientFactoryTests
                 It.IsAny<Exception>(),
                 It.IsAny<Func<It.IsAnyType, Exception?, string>>()),
             Times.Once);
+    }
+
+    [TestCase("https://localhost:7281", true)]
+    [TestCase("https://127.0.0.1:7281", true)]
+    [TestCase("https://[::1]:7281", true)]
+    [TestCase("https://api.example.com", false)]
+    [TestCase("not-a-uri", false)]
+    public void IsLocalhostApiUri_ReturnsExpectedResult(string apiUri, bool expected)
+    {
+        Assert.That(ValidatedHttpClientFactory.IsLocalhostApiUri(apiUri), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void ShouldDisableCertificateValidation_ReturnsFalse_WhenEnvVarNotSet()
+    {
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.InsecureSslEnvVar, null);
+
+        Assert.That(
+            ValidatedHttpClientFactory.ShouldDisableCertificateValidation("https://localhost:7281"),
+            Is.False);
+    }
+
+    [TestCase("1")]
+    [TestCase("true")]
+    [TestCase("TRUE")]
+    public void ShouldDisableCertificateValidation_ReturnsTrue_ForLocalhostWhenEnabled(string envValue)
+    {
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.InsecureSslEnvVar, envValue);
+
+        Assert.That(
+            ValidatedHttpClientFactory.ShouldDisableCertificateValidation("https://localhost:7281"),
+            Is.True);
+    }
+
+    [Test]
+    public void ShouldDisableCertificateValidation_ReturnsFalse_ForRemoteHostWhenEnabled()
+    {
+        Environment.SetEnvironmentVariable(ValidatedHttpClientFactory.InsecureSslEnvVar, "1");
+
+        Assert.That(
+            ValidatedHttpClientFactory.ShouldDisableCertificateValidation("https://api.example.com"),
+            Is.False);
     }
 }
