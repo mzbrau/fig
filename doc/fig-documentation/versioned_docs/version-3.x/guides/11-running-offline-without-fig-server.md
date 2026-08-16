@@ -10,15 +10,15 @@ This guide walks through how to run a Fig-configured application without a Fig s
 
 The offline workflow has two phases:
 
-1. **Generate** — Run the application once with `--printappsettings` to produce an `appsettings.json` file with encrypted secrets
-2. **Run Offline** — Start the application with `--figoffline`; Fig reads configuration from `appsettings.json` and automatically decrypts any `_FigEncrypted` values
+1. **Generate** — Run the application once with `--printappsettings` to produce an `appsettings.fig.json` file with encrypted secrets
+2. **Run Offline** — Rename the generated file to `appsettings.json`, then start the application with `--figoffline`; Fig reads configuration from `appsettings.json` and automatically decrypts any `_FigEncrypted` values
 
 ## Prerequisites
 
 - Windows machine (DPAPI encryption is Windows-only)
 - The application must use Fig.Client and pass `CommandLineArgs` in `FigOptions`
 - The `Fig.Client.SecretProvider.Dpapi` NuGet package must be referenced and `DpapiSecretProvider` added to `ClientSecretProviders`
-- The same Windows user account must be used both to generate the file and to run the application
+- The same Windows user profile on the same machine must be used both to generate the file and to run the application
 
 ## Step 1: Configure Your Application
 
@@ -26,6 +26,7 @@ Ensure your `Program.cs` (or equivalent startup code) passes the command line ar
 
 ```csharp
 var configuration = new ConfigurationBuilder()
+    .AddJsonFile("appsettings.json", optional: false)  // Add BEFORE AddFig for offline reloads
     .AddFig<MySettings>(o =>
     {
         o.ClientName = "My App";
@@ -42,21 +43,34 @@ And also update your `IHostBuilder` to support offline mode:
 
 ```csharp
 var host = Host.CreateDefaultBuilder(args)
+    .ConfigureAppConfiguration((_, config) =>
+    {
+        config.AddFig<MySettings>(o =>
+        {
+            o.ClientName = "My App";
+            o.CommandLineArgs = args;
+            o.ClientSecretProviders = [new DpapiSecretProvider()];
+        });
+    })
     .UseFig<MySettings>()
     // ...
     .Build();
 ```
 
-## Step 2: Generate the appsettings.json
+## Step 2: Generate the appsettings.fig.json
 
-Run your application with `--printappsettings`, providing values for any settings you want to override (including secrets):
+Run your application with `--printappsettings`, providing values for any settings you want to override:
 
 ```bash
-myapp.exe --printappsettings ApiUrl=https://api.company.com Password=MySecretPass123
+myapp.exe --printappsettings ApiUrl=https://api.company.com SecretFromSecureInput=<provide-at-runtime>
 ```
 
 :::tip
-You must run this command **as the same Windows user account** that will run the application in production. DPAPI encryption is tied to the user identity.
+Use a secure input or secret source for production secret values. Passing real secrets on the command line is not suitable for production because command-line arguments may be exposed by shell history, process listings, or command auditing.
+:::
+
+:::tip
+You must run this command **as the same Windows user profile on the same machine** that will run the application in production. DPAPI encryption is tied to both user identity and machine context.
 :::
 
 The command will:
@@ -74,7 +88,7 @@ The command will:
 }
 ```
 
-Notice that `Password` appears as `Password_FigEncrypted` — the value is DPAPI-encrypted and tied to the Windows user who generated it (unreadable by others). **Do not commit production secrets to source control**, even in encrypted form. For production environments, use file system permissions, an external secret manager, or environment variables to distribute this file securely.
+Notice that `Password` appears as `Password_FigEncrypted` — the value is DPAPI-encrypted and tied to the Windows user profile and machine that generated it (unreadable by others). **Do not commit production secrets to source control**, even in encrypted form. For production environments, use file system permissions, an external secret manager, or environment variables to distribute this file securely.
 
 Settings marked `[Secret]` are always stored encrypted. Other settings use their default values unless overridden.
 
@@ -110,16 +124,16 @@ Use `--figoffline` when you have encrypted settings in `appsettings.json`. Use `
 
 ## Security Considerations
 
-- DPAPI-encrypted values are tied to the **user account** on the **machine** where they were created
+- DPAPI-encrypted values are tied to the **user profile** on the **machine** where they were created
 - The encrypted value **cannot** be used on a different machine or by a different user
-- If you need to rotate the encrypted values (e.g., password changed), regenerate the `appsettings.json` using `--printappsettings` with the new value
+- If you need to rotate the encrypted values (e.g., password changed), regenerate `appsettings.fig.json` using `--printappsettings` with the new value, then rename it to `appsettings.json`
 - Encrypted `appsettings.json` files are safer than plain text but should still be protected with appropriate file system permissions
 
 ## Troubleshooting
 
 **Secret setting shows the default value instead of the configured one**  
 Ensure that:
-- The application is running as the same Windows user who generated the file
+- The application is running as the same Windows user profile on the same machine that generated the file
 - The `_FigEncrypted` key in `appsettings.json` is properly formed (no typos in the suffix)
 - The `appsettings.json` is in a location that the application reads from
 
@@ -137,5 +151,5 @@ var configuration = new ConfigurationBuilder()
     .Build();
 ```
 
-**`--printappsettings` generates no secret entries on Linux/Mac**  
-DPAPI is only available on Windows. Run the generation step on a Windows machine, then transfer the `appsettings.json` to your target environment.
+**`--printappsettings` generates no secret entries on Linux/macOS**  
+DPAPI is only available on Windows, and DPAPI-encrypted files are valid only for the same Windows user profile on the same machine. Do not transfer a DPAPI-generated offline settings file to another machine or a Linux/macOS target. For cross-machine or non-Windows deployments, use a non-DPAPI secret strategy such as Docker secrets or cloud secret providers (see [Client Secret Providers](../features/28-client-secrets/1-client-secret-providers.md)).

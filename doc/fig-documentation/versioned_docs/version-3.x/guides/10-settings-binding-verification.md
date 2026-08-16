@@ -40,7 +40,7 @@ This bug can go undetected for a long time, especially in applications where dev
 Add the Fig Client Testing package to your test project:
 
 ```xml
-<PackageReference Include="Fig.Client.Testing" Version="latest" />
+<PackageReference Include="Fig.Client.Testing" Version="*" />
 ```
 
 ## Quick Start: Auto-Mutation
@@ -55,7 +55,7 @@ public async Task SettingsShouldBeBoundToOptionsMonitor()
     var reloader = new ConfigReloader<Settings>();
 
     // Build the application (same pattern as integration testing)
-    var application = new WebApplicationFactory<MyController>().WithWebHostBuilder(builder =>
+    using var application = new WebApplicationFactory<MyController>().WithWebHostBuilder(builder =>
     {
         builder.DisableFig();
         builder.ConfigureAppConfiguration((_, config) =>
@@ -74,7 +74,7 @@ public async Task SettingsShouldBeBoundToOptionsMonitor()
 If `services.Configure<Settings>(builder.Configuration)` is missing from `Program.cs`, this test will fail with a descriptive message listing every property that did not reload.
 
 :::tip Automatically Adapts to Change
-Because auto-mutation discovers properties by reflection, the test continues to cover newly added settings without any manual updates. Add a new `[Setting]` property to your class and the verifier will start testing it immediately.
+Because auto-mutation discovers supported scalar properties by reflection, the test continues to cover newly added supported `[Setting]` properties without manual updates. Use explicit mutations for collection and complex-object properties.
 :::
 
 ## Supported Types
@@ -255,9 +255,9 @@ public class IntegrationTests : IntegrationTestBase
             Settings);
     }
 
-    // Verify a specific property end-to-end through the HTTP layer
+    // Verify a specific property through the options-monitor layer
     [Test]
-    public async Task LocationShouldBeReflectedInApiResponse()
+    public async Task LocationShouldBeReflectedInOptionsMonitor()
     {
         await FigSettingsBindingVerifier.VerifyOptionsMonitorReloadsAsync(
             Application!.Services,
@@ -273,7 +273,7 @@ public class IntegrationTests : IntegrationTestBase
 
 When verification fails, `FigSettingsBindingVerificationException` is thrown with a message that identifies the problem and hints at the fix:
 
-```
+```text
 Fig settings binding verification failed for MyApp.Settings (default options).
 2 properties did not reload correctly:
   - 'Location': expected "London_fig_mutated", but found "London"

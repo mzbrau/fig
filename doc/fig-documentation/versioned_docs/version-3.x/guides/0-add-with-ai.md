@@ -84,6 +84,8 @@ Rules:
 Minimal example:
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.Enums;
@@ -107,6 +109,11 @@ public class Settings : SettingsBase
     [Setting("Feature enabled")]
     [Category("Features", CategoryColor.Green)]
     public bool FeatureEnabled { get; set; } = true;
+
+    public override IEnumerable<string> GetValidationErrors()
+    {
+        return Array.Empty<string>();
+    }
 }
 ```
 Refactoring guidance:
@@ -133,7 +140,6 @@ var builder = WebApplication.CreateBuilder(args);
 var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
 
 builder.Configuration
-    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddFig<Settings>(options =>
     {
         options.ClientName = "MyApp"; // Fig client name shown in Fig Web
@@ -199,6 +205,8 @@ Rich end-to-end example: [AspNetApi Settings.cs](https://github.com/mzbrau/fig/b
 Example with several high-value attributes:
 
 ```csharp
+using System;
+using System.Collections.Generic;
 using Fig.Client;
 using Fig.Client.Abstractions.Attributes;
 using Fig.Client.Abstractions.Enums;
@@ -243,6 +251,11 @@ public class Settings : SettingsBase
     [ValidValues(typeof(LogLevel))]
     [Category("General", CategoryColor.Green)]
     public LogLevel SystemLogOverride { get; set; } = LogLevel.Warning;
+
+    public override IEnumerable<string> GetValidationErrors()
+    {
+        return Array.Empty<string>();
+    }
 }
 ```
 Apply only the features the user accepted. Do not enable display scripts, custom actions, or lookups unconditionally.
@@ -273,10 +286,17 @@ Multiple API URIs can be comma-separated for failover.
 1. Prefer `IOptionsMonitor<T>` so the app receives live Fig updates:
 
 ```csharp
-public class OrdersController(IOptionsMonitor<Settings> settings) : ControllerBase
+public class OrdersController : ControllerBase
 {
+    private readonly IOptionsMonitor<Settings> _settings;
+
+    public OrdersController(IOptionsMonitor<Settings> settings)
+    {
+        _settings = settings;
+    }
+
     [HttpGet("timeout")]
-    public int GetTimeout() => settings.CurrentValue.ApiTimeoutSeconds;
+    public int GetTimeout() => _settings.CurrentValue.ApiTimeoutSeconds;
 }
 ```
 
