@@ -205,7 +205,7 @@ public partial class ImportExport : IDisposable
             }
             else
             {
-                UpdateStatus("Import Failed");
+                UpdateStatus(ImportResultStatus.DescribeSettingsImportHttpFailure());
             }
 
             await DataFacade.RefreshDeferredClients();
@@ -978,15 +978,10 @@ public partial class ImportExport : IDisposable
         try
         {
             var result = await GroupsFacade.ImportGroups(_groupDataToImport, _groupImportType);
-            if (result?.ErrorMessage != null)
-            {
-                _groupImportStatus += $"\nImport failed: {result.ErrorMessage}";
-            }
-            else
-            {
-                _groupImportStatus += "\nImport completed successfully.";
+            var (message, succeeded) = ImportResultStatus.DescribeGroupImport(result);
+            _groupImportStatus += $"\n{message}";
+            if (succeeded)
                 SettingClientFacade.MarkGroupsChanged();
-            }
         }
         catch (Exception ex)
         {

@@ -67,6 +67,10 @@ public class ImportExportService : AuthenticatedService, IImportExportService
         {
             return await PerformImport(data, importMode);
         }
+        catch (UnauthorizedAccessException)
+        {
+            throw;
+        }
         catch (InvalidPasswordException e)
         {
             var errorMessage = GetFriendlyErrorMessage(e);
@@ -83,10 +87,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             var errorMessage = GetFriendlyErrorMessage(e);
             _logger.LogError(e, "Import failed");
             await _eventLogRepository.Add(_eventLogFactory.DataImportFailed(data?.ImportType ?? ImportType.AddNew, importMode, AuthenticatedUser, errorMessage));
-            return new ImportResultDataContract
-            {
-                ErrorMessage = errorMessage
-            };
+            throw;
         }
     }
 
@@ -147,7 +148,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
             ThrowIfNoAccess(client);
         
         if (data?.ImportType != ImportType.UpdateValues && data?.ImportType != ImportType.UpdateValuesInitOnly)
-            throw new NotSupportedException(
+            throw new InvalidImportException(
                 $"Value only imports only support {nameof(ImportType.UpdateValues)} import type");
         
         if (!data.Clients.Any())
@@ -334,7 +335,7 @@ public class ImportExportService : AuthenticatedService, IImportExportService
                 break;
             }
             default:
-                throw new NotSupportedException($"Import type {data.ImportType} not supported for full imports");
+                throw new InvalidImportException($"Import type {data.ImportType} not supported for full imports");
         }
 
         if (result.ImportedClients.Count > 0)

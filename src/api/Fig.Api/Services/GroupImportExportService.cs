@@ -62,10 +62,7 @@ public class GroupImportExportService : AuthenticatedService, IGroupImportExport
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to import setting groups");
-            return new ImportResultDataContract
-            {
-                ErrorMessage = ex.Message
-            };
+            throw;
         }
     }
 

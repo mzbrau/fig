@@ -178,14 +178,14 @@ public class GroupImportExportServiceTests
     }
 
     [Test]
-    public async Task ImportGroups_ReturnsErrorMessage_WhenRepositoryThrows()
+    public void ImportGroups_Rethrows_WhenRepositoryThrows()
     {
         _settingGroupRepository.Setup(r => r.GetAllGroups())
             .ThrowsAsync(new InvalidOperationException("db down"));
 
-        var result = await _sut.ImportGroups(CreateExport([CreateGroup("A")]), ImportType.ClearAndImport);
-
-        Assert.That(result.ErrorMessage, Is.EqualTo("db down"));
+        Assert.That(
+            async () => await _sut.ImportGroups(CreateExport([CreateGroup("A")]), ImportType.ClearAndImport),
+            Throws.TypeOf<InvalidOperationException>().With.Message.EqualTo("db down"));
     }
 
     [Test]
