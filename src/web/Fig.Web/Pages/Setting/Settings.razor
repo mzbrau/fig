@@ -311,11 +311,13 @@
                     <div class="p-1">
                         <RadzenButton Click=@(async _ => await OnSave()) Text="@GetSaveButtonText()" Icon="save" BusyText="Saving..."
                                       data-test-id="SaveSettings"
+                                      Class="toolbar-save-button"
                                       IsBusy=@_isSaveInProgress Disabled=@IsSaveDisabled ButtonStyle="ButtonStyle.Success"/>
                     </div>
                     <div class="p-1">
                         <RadzenButton Click=@(async _ => await OnSaveAll()) Text="@GetSaveAllButtonText()" Icon="backup_table"
                                       data-test-id="SaveAllSettings"
+                                      Class="toolbar-save-all-button"
                                       BusyText="Saving..."
                                       IsBusy=@_isSaveAllInProgress Disabled=@IsSaveAllDisabled
                                       ButtonStyle="ButtonStyle.Success"/>
@@ -635,6 +637,16 @@
         margin: 0 auto;
         max-width: 100%;
         background: transparent;
+    }
+
+    .toolbar-save-button {
+        min-width: 8rem;
+        flex-shrink: 0;
+    }
+
+    .toolbar-save-all-button {
+        min-width: 10rem;
+        flex-shrink: 0;
     }
 
     /* Filter count overlay */
