@@ -27,4 +27,4 @@ Do not use `npm run deploy` / `GIT_USER` for production; that is the stock Docus
 
 ## Versions
 
-Current markdown in `docs/` is served as **Next**. Archived versions are `3.x` and `2.0` under `versioned_docs/`. Snapshot a new version with `npx docusaurus docs:version <label>` when that release ships — not on every docs edit.
+The default published version is **4.x** (`/docs/`). Markdown in `docs/` is served as **Next** (`/docs/next/`). Archived versions are `4.x`, `3.x`, and `2.0` under `versioned_docs/`. Snapshot a new version with `npx docusaurus docs:version <label>` when that release ships — not on every docs edit.

@@ -1,0 +1,8 @@
+{
+  "label": "Settings Management",
+  "position": 1,
+  "link": {
+    "type": "generated-index",
+    "description": "Details of how to configure and manage your settings in Fig."
+  }
+}
