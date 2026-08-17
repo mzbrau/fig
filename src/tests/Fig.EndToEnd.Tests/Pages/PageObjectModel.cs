@@ -34,25 +34,48 @@ public abstract class PageObjectModel
 
     private async Task<bool> TryDismissVisibleDialogAsync()
     {
-        var mask = Page.Locator(".rz-dialog-mask");
-        if (await mask.CountAsync() == 0 || !await mask.First.IsVisibleAsync())
+        var mask = Page.Locator(".rz-dialog-mask").First;
+        if (await Page.Locator(".rz-dialog-mask").CountAsync() == 0 || !await mask.IsVisibleAsync())
             return false;
 
+        await Page.Keyboard.PressAsync("Escape");
+        if (await WaitForMaskHiddenAsync(mask))
+            return true;
+
+        var dialog = Page.Locator(".rz-dialog").Last;
         foreach (var name in new[] { "Dismiss", "Close", "Done" })
         {
-            var button = Page.GetByRole(AriaRole.Button, new PageGetByRoleOptions { Name = name });
+            var button = dialog.GetByRole(AriaRole.Button, new LocatorGetByRoleOptions
+            {
+                Name = name,
+                Exact = true
+            });
             if (await button.CountAsync() == 0)
                 continue;
 
-            await button.First.ClickAsync();
-            await mask.First.WaitForAsync(new LocatorWaitForOptions
-            {
-                State = WaitForSelectorState.Hidden,
-                Timeout = 10_000
-            });
-            return true;
+            // Prefer Last so footer "Close" wins over the header icon-only close control.
+            await button.Last.ClickAsync();
+            if (await WaitForMaskHiddenAsync(mask))
+                return true;
         }
 
         return false;
+    }
+
+    private static async Task<bool> WaitForMaskHiddenAsync(ILocator mask)
+    {
+        try
+        {
+            await mask.WaitForAsync(new LocatorWaitForOptions
+            {
+                State = WaitForSelectorState.Hidden,
+                Timeout = 3_000
+            });
+            return true;
+        }
+        catch (Exception ex) when (ex is TimeoutException or System.TimeoutException)
+        {
+            return false;
+        }
     }
 }
