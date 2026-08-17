@@ -39,10 +39,15 @@ const config = {
       ({
         docs: {
           sidebarPath: require.resolve('./sidebars.js'),
-          // Please change this to your repo.
-          // Remove this to remove the "edit this page" links.
           editUrl:
             'https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/',
+          lastVersion: '4.x',
+          versions: {
+            current: {
+              label: 'Next',
+              path: 'next',
+            },
+          },
         },
         blog: false,
         /* blog: {
