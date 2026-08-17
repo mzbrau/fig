@@ -84,7 +84,7 @@ People.ValidValues[1].Pet = ['Cat', 'Dog', 'Fish']
 | ValidationErrors      | This is an array of expando objects which is a string for each cell in the data grid. If any cell has a validation error, it will be automatically displayed below the setting. If multiple have errors, they will be summarized below. Note that you'll need to set the individual validation error property to null to clear that validation error. | `MySetting.ValidationErrors[0].Name = 'Name must be set'`    |
 | Advanced              | True if this setting should be hidden unless the advanced flag is set to show those settings. | `MySetting.Advanced = true`                                  |
 | EditorLineCount       | The number of lines that the setting should have displayed. **Note:** to use this setting, you must have set this property via attribute first. | `MySetting.EditorLineCount = 4`<br />`MySetting.EditorLineCount[2].Description = 2` |
-| DisplayOrder          | The order that the setting will appear within the UI         | `MySetting.DisplayOrder = 6`                                 |
+| DisplayOrder          | The order that the setting will appear within the UI (JavaScript property; there is no `[DisplayOrder]` C# attribute) | `MySetting.DisplayOrder = 6`                                 |
 | IsVisible             | If this setting should be displayed or hidden.               | `MySetting.IsVisible = false`                                |
 | CategoryColor         | The color used on the left hand side of the setting to show its category. Note that this must be a hex value | `MySetting.CategoryColor = '#8a2d69'`                        |
 | CategoryName          | The name used in the category tooltip.                       | `MySetting.CategoryName = 'Important'`                       |
@@ -274,6 +274,8 @@ There are a number of security features related to this feature:
 5. There is infinate loop protection in place. If one script updates another property value and it has a script that updates the first property value there is the potential for an infinate loop. There is code in place to detect this and cut it off after a few seconds. However developers should be careful not to build this into their clients.
 6. Display scripts are executed on a background thread to prevent UI slowness.
 7. A hash of the javascript code is stored in the database to prevent tampering.
+
+Display script run history is available from a dialog in the Fig Web navbar (open it from the toolbar). Use it to see recent script executions and errors without leaving the settings page.
 
 With these security features, Display Scripts should be a pretty safe feature to use and offers a lot of benifits. However with any code there may be some risks and if the origin of all clients is unknown, consider leaving the scripts disabled. If you find any security flaws with this feature, please raise a GitHub issue.
 

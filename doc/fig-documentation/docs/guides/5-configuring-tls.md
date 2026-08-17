@@ -10,7 +10,7 @@ Fig is able to run both its api and web instances with TLS enabled, provided the
 
 To enable this within the Fig-Api docker container:
 
-1. Define the kestral environment variables
+1. Define the Kestrel environment variables
 2. Mount the pem encoded certificate and key at the paths defined in the corresponding path variables
 3. Update the port mapping and health check to match the https port that Fig-Api is now listening at. Below is an example docker-compose file snippet representing the required configuration.
 

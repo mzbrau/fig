@@ -1,41 +1,30 @@
-# Website
+# Fig documentation
 
-This website is built using [Docusaurus 3](https://docusaurus.io/), a modern static website generator.
+This site is the Fig product documentation, built with [Docusaurus 3](https://docusaurus.io/). Source lives in this folder; production is published to [figsettings.com](https://www.figsettings.com) via GitHub Pages.
 
-### Installation
+## Local development
 
-```
-$ npm install
-```
+Requires Node 20+.
 
-### Local Development
-
-```
-$ npm start
+```bash
+npm ci
+npm start
 ```
 
-This command starts a local development server and opens up a browser window. Most changes are reflected live without having to restart the server.
+The dev server opens a browser and reloads on most markdown and config changes.
 
-### Build
-
-```
-$ npm run build
+```bash
+npm run build
 ```
 
-This command generates static content into the `build` directory and can be served using any static contents hosting service.
+Produces a static site in `build/`. Broken page links fail the build (`onBrokenLinks: throw`).
 
-### Deployment
+## Deployment
 
-Using SSH:
+Pushes to `main` that include this folder are built by [`.github/workflows/deploy_documentation.yml`](../../.github/workflows/deploy_documentation.yml) (`npm ci` + `npm run build`) and published to the `gh-pages` branch.
 
-```
-$ USE_SSH=true npm run deploy
-```
+Do not use `npm run deploy` / `GIT_USER` for production; that is the stock Docusaurus GitHub Pages helper and is not how figsettings.com is updated.
 
-Not using SSH:
+## Versions
 
-```
-$ GIT_USER=<Your GitHub  username> npm run deploy
-```
-
-If you are using GitHub  pages for hosting, this command is a convenient way to build the website and push to the `gh-pages` branch.
+Current markdown in `docs/` is served as **Next**. Archived versions are `3.x` and `2.0` under `versioned_docs/`. Snapshot a new version with `npx docusaurus docs:version <label>` when that release ships — not on every docs edit.

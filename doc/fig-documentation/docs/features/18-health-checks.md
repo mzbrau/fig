@@ -5,7 +5,7 @@ sidebar_label: Health Checks
 
 # Health Checks
 
-When the fig client is registered in the program.cs file, it enables [health checks](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks?view=aspnetcore-9.0) for an ASP.NET application. Health Checks provide a mechanism to query an application and understand its health state.
+When the Fig client is registered with `UseFig<T>()` in `Program.cs`, it adds a Fig configuration [health check](https://learn.microsoft.com/en-us/aspnet/core/host-and-deploy/health-checks?view=aspnetcore-10.0) and reports application health to the Fig API on each poll. Health checks are ASP.NET Core's mechanism for querying whether an application (and its dependencies) is healthy.
 
 Typically, applications should include health checks for all components as part of the overall health check. This might include third party dependencies such as databases, message busses, caches, or API's. Each of these can be registered as their own health check and are added as components to the overall heath of the application.
 
@@ -24,7 +24,7 @@ Health is displayed in 2 places:
 
 - In the connected clients page - Here an icon is shown for each running instances. Instances can be expanded to show all health details.
 
-![alt text](./img/health-checks-client.png)  
+![Health checks on a client](./img/health-checks-client.png)  
 *You can see the health of each component within the application*
 
 ## Health States

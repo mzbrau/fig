@@ -4,18 +4,22 @@ sidebar_position: 1
 
 # Why Fig?
 
-If you have ever created a service or other application, you probably found at some stage you needed to add some configurable components. This is particularly the case if the application could be deployed into multiple environments. 
-This could be things like:
-- an API URL;
-- a timeout value;
-- credentials to access an external service; or 
-- a logging level.
+Every service needs configuration: API URLs, timeouts, credentials, logging levels. Those values change by environment, and they need to stay consistent across many microservices.
 
-There are many ways of passing this information to your application including **command parameters** or **environment variables**, however in dotnet framework, this was most commonly achieved using an `app.config` file and using `ConfigurationManager.AppSettings["SettingName"]`. This worked ok but had a lot of shortcomings.
+In modern .NET you typically bind `appsettings.json`, environment variables, and other providers into `IOptions<T>` / `IOptionsMonitor<T>`. That pattern is typed, testable, and can reload. It still leaves gaps when you operate a fleet of services:
 
-In dotnet core you might use a range of configuration providers including an `appsettings.json` file and then inject an `IOptions<T>` where it is required to access your settings. This pattern addressed many problems with the app.config structure including live reload, some support for concrete types and better testing support. However, there are still many problems including the ability to set settings across multiple applications in an efficient way, sharing settings between applications and audit logging settings changes among others.
+- Changing the same setting across many applications
+- Sharing values (for example a connection string) without copy-paste
+- Knowing who changed a value, when, and why
+- Validating types and ranges before a bad value reaches production
+- Seeing which instances are running and whether they picked up the last change
 
-Fig adds these features while fitting neatly into the same configuration provider pattern. This means it is possible to use Fig in conjunction with other configuration providers where required. However by using Fig you will get a suite of features that will more easily allow you to manage configuration across a number of applications. Attributes are added to give Fig a hint about how they should be managed and Fig does the rest. The settings are registered on startup toward the Fig API. They are then made available via the Fig web client where they can be updated and managed. Settings editors for each type ensure those configuring the application are not inputting incorrect information and text descriptions explain what the setting is and how it should be used.
+Fig is itself a configuration provider, so it fits the same `IOptions<T>` pattern and can sit alongside other sources. Applications declare settings with attributes. On startup they register with the Fig API. Operators then edit values in Fig Web, with editors, descriptions, history, and access control.
 
-Fig allows settings to be managed across many micro services in an efficient, secure and fool proof way.
+Fig is designed so configuration can be managed across many microservices in a secure, auditable way without giving up the ASP.NET configuration model.
 
+:::note .NET Framework
+
+Older .NET Framework apps often used `app.config` and `ConfigurationManager.AppSettings`. Fig.Client still supports Framework hosts via `FigConfigurationManager<T>` (see the [NetFramework console example](https://github.com/mzbrau/fig/tree/main/examples/Fig.Examples.NetFramework.ConsoleApp)), but new integrations should use the ASP.NET Core `AddFig` / `UseFig` path.
+
+:::

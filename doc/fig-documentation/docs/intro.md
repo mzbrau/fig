@@ -4,9 +4,7 @@ sidebar_position: 1
 
 # Introduction
 
-<iframe width="100%" height="450" src="https://www.youtube.com/embed/-2Bth4m0RcM?si=VKaqJBLBLMdFKRLH" title="15 new features in Fig 2.0" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-
-## Quick Start
+Fig is a complete solution for managing settings across .NET microservices. Applications register a strongly typed settings class through the `Fig.Client` NuGet package. The Fig API stores those settings, and the Fig web application is where operators view, edit, and audit them.
 
 :::tip Add with AI
 
@@ -14,217 +12,105 @@ Want an AI coding assistant to wire Fig into your app? Copy the prompt from [Add
 
 :::
 
-The fastest way to get up and running with Fig is to clone the [fig quick start](https://github.com/mzbrau/fig-quick-start) repository. This repository contains an aspire setup with the Fig API and Web as well as a sample application using Fig for configuration.
+A Fig 2.0-era product walkthrough is on the [Videos](./overview/videos.md) page. The integration steps on this page reflect the current client API.
 
-Instructions below uses docker compose to set up fig as an alternative.
+## Quick Start
 
-## Install API and Web Client
+Pick the path that matches how you want to run Fig:
 
-To get up and running with Fig, you'll need to set up the API, Web and integrate the `Fig.Client` nuget package into your application.
+1. **Fastest** — clone the [fig-quick-start](https://github.com/mzbrau/fig-quick-start) repository. It is an Aspire host with Fig API, Fig Web, and a sample application.
+2. **Already using Aspire** — add Fig to your AppHost with the [Aspire integration](./guides/9-aspire-integration.md).
+3. **Docker Compose** — the compose file in the Fig repository deploys Fig API, Fig Web, and Fig MCP against SQL Server. It is a full deployment, not a one-command local demo.
 
-The API and Web Clients can be installed using Docker. This guide assumes docker is installed and running.
+### Docker Compose
 
-1. Clone the [fig repository](https://github.com/mzbrau/fig) and use the `docker-compose.yml` file included.
+1. Copy [`.env.example`](https://github.com/mzbrau/fig/blob/main/.env.example) to `.env` in the repository root and set `fqdn`, `SA_PWD`, `FIG_DB_PWD`, and the other required values. Optionally set `FIG_MCP_PASSWORD` if you want the MCP container to start authenticated.
+2. From the repository root, run `docker compose up`.
+3. Open Fig Web at `http://localhost:7148` and log in with user `admin` / password `admin`. Change that password before exposing Fig Web beyond a local machine.
 
-2. Open a terminal / command prompt, navigate to the directory containing the docker-compose file and type `docker-compose up` to download the containers and run them.
+The API listens on `http://localhost:7281`. Compose maps API `7281:8080` and Web `7148:80`.
 
-## Log in to Web Client
+## Integrate a client
 
-Navigate to `http://localhost:7148` and at the login prompt enter user: `admin` password: `admin`. You should see the administration view of fig with all options available.
+The same steps apply to a new or existing ASP.NET Core project.
 
-## Integrate Client
-
-:::tip
-
-In this guide, we'll create an ASP.NET project from scratch and integrate the `Fig.Client` to use fig for configuration. However the same instructions apply if you have an existing project. Just skip the project creation.
-
-:::
-
-1. Create new ASP.NET project
+1. Create a project if you need one:
 
 ```bash
 dotnet new webapi
 ```
 
-2. Open the project in your favourite IDE
+2. Add **[Fig.Client](https://www.nuget.org/packages/Fig.Client)**. Add a [secret provider](./features/28-client-secrets/1-client-secret-providers.md) package for production.
 
-3. Add **[Fig.Client](https://www.nuget.org/packages/Fig.Client)** nuget package. You might want to add a secret provider nuget package too
+3. Create a settings class that extends `SettingsBase`. Put the Fig client name on `FigOptions`, not on this class:
 
-4. Create a new class to hold your application settings, extending the SettingsBase class. For example:
+```csharp
+using Fig.Client;
+using Fig.Client.Abstractions.Attributes;
 
-   ```csharp
-   public class ExampleSettings : SettingsBase
-   {
-       public override string ClientName => "ExampleService";
-   
-       [Setting("My favourite animal")]
-       public string FavouriteAnimal { get; set; } = "Cow"
-   
-       [Setting("My favourite number")]
-       public int FavouriteNumber { get; set; } = 66;
-       
-       [Setting("True or false, your choice...")]
-       public bool TrueOrFalse { get; set; } = true;
-   }
-   ```
+public class Settings : SettingsBase
+{
+    public override string ClientDescription => "Example service settings";
 
-5. Register Fig as a configuration provider in the `program.cs` file.
+    [Setting("My favourite animal")]
+    public string FavouriteAnimal { get; set; } = "Cow";
 
-   ```csharp
-   builder.Configuration.SetBasePath(GetBasePath())
+    [Setting("My favourite number")]
+    public int FavouriteNumber { get; set; } = 66;
+
+    [Setting("True or false, your choice...")]
+    public bool TrueOrFalse { get; set; } = true;
+}
+```
+
+4. Register Fig as a configuration provider in `Program.cs`. Fig should be the **last** competing provider so it wins over `appsettings.json`.
+
+```csharp
+using Fig.Client.ExtensionMethods;
+
+var builder = WebApplication.CreateBuilder(args);
+
+var loggerFactory = LoggerFactory.Create(b => b.AddConsole());
+
+builder.Configuration
     .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
     .AddFig<Settings>(options =>
     {
-        options.ClientName = "AspNetApi";
+        options.ClientName = "ExampleService";
         options.LoggerFactory = loggerFactory;
         options.CommandLineArgs = args;
-        //options.ClientSecretProviders = [new DockerSecretProvider(), new DpapiSecretProvider()]; // if you added a secret provider
-        o.ClientSecretOverride = "be633c90474448c382c47045b2e172d5xx"; // not for production use, use a secret provider
+        // Production: options.ClientSecretProviders = [new DockerSecretProvider(), new DpapiSecretProvider()];
+        options.ClientSecretOverride = "be633c90-4744-48c3-82c4-7045b2e172d5"; // development only
     });
-   ```
 
-6. Bind the Fig settings to the options system:
-
-```csharp
 builder.Services.Configure<Settings>(builder.Configuration);
-```
-
-7. Register Fig with the host:
-
-```csharp
 builder.Host.UseFig<Settings>();
 ```
 
-8. Access the settings via the `IOptions` or `IOptionsMonitor` interface. Use `IOptionsMonitor` when the application should receive live Fig updates. E.g.
+`UseFig<T>()` registers Fig host workers (health, restart, custom actions, lookups). Do not call separate `UseFigValidation` / `UseFigRestart` APIs — they are obsolete.
 
-   ```csharp
-   public WeatherForecastController(IOptionsMonitor<ExampleSettings> settings)
-   {
-       _settings = settings;
-   }
-   ```
+5. Inject `IOptionsMonitor<Settings>` where the application should receive live updates.
 
-9. Add an environment variable called `FIG_API_URI` with the URI of the Fig API. For example:
-
-   ```bash
-   FIG_API_URI=https://localhost:7281
-   ```
-
-10. Add a client secret (see [Client Secrets](./features/28-client-secrets/1-client-secret-providers.md) section for details on how to do that)
-
-See the **examples folder** in the source repository for more examples.
-
-## Fig NuGet Packages
-
-Fig provides several NuGet packages to support different integration scenarios and environments:
-
-### Core Packages
-
-#### [Fig.Client](https://www.nuget.org/packages/Fig.Client)
-
-The main client library for integrating Fig into your applications. This is the primary package you'll need for most scenarios.
-
-- **Description**: Client library to include in your project when using Fig managed settings
-- **Target Framework**: .NET Standard 2.0
-- **Usage**: Configuration management, settings integration
-- **Documentation**: [Client Configuration](./client-configuration.md)
-
-#### [Fig.Client.Abstractions](https://www.nuget.org/packages/Fig.Client.Abstractions)
-
-Lightweight abstractions and attributes for Fig configuration settings that can be referenced by third-party libraries without requiring the full Fig.Client package.
-
-- **Description**: Abstractions and attributes for Fig configuration settings
-- **Target Framework**: .NET Standard 2.0
-- **Usage**: Third-party library integration, minimal dependencies
-- **Documentation**: See active pull request for integration scenarios
-
-### Secret Provider Packages
-
-Fig supports secure secret management through specialized provider packages:
-
-#### [Fig.Client.SecretProvider.Azure](https://www.nuget.org/packages/Fig.Client.SecretProvider.Azure)
-
-Azure Key Vault integration for secure secret management.
-
-- **Description**: Fig secret provider for Azure Key Vault
-- **Documentation**: [Azure KeyVault Integration](./features/26-azure-keyvault-integration.md)
-
-#### [Fig.Client.SecretProvider.Aws](https://www.nuget.org/packages/Fig.Client.SecretProvider.Aws)
-
-AWS Secrets Manager integration for secure secret management.
-
-- **Description**: Fig secret provider for AWS Secrets Manager
-
-#### [Fig.Client.SecretProvider.Google](https://www.nuget.org/packages/Fig.Client.SecretProvider.Google)
-
-Google Cloud Secret Manager integration for secure secret management.
-
-- **Description**: Fig secret provider for Google Cloud Secret Manager
-
-#### [Fig.Client.SecretProvider.Docker](https://www.nuget.org/packages/Fig.Client.SecretProvider.Docker)
-
-Docker secrets integration for containerized environments.
-
-- **Description**: Fig secret provider for Docker secrets
-
-#### [Fig.Client.SecretProvider.Dpapi](https://www.nuget.org/packages/Fig.Client.SecretProvider.Dpapi)
-
-Windows Data Protection API (DPAPI) integration for Windows environments.
-
-- **Description**: Fig secret provider for DPAPI
-- **Platform**: Windows only
-
-### Testing and Development Packages
-
-#### [Fig.Client.Testing](https://www.nuget.org/packages/Fig.Client.Testing)
-
-Testing framework for Fig clients that allows developers to unit and integration test settings-related functionality.
-
-- **Description**: A testing framework for Fig clients for unit and integration testing
-- **Usage**: Unit testing, integration testing, development workflows
-
-#### [Fig.Client.Contracts](https://www.nuget.org/packages/Fig.Client.Contracts)
-
-Internal contracts and interfaces used by Fig client components.
-
-- **Description**: Fig client contracts
-- **Usage**: Internal package, typically not directly referenced
-
-### Installation Examples
-
-**Basic Fig integration:**
+6. Set `FIG_API_URI` to the Fig API address:
 
 ```bash
-dotnet add package Fig.Client
+FIG_API_URI=http://localhost:7281
 ```
 
-**With Azure Key Vault:**
+Comma-separated addresses are supported; the first reachable address is used for the process lifetime. Unset `FIG_API_URI` (or pass `--disable-fig=true`) to run without Fig.
 
-```bash
-dotnet add package Fig.Client
-dotnet add package Fig.Client.SecretProvider.Azure
-```
+7. Provide a client secret. Prefer a [secret provider](./features/28-client-secrets/1-client-secret-providers.md) in production. `ClientSecretOverride` is for local development only.
 
-**With testing support:**
+See the [examples](./examples.md) in the source repository and [Client Configuration](./client-configuration.md) for options, CLI flags, and offline modes.
 
-```bash
-dotnet add package Fig.Client
-dotnet add package Fig.Client.Testing
-```
+## Packages
 
-**For third-party libraries (minimal dependencies):**
+| Package | Use |
+| ------- | --- |
+| [Fig.Client](https://www.nuget.org/packages/Fig.Client) | Add this to applications that Fig should manage |
+| [Fig.Client.Abstractions](https://www.nuget.org/packages/Fig.Client.Abstractions) | Attributes and contracts for libraries that must not take a full client dependency |
+| [Fig.Client.Testing](https://www.nuget.org/packages/Fig.Client.Testing) | Integration tests and display-script tests |
+| [Fig.Aspire](https://www.nuget.org/packages/Fig.Aspire) | Aspire AppHost helpers for Fig API and Fig Web |
+| Secret providers | [Docker](./features/28-client-secrets/2-docker-secret-provider.md), [DPAPI](./features/28-client-secrets/3-dpapi-secret-provider.md), [Azure](./features/28-client-secrets/4-azure-secret-provider.md), [AWS](./features/28-client-secrets/5-aws-secret-provider.md), [Google](./features/28-client-secrets/6-google-secret-provider.md) |
 
-```bash
-dotnet add package Fig.Client.Abstractions
-```
-
-### Documentation Links
-
-- [Client Configuration](./client-configuration.md) - Basic Fig.Client setup
-- [Client Secrets](./features/28-client-secrets/1-client-secret-providers.md) - Secret provider configuration
-- [Azure KeyVault Integration](./features/26-azure-keyvault-integration.md) - Azure-specific setup
-- [Examples](./examples.md) - Code examples and usage patterns
-
-## Example Setup using WSL
-
-![fig-local-machine-setup](./img/fig-local-machine-setup.png)
+Fig MCP is a standalone container/app, not a client NuGet package. See the [Fig MCP Server](./integrations/fig-mcp-server.md) and the [full package list](./nuget-packages.md).

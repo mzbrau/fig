@@ -1,6 +1,6 @@
 ---
 sidebar_position: 10
-sidebar_label: Time Machine
+sidebar_label: Scheduling
 ---
 
 # Scheduling

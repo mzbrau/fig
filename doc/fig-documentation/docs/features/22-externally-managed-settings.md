@@ -109,7 +109,7 @@ It is also possible for a client to update its own setting values via `ISettingU
 
 Any setting that is externally managed will be shown read only in the UI.
 
-![alt text](./img/externally-managed-setting.png)
+![Externally managed setting](./img/externally-managed-setting.png)
 
 When the user clicks the red padlock, they will be prompted to confirm that they understand the setting is externally managed and then they will be allowed to edit the setting again as normal.
 

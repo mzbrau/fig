@@ -174,7 +174,7 @@ The integration requires a client secret for authentication with the Fig API. **
 **Recommended approaches (in order of security):**
 
 1. **Docker Secrets** (Production): Secrets are mounted as read-only in-memory files at `/run/secrets/`
-   - See `SECRETS_SETUP.md` for detailed configuration
+   - See [Docker Secret Provider](../features/28-client-secrets/2-docker-secret-provider.md)
    - Secrets are isolated from environment variables and process lists
    - Supported by Docker Swarm and can be used with Docker Compose
 

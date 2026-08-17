@@ -4,119 +4,107 @@ sidebar_position: 2
 
 # Client Configuration
 
-Fig can be installed into any client type however this section will focus on asp.net style projects written in dotnet 7.
+`Fig.Client` targets .NET Standard 2.0, so it can be used from .NET Framework and modern .NET hosts. This page focuses on ASP.NET Core (`WebApplication.CreateBuilder`) on .NET 8 or later. Fig API and Fig Web currently run on .NET 10.
 
-1. Add the Fig.Client nuget package
+For a copy-paste walkthrough, see the [Introduction](./intro.md) or the [Add Fig with AI](./guides/0-add-with-ai.md) playbook. The [AspNetApi example](https://github.com/mzbrau/fig/blob/main/examples/Fig.Examples.AspNetApi/Program.cs) is the canonical reference.
 
-2. In your program.cs file, add the following
+## Bootstrap
+
+1. Add the **[Fig.Client](https://www.nuget.org/packages/Fig.Client)** package.
+
+2. Create a settings class that extends `SettingsBase`. Override `ClientDescription`. Set `ClientName` on `FigOptions`, not on the settings class.
+
+3. Register Fig **after** JSON (and other baseline) providers so Fig wins:
 
 ```csharp
-var configuration = new ConfigurationBuilder()
-    .AddFig<Settings>(o =>
+using Fig.Client.ExtensionMethods;
+
+builder.Configuration
+    .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+    .AddFig<Settings>(options =>
     {
-        o.ClientName = "<YOUR CLIENT NAME>";
+        options.ClientName = "MyApplication";
+        options.LoggerFactory = loggerFactory;
+        options.CommandLineArgs = args;
+        options.ClientSecretProviders = [new DockerSecretProvider(), new DpapiSecretProvider()];
+        // options.ClientSecretOverride = "a GUID"; // development only
     });
+
+builder.Services.Configure<Settings>(builder.Configuration);
+builder.Host.UseFig<Settings>();
 ```
 
-:::tip My tip
+`UseFig<T>()` registers Fig host workers: configuration health checks, restart, custom actions, lookup table registration, and custom status properties. Do not call obsolete `UseFigValidation` / `UseFigRestart` APIs.
 
-It is recommended that Fig be the **LAST** configuration provider added. This is because Fig will override any settings that are set in other configuration providers. If you use other configuration providers after Fig, they may overwrite settings in the application but this will not be visible from the Fig web application.
-If you need to override a value locally, you can use the [client settings override](https://www.figsettings.com/docs/features/client-settings-override/) feature.
+:::tip Last provider wins
 
-:::
-
-
-3. Add an environment variable called FIG_API_URI with the URI of the Fig API. For example:
-
-   ```
-   FIG_API_URI=https://localhost:7281
-   ```
-
-Multiple addresses separated by a comma are also supported with the first address being prioritized. Addresses are tested in order on startup and are not changed once selected.
-
-:::tip My tip
-
-You can disable Fig by removing the FIG_API_URI environment variable. This is useful if you want to use other configuration providers instead in some environments.
+Fig should be the last competing configuration provider. Providers registered after Fig can overwrite values in the process without those changes appearing in Fig Web. For a local override that Fig can see, use [client settings override](./features/23-client-settings-override.md).
 
 :::
 
-4. Create a class to hold your configuration items. e.g. `Settings` (they can be called whatever you want)
+4. Set `FIG_API_URI` to the Fig API address (comma-separated addresses are tried in order on startup):
 
-5. Extend `Settings` from `SettingsBase`
+```
+FIG_API_URI=http://localhost:7281
+```
 
-6. Create a secret for your client. This must be a random string of at least 32 characters. Fig accepts 3 ways to register a secret. 
-   On **Windows**, secrets must be stored in DPAPI and the encrypted value set in an environment variable called `FIG_<CLIENT NAME>_SECRET`. There is a DPAPI tool included as part of the Fig release which can be used to easily generate an encrypted secret.
-   In a **Docker Container**, the secret must be set as a docker secret called `FIG_<client name>_SECRET`. The file may also have a .txt extension.
-   On any other platform, it is possible to specify the secret in code, but this is **not recommended for production use**. It can be set in the options when registering Fig. e.g.
+Unset `FIG_API_URI`, or pass `--disable-fig=true`, to run without Fig. That is different from [offline settings](./features/20-offline-settings.md) and from [`--figoffline`](./guides/11-running-offline-without-fig-server.md).
 
-   ```csharp
-   var configuration = new ConfigurationBuilder()
-    .AddFig<Settings>(o =>
-    {
-        o.ClientName = "AspNetApi";
-        o.ClientSecretOverride = "d4b0b76dfb5943f3b0ab6a7f70b6ffa0";
-    });
-   ```
-
-7. It is recommended that you validate the settings when they are changed. To add this functionality, add the following in `program.cs`:
-   ```csharp
-   builder.Host.UseFigValidation<Settings>();
-   ```
-
-8. If you want to allow the Fig web application to be able to restart Fig, add the following in `program.cs`:
-
-   ```csharp
-   var configuration = new ConfigurationBuilder()
-    .AddFig<Settings>(o =>
-    {
-        o.ClientName = "AspNetApi";
-        o.SupportsRestart = true;
-    });
-   
-   builder.Host.UseFigRestart<Settings>();
-   ```
+5. Provide a **client secret**. Prefer a GUID, and use the same secret for every instance of the same client. In production, use [client secret providers](./features/28-client-secrets/1-client-secret-providers.md) (Docker, DPAPI, Azure, AWS, or Google). `ClientSecretOverride` and `--secret=` are for development only.
 
 ## Startup performance
 
-By default, the Fig client stores a checksum of your settings definition on disk and skips re-registration when the definition has not changed. This speeds up startup when settings are unchanged. See [Registration Checksum](./features/37-registration-checksum.md) for details, including how to disable the feature and how to persist the checksum file in container deployments.
+By default, the client stores a checksum of your settings definition on disk and skips re-registration when the definition has not changed. See [Registration Checksum](./features/37-registration-checksum.md).
 
 ## Fig Options
 
-There are a number of options that you can configure within Fig.
+| Option | Description | Default / example |
+| ------ | ----------- | ----------------- |
+| `ClientName` | Name shown in Fig Web. Required. | `"MyApplication"` |
+| `LiveReload` | Update in-memory settings when values change in Fig Web. | `true` |
+| `ClientSecretOverride` | In-code secret. Not for production. Prefer a GUID. | a GUID |
+| `ClientSecretProviders` | Ordered [secret providers](./features/28-client-secrets/1-client-secret-providers.md). | `[new DockerSecretProvider(), new DpapiSecretProvider()]` |
+| `VersionOverride` | Override the version Fig reports. By default Fig reads assembly / file / product version. | `"1.2"` |
+| `VersionType` | `Assembly`, `File`, or `Product`. | `Assembly` |
+| `AllowOfflineSettings` | Encrypted last-known-good cache when the API is unreachable. | `true` |
+| `LoggerFactory` | Enables logging inside Fig.Client. | |
+| `CommandLineArgs` | Pass `args` from `Main` so CLI flags work. | `args` |
+| `HttpClient` | Optional `HttpClient` (mainly for tests). | |
+| `InstanceOverride` | Optional instance name (mainly for tests). Prefer `--instance=` or `FIG_[CLIENTNAME]_INSTANCE`. | |
+| `CustomActionPollInterval` | How often the client polls for custom action requests. | `TimeSpan.FromSeconds(5)` |
+| `AutomaticallyGenerateHeadings` | Generate headings from categories. | `true` |
+| `ApiRequestTimeout` | HTTP timeout to Fig API. Also overridable with `FIG_API_REQUEST_TIMEOUT_SECONDS`. | context-dependent |
+| `ApiRetryCount` | Retries before falling back to offline settings. | context-dependent |
+| `LookupTableRegistrationDelay` | Delay before registering `ILookupProvider` / `IKeyedLookupProvider` tables. | `TimeSpan.FromSeconds(30)` |
 
-| Option               | Description                                                  | Example                                |
-| -------------------- | ------------------------------------------------------------ | -------------------------------------- |
-| LiveReload           | A boolean indicating if this client should live reload its settings. If set to true the values of the properties in the settings class will be updated as soon as they are updated in the Fig web app application. Default to true. | True                                   |
-| ClientSecretOverride | A string (at least 32 characters) that is unique to this application which is used to authenticate the client towards the Fig api. | e682dea03f044e0<br />eb571c441eb095ee9 |
-| VersionOverride      | By default Fig will attempt to locate the version of your application. This is used to display the version within the Fig Web Application. Fig looks at the `AssemblyFileVersionAttribute` for version information. If your application is not versioned in this way, the version can be overridden here. | 1.2                                    |
-| AllowOfflineSettings | True if offline settings should be supported. Offline settings are useful in the case the Fig API is offline and your application needs to start, it can start with the previously issued settings. Settings are stored as an encrypted blob with your client secret as the encryption key. Defaults to true. | True                                   |
-| VersionType          | By default, Fig will read the assembly version of the application and provide that to the Fig API as the applications version. If different application version information is preferred, the VersionType can be set in the client options. Supported version types are `Assembly`, `File`, or `Product`.                     ||
-| LoggerFactory | Add a logger factory to enable logging within the Fig client. ||
-| ClientSecretProviders | An array of [client secret providers](./features/28-client-secrets/1-client-secret-providers.md). |[new DockerSecretProvider(), new DpapiSecretProvider()]|
-| CustomActionPollInterval | How frequently the Fig.Client should poll Fig.Api to check for custom action execution request. |TimeSpan.FromSeconds(5)|
-| AutomaticallyGenerateHeadings | By default, headings will automatically generated based on categories. It is possible to disable this functionality. |True|
-| ApiRequestTimeout | It is possible to change the duration of the timeout when trying to contact the Fig.Api. This can be useful if the application is not responsive enough when the Api is offline. |TimeSpan.FromSeconds(2)|
-| ApiRetryCount | The number of retries that should attempted before using offline settings. |2|
-| LookupTableRegistrationDelay | The delay before any lookup tables are registered using the `ILookupProvider` or `IKeyedLookupProvider` interface. |TimeSpan.FromSeconds(30)|
+## Command line arguments
 
-## Command Line Arguments
-
-Fig.Client supports several command line arguments that can be passed to your application:
+Pass `options.CommandLineArgs = args` so Fig can see these flags.
 
 | Argument | Description |
 | -------- | ----------- |
-| `--disable-fig=true` | Disables Fig entirely. The application will start without connecting to the Fig API. |
-| `--printappconfig` | Logs the application configuration to the console on startup. Useful for debugging. |
-| `--secret=<value>` | Overrides the client secret. Not recommended for production use. |
-| `--setting-definitions` | Exports the client's setting definitions to a JSON file and exits. See [Client Registration History](./features/32-client-registration-history.md) for details. |
-
-To pass command line arguments to Fig, set the `CommandLineArgs` option:
+| `--disable-fig=true` | Disables Fig entirely. The app starts without contacting the API. |
+| `--figoffline` | Run without a Fig server using generated `appsettings` and encrypted secrets. See [Running offline without a Fig server](./guides/11-running-offline-without-fig-server.md). |
+| `--printappsettings` | Generate `appsettings.fig.json` (optional `key=value` overrides) and exit. See [AppSettings.json Generation](./features/36-appsettings-generation.md). |
+| `--printappconfig` | Log a legacy `app.config` fragment. See [App.config File Generation](./features/25-app-config-generation.md). |
+| `--instance=Name` | Select a [named instance](./features/19-instances.md). Takes precedence over `FIG_[CLIENTNAME]_INSTANCE`. |
+| `--secret=<value>` | Override the client secret. Not for production. |
+| `--setting-definitions` | Export setting definitions to JSON and exit. See [Client Registration History](./features/32-client-registration-history.md). |
 
 ```csharp
-var configuration = new ConfigurationBuilder()
-    .AddFig<Settings>(o =>
-    {
-        o.ClientName = "MyApplication";
-        o.CommandLineArgs = args; // Pass the args from Main()
-    });
+builder.Configuration.AddFig<Settings>(options =>
+{
+    options.ClientName = "MyApplication";
+    options.CommandLineArgs = args;
+});
 ```
+
+## Three ways to run without a live API
+
+These are easy to confuse:
+
+| Mode | When to use |
+| ---- | ----------- |
+| [Offline settings](./features/20-offline-settings.md) (`AllowOfflineSettings`) | Fig is still enabled. If the API is briefly down, the client starts from an encrypted cache of the last settings. |
+| [`--figoffline`](./guides/11-running-offline-without-fig-server.md) | No Fig server at all. Load previously generated `appsettings` with DPAPI-encrypted secrets. |
+| `--disable-fig=true` | Turn Fig off and use ordinary configuration providers. |

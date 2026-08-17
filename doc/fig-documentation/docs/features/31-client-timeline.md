@@ -1,6 +1,6 @@
 # Client Timeline
 
-The Client Timeline feature provides a chronological view of all setting changes and registration events for a specific client over the past 60 days (by default, the period is configurable). This feature helps administrators and users track configuration changes, understand when settings were modified, and audit client changes.
+The Client Timeline feature provides a chronological view of all setting changes and registration events for a specific client. By default the dialog shows the last **30 days** of activity (the period is configurable). This feature helps administrators and users track configuration changes, understand when settings were modified, and audit client changes.
 
 ## Overview
 

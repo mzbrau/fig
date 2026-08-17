@@ -187,7 +187,7 @@ It is possible to export the settings in a markdown format. This can be useful f
 
 It is possible to enable setting analysis as part of the markdown export.
 
-![alt text](./img/setting-analysis.png)  
+![Setting analysis](./img/setting-analysis.png)  
 *Markdown export options*
 
 Setting analysis adds some additional sections to the end of the document, it looks at the settings and provides high level recommendations on how they might be improved. This includes:

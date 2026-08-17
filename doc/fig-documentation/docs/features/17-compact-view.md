@@ -15,6 +15,6 @@ Compact view can be toggled for a whole category by holding down the control key
 
 :::note
 
-Compact view is enabled by default from Fig 3.0. To enable expanded view by default, update the setting `DefaultDisplayCollapsed` to `False` in the `appSettings.json` for Fig.Web.
+Compact view is enabled by default. To open expanded view by default, set `WebSettings.DefaultDisplayCollapsed` to `false` in Fig.Web `appsettings.json`. See [Web Configuration](../web-configuration.md).
 
 :::

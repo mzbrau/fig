@@ -1,6 +1,5 @@
 ---
 sidebar_position: 0
-slug: /guides/add-with-ai
 ---
 
 # Add Fig with AI

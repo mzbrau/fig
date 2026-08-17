@@ -144,7 +144,7 @@ When executing actions, you can choose:
 - **Auto**: Fig automatically selects an available client instance
 - **Specific Instance**: Target a particular running instance by its session ID
 
-![alt text](./img/custom-actions-session.png)
+![Custom actions for a session](./img/custom-actions-session.png)
 
 ## Configuration
 

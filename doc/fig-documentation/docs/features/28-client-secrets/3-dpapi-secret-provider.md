@@ -1,6 +1,6 @@
 ---
 sidebar_position: 3
-sidebar_label: Default Client Secret Provider
+sidebar_label: DPAPI
 ---
 
 # Fig DPAPI Secret Provider

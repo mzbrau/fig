@@ -1,6 +1,6 @@
 ---
 sidebar_position: 34
-sidebar_label: Groups
+sidebar_label: Groups page
 ---
 
 # Groups
