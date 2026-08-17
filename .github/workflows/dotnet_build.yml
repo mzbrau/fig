@@ -208,14 +208,11 @@ jobs:
         restore-keys: |
           playwright-${{ runner.os }}-
 
-    - name: Download build outputs
-      uses: actions/download-artifact@v4
-      with:
-        name: build-outputs
-        path: src
-
     - name: Restore
-      run: dotnet restore ./src
+      run: dotnet restore ./src/tests/Fig.EndToEnd.Tests/Fig.EndToEnd.Tests.csproj
+
+    - name: Build
+      run: dotnet build ./src/tests/Fig.EndToEnd.Tests/Fig.EndToEnd.Tests.csproj --configuration Release --no-restore
 
     - name: Install Playwright OS dependencies
       run: pwsh ./src/tests/Fig.EndToEnd.Tests/bin/Release/net10.0/playwright.ps1 install-deps chromium
