@@ -48,7 +48,7 @@ jobs:
       shell: bash
       run: |
         set -o pipefail
-        dotnet build --configuration Release --no-restore ./src /p:ErrorLog=build.sarif 2>&1 | tee build.log
+        dotnet build --configuration Release --no-restore ./src -p:ErrorLog=build.sarif 2>&1 | tee build.log
 
     - name: Upload build outputs
       uses: actions/upload-artifact@v4
