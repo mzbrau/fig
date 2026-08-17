@@ -4,6 +4,12 @@
  * work well for content-centric websites.
  */
 
+@import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=Source+Sans+3:wght@400;500;600&display=swap');
+
+html {
+  overflow-x: clip;
+}
+
 /* You can override the default Infima variables here. */
 :root {
   --ifm-color-primary: #FF9800;
