@@ -9,7 +9,7 @@ Fig has a web hook integration point which allows third party integrations to be
 
 ## Web Hook Types
 
-Web Hooks are currently support for the following events:
+Web Hooks are currently supported for the following events:
 
 | Event                       | Description                                                  | Contract                                                     | Route (POST)               |
 | --------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ | -------------------------- |
@@ -35,7 +35,7 @@ Click 'Add Client' to add a new client. The two required fields are 'Name' and '
 
 ![webhook-add-client](./img/webhook-add-client.png)
 
-Once entered, select the tick to save. Fig will generate a new secret to be used to secure the web hook integration. This information will be displayed in a popup. Be sure to copy this hashed secret value as it is only shown once (a new one can be generated if required). See the Web Hook Integration page for details of how this hashed secret can be used.
+Once entered, select the tick to save. Fig will generate a new secret to be used to secure the web hook integration. This information will be displayed in a popup. Be sure to copy this hashed secret value as it is only shown once (a new one can be generated if required). See [Receiving web hooks](#receiving-web-hooks) for how to validate the secret.
 
 ![webhook-client-secret](./img/webhook-client-secret.png)
 
@@ -60,3 +60,40 @@ Select a configured client and the event that should be sent. Once an event has 
 Once the web hook has been configured and saved, fig will calculate the number of clients and settings that match given the configuration filters. More details of these matches can be shown by clicking the details link.
 
 ![webhook-configuration-details](./img/webhook-configuration-details.png)
+
+## Receiving web hooks
+
+Fig sends each webhook as an HTTP POST. Each event type uses a separate route under the client's base URI (see the table above). Payload contracts are published as [Fig.WebHooks.Contracts](https://www.nuget.org/packages/Fig.WebHooks.Contracts); you can also reconstruct them from the JSON.
+
+Integrations may run without authentication, but it is recommended that you validate the pre-shared secret Fig sends with each call. A hashed version of the secret is shown once when the webhook client is created. One way to check it:
+
+```csharp
+public class FigWebHookAuthMiddleware
+{
+    private readonly RequestDelegate _next;
+    private readonly ISettings _settings;
+
+    public FigWebHookAuthMiddleware(RequestDelegate next, ISettings settings)
+    {
+        _next = next;
+        _settings = settings;
+    }
+
+    public async Task Invoke(HttpContext context)
+    {
+        var secret = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        if (string.IsNullOrWhiteSpace(secret) ||
+            !BCrypt.Net.BCrypt.EnhancedVerify(secret, _settings.HashedSecret))
+        {
+            context.Response.StatusCode = (int)HttpStatusCode.Unauthorized;
+        }
+        else
+        {
+            await _next(context);
+        }
+    }
+}
+```
+
+This is drawn from the [example integration](https://github.com/mzbrau/fig/blob/main/src/integrations/Fig.Integration.ConsoleWebHookHandler/Middleware/FigWebHookAuthMiddleware.cs).
+

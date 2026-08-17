@@ -109,4 +109,4 @@ Fig Assistant is an optional in-app chatbot for administrators. It is disabled b
 
 ## Appearance
 
-![image-20220802231541473](./img/fig-configuration.png)
+![Fig configuration page](./img/fig-configuration.png)

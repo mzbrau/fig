@@ -5,7 +5,7 @@ sidebar_label: Settings Table
 
 # Settings Table
 
-All settings can be reviewed in table format which includes when the settings where last. This can be useful when trying to search for specific settings or review recent changes in an easy to review format. All columns can be filtered or sorted as required.
+All settings can be reviewed in table format, including when they were last changed. This is useful when searching for specific settings or reviewing recent changes. All columns can be filtered or sorted as required.
 
 All values are read only in this view.
 

@@ -48,7 +48,8 @@ The `AddFigApi` method supports several configuration options:
 var figApi = builder.AddFigApi(
     name: "fig-api",           // Resource name
     port: 7281,                // Optional: Host port (random if not specified)
-    tag: "latest"              // Optional: Docker image tag
+    tag: "latest",             // Optional: Docker image tag
+    image: null                // Optional: fully-qualified image (private registry)
 );
 ```
 
@@ -58,8 +59,17 @@ The `AddFigWeb` method supports similar configuration options:
 var figWeb = builder.AddFigWeb(
     name: "fig-web",           // Resource name
     port: 7148,                // Optional: Host port (random if not specified)
-    tag: "latest"              // Optional: Docker image tag
+    tag: "latest",             // Optional: Docker image tag
+    image: null                // Optional: fully-qualified image (private registry)
 );
+```
+
+For a private registry:
+
+```csharp
+var figApi = builder.AddFigApi("fig-api", image: "myregistry.example.com/myorg/fig-api");
+var figWeb = builder.AddFigWeb("fig-web", image: "myregistry.example.com/myorg/fig-web")
+    .WithFigApiReference(figApi);
 ```
 
 ## Database Configuration
@@ -110,18 +120,20 @@ var figWeb = builder.AddContainer("fig-web", "mzbrau/fig-web")
 Once your services reference the Fig API, you need to configure the Fig client in your service's `Program.cs`:
 
 ```csharp
-using Fig.Client;
-using Fig.Client.Configuration;
+using Fig.Client.ExtensionMethods;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add Fig as a configuration provider
 builder.Configuration.AddFig<AppSettings>(options =>
 {
     options.ClientName = "MyService";
-    options.ClientSecret = "your-client-secret";
+    options.CommandLineArgs = args;
+    options.ClientSecretOverride = "your-client-secret"; // development only; use a secret provider in production
     // FIG_API_URI is automatically set by Aspire
 });
+
+builder.Services.Configure<AppSettings>(builder.Configuration);
+builder.Host.UseFig<AppSettings>();
 
 var app = builder.Build();
 app.Run();

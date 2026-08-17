@@ -16,6 +16,8 @@ By default, Fig reads the assembly version of the application but this can be ch
 ![Connected clients](./img/connected-clients.png)  
 *Connected clients details are shown in an interactive list*
 
+The Clients page includes an **Export CSV** button for the current run-session list.
+
 ## Restart
 
 If a setting is updated on a client that is not marked as supporting live reload, Fig will automatically change the restart button to 'Restart Required' and show it in red. This indicates that although fig as passed down all the setting updates, the application has been written in such a way that it is unable to dynamically load the updated setting value and the only way to apply the updated setting value is to restart the client. The client can be restarted by clicking the restart required button.

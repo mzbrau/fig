@@ -147,6 +147,26 @@ Add to your `claude_desktop_config.json`:
 }
 ```
 
+### Cursor
+
+Add to `.cursor/mcp.json` in your project (or Cursor user MCP settings):
+
+```json
+{
+  "mcpServers": {
+    "fig": {
+      "command": "dotnet",
+      "args": ["run", "--project", "/path/to/src/mcp/Fig.Mcp"],
+      "env": {
+        "McpSettings__FigApiBaseUrl": "https://localhost:7281",
+        "McpSettings__Username": "admin",
+        "McpSettings__Password": "your-password"
+      }
+    }
+  }
+}
+```
+
 ### HTTP Mode (Remote Agents)
 
 Run the MCP server as an HTTP service:
@@ -194,6 +214,7 @@ Or using docker-compose (see `docker-compose.yml` in the repository root).
 | `GetCustomActionHistory` | ReadSettings | Custom action execution history |
 | `GetDeferredImports` | ReadSettings | Pending deferred imports |
 | `GetClientRegistrationHistory` | ReadSettings | Client registration history |
+| `GetCustomStatusProperties` | ReadSessions | Custom status properties for connected sessions |
 
 ### Write Tools (disabled by default)
 
@@ -210,6 +231,9 @@ Or using docker-compose (see `docker-compose.yml` in the repository root).
 | `CreateWebHook` | ManageWebHooks | Create a webhook |
 | `UpdateWebHook` | ManageWebHooks | Update a webhook |
 | `DeleteWebHook` | ManageWebHooks | Delete a webhook |
+| `CreateWebHookClient` | ManageWebHooks | Register a webhook client endpoint |
+| `UpdateWebHookClient` | ManageWebHooks | Update a webhook client endpoint |
+| `DeleteWebHookClient` | ManageWebHooks | Delete a webhook client endpoint |
 | `TestWebHookClient` | ManageWebHooks | Test webhook connectivity |
 | `ApplyCheckPoint` | ManageTimeMachine | Restore to a checkpoint |
 | `UpdateCheckPointNote` | ManageTimeMachine | Add note to checkpoint |
@@ -217,8 +241,10 @@ Or using docker-compose (see `docker-compose.yml` in the repository root).
 | `DeleteDeferredChange` | ManageScheduling | Cancel a scheduled change |
 | `ExecuteCustomAction` | ExecuteCustomActions | Execute a custom action |
 | `ListUsers` / `GetUser` / `CreateUser` / `UpdateUser` / `DeleteUser` | ManageUsers | User management |
-| `ExportData` / `ImportData` / `ExportValuesOnly` / `ImportValuesOnly` | ImportExportData | Data import/export |
+| `ExportAllData` / `ImportAllData` / `ExportValuesOnly` / `ImportValuesOnly` / `DeleteDeferredImports` | ImportExportData | Data import/export |
 | `GetConfiguration` / `UpdateConfiguration` | ManageConfiguration | API configuration |
+
+Fig MCP does **not** expose Dashboards, Reports, or Fig Assistant. Use Fig Web for those features.
 
 ## Example AI Interactions
 

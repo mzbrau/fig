@@ -11,4 +11,6 @@ In addition to capturing the change message, the popup window will also display 
 
 The current environment is also shown in the heading of the popup.
 
+Right-click a pending row in the change dialog to revert that value, exclude it from this save, or keep only the selected changes. That is useful when reviewing a large batch.
+
 ![change-message](./img/change-message.png)

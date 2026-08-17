@@ -40,7 +40,9 @@ Filenames follow the same convention as offline settings files, using the **clie
 | Condition | Filename pattern | Example |
 | --------- | ---------------- | ------- |
 | No instance | `{ClientName}.checksum` | `MyApp.checksum` |
-| With instance | `{ClientName}_{Instance}.checksum` | `MyApp_Production.checksum` |
+| With instance | `{ClientNameLength}_{ClientName}_{Instance}.checksum` | `5_MyApp_Production.checksum` |
+
+The length prefix avoids a collision between client `A_B` (no instance) and client `A` with instance `B`.
 
 Invalid filename characters are removed and spaces are stripped from client and instance names, matching offline settings behaviour.
 

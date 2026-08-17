@@ -33,7 +33,7 @@ Azure App Configuration is Microsoft's cloud-native configuration service for Az
 - **Advanced Features**: Fig includes features like lookup tables, custom validation scripts, dependent settings, and scheduled changes that App Configuration lacks
 - **Multi-tenancy Support**: Fig supports multiple instances and client overrides out of the box
 - **Self-hosted Option**: Fig can be deployed on-premises or in any cloud, while App Configuration is Azure-only
-- **Cost Effectiveness**: Fig eliminates per-request charges and provides unlimited configuration reads
+- **Cost Effectiveness**: Fig has no per-request cloud pricing. The API does apply configurable [rate limiting](../security.md#rate-limiting) to protect the service.
 - **Enhanced Security**: Fig encrypts all values at rest and provides granular access control with user classifications
 
 ### Google Cloud Secret Manager
@@ -46,7 +46,7 @@ Google Cloud Secret Manager focuses primarily on secrets management with some co
 - **Interactive Management**: Fig provides an intuitive web interface for configuration management, while Secret Manager is primarily API/CLI driven
 - **Live Monitoring**: Fig shows real-time client status and health checks, providing visibility into which services are running and their configuration state
 - **Rich Data Types**: Fig supports complex data types like data grids, nested objects, and custom validation, while Secret Manager is limited to key-value pairs
-- **Change Management**: Fig includes features like scheduled changes, change approval workflows, and rollback capabilities
+- **Change Management**: Fig includes scheduled changes, Time Machine checkpoints for rollback, and a full audit history
 
 ## Open Source Alternatives
 

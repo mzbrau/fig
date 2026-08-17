@@ -1,46 +1,36 @@
 ---
-sidebar_position: 11
+sidebar_position: 14
 ---
 
 # FAQ's
 
+## How do I run Fig locally?
+
+The fastest path is the [fig-quick-start](https://github.com/mzbrau/fig-quick-start) repository, or [Aspire](./guides/9-aspire-integration.md). For a SQL Server deployment, copy `.env.example` to `.env` and run `docker compose up` from the Fig repository root. Fig Web is then at `http://localhost:7148` (user `admin` / password `admin`) and the API at `http://localhost:7281`.
+
 ## How to build and run containers locally?
 
-1. Open the terminal
-2. Set the directory to src
-3. Build the api
+From the `src` directory:
+
 ```
 docker build -f api/Fig.Api/Dockerfile -t fig.api .
+docker run -p 7281:8080 -it fig.api
 ```
-4. Start the api
-```
-docker run -p 5000:80 -it fig.api
-```
-5. Build the web
+
 ```
 docker build -f web/Fig.Web/Dockerfile -t fig.web .
-```
-6. Start the web
-```
-docker run -p 8080:80 -e FIG_API_ADDRESS=https://localhost:5000 fig.web
-```
-7. Open a web browser and navigate to https://localhost:8080
-
-
-## How to export a container image
-
-https://stackoverflow.com/a/46526598
-```
-docker export $(docker ps -lq) -o fig.web.tar
+docker run -p 7148:80 -e FIG_API_URI=http://localhost:7281 fig.web
 ```
 
+Open `http://localhost:7148`. The Web image substitutes `FIG_API_URI` into `appsettings.json` at startup. Prefer published images (`mzbrau/fig-api`, `mzbrau/fig-web`) or compose for anything beyond a smoke test.
 
+The API container listens on port **8080** (mapped to **7281** in compose). Fig Web (nginx) listens on port **80** (mapped to **7148**). The environment variable is **`FIG_API_URI`**, not `FIG_API_ADDRESS`.
 
 ## Can I run this on an Apple Silicon (M1/M2/M3/M4) Mac?
 
 Yes. Containers work on Apple Silicon, and building the solution locally also works without extra SQLite setup.
 
-Fig.Api uses **System.Data.SQLite 2.x** with native SQLite from the **SourceGear.sqlite3** NuGet package, which includes `osx-arm64` binaries (`libe_sqlite3.dylib`). No hand-built interop libraries or copies under `/usr/local/lib` are required.
+Fig.Api uses **System.Data.SQLite 2.x** with native SQLite from the **SourceGear.sqlite3** NuGet package, which includes `osx-arm64` binaries. No hand-built interop libraries are required. See [Database](./database.md).
 
 ```
 dotnet build
@@ -49,8 +39,6 @@ dotnet run --project src/api/Fig.Api
 
 Or use the Aspire AppHost under `src/hosting/Fig.AppHost`.
 
-# References
+## How do I install Fig as a Windows service?
 
-https://daniel-vetter86.medium.com/building-a-ci-cd-pipeline-with-asp-net-core-github-actions-docker-and-a-linux-server-3fc5271ebbe4
-
-https://chrissainty.com/containerising-blazor-applications-with-docker-containerising-a-blazor-webassembly-app/
+[`scripts/Install-Fig.ps1`](https://github.com/mzbrau/fig/blob/main/scripts/Install-Fig.ps1) downloads the latest GitHub release zip and installs Fig API (Windows service) and Fig Web. Review the script before running it; it is intended for Windows hosts, not containers.

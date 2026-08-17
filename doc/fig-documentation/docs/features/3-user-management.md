@@ -7,6 +7,18 @@ sidebar_label: User Management
 
 Administrators in the Fig web client have the ability to manage users. They are able to create and delete users (or other administrators) as well as set and reset passwords.
 
+## Roles
+
+| Role | Access |
+| ---- | ------ |
+| **Administrator** | Full access, including users, configuration, reports, and dashboards |
+| **User** | View and edit settings they are allowed to see (client filter and classifications apply). No user administration |
+| **ReadOnly** | View settings only |
+| **LookupService** | Machine account for lookup-table integrations |
+| **Dashboard** | After login, redirected to `/dashboards` and limited to the dashboards UI (not settings management). Added in Fig 4.0 |
+
+See [Dashboards](./41-dashboards.md) for the Dashboard role in more detail.
+
 ![user management](./img/user-management.png)  
 *Administrators can create, modify and delete the users who have access to Fig*
 

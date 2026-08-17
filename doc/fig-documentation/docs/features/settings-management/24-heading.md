@@ -12,10 +12,10 @@ Headings are visual separators that help organize settings into logical groups i
 Fig automatically creates headings based on your `[Category]` attributes. This is the **recommended approach** as it requires no additional configuration and keeps your code clean. Manual heading attributes are only needed for special cases.
 :::
 
-![alt text](img/setting-heading.png)  
+![Setting heading](img/setting-heading.png)  
 *Headings shown above settings*
 
-![alt text](img/setting-heading-collapsed.png)  
+![Collapsed setting heading](img/setting-heading-collapsed.png)  
 *Headings when settings are collapsed*
 
 ## Automatic Heading Creation

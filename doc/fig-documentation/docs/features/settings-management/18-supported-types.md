@@ -32,25 +32,25 @@ Decimal numbers. Nullable values are also supported.
 
 Whole numbers. Nullable values are also supported.
 
-![image-20220726225609084](./img/int-setting.png)
+![Integer setting editor](./img/int-setting.png)
 
 ## Long
 
 Larger whole numbers. Nullable values are also supported.
 
-![image-20220726225708951](./img/long-setting.png)
+![Long setting editor](./img/long-setting.png)
 
 ## DateTime
 
 Date and Time
 
-![2022-07-26 23.32.36](./img/date-time-setting.png)
+![DateTime setting editor](./img/date-time-setting.png)
 
 ## TimeSpan
 
 A time range.
 
-![image-20220726230046584](./img/timespan-setting.png)
+![TimeSpan setting editor](./img/timespan-setting.png)
 
 ## Enums
 
@@ -62,13 +62,13 @@ Enums or Nullable enums.
 
 Data grids can be used to group multiple values in a collection. For example a data grid can be used for list of strings or integers or it could be a collection of objects where the class definition for the object contains multiple properties of different types.
 
-![image-20220726230140744](./img/data-grid-setting.png)
+![Data grid setting editor](./img/data-grid-setting.png)
 
 ## JSON
 
 JSON representation of a class. This is the fallback mode for Fig if it cannot find another match for this property type.
 
-![2022-07-26 23.02.28](./img/json-setting.png)
+![JSON setting editor](./img/json-setting.png)
 
 ## The following types are NOT supported
 

@@ -35,12 +35,12 @@ public string? Types { get; set; }
 
 With this lookup table defined:
 
-![alt text](./img/lookup-table-no-alias.png)  
+![Lookup table without an alias](./img/lookup-table-no-alias.png)  
 *Lookup table without an alias defined*
 
 The user gets a drop down list.
 
-![alt text](./img/dropdown-lookup-table.png)  
+![Dropdown from a lookup table](./img/dropdown-lookup-table.png)  
 *Dropdown defined by the lookup table*
 
 If the existing value is not in the list, it is added but marked as invalid.
@@ -64,11 +64,11 @@ public long? SupportedTypeId { get; set; }
 
 The lookup table is defined with an alias:
 
-![alt text](./img/lookup-table-alias.png)
+![Lookup table with an alias](./img/lookup-table-alias.png)
 
 Then the dropdown contains alias items
 
-![alt text](./img/drop-down-with-alias.png)
+![Dropdown with lookup alias](./img/drop-down-with-alias.png)
 
 When the user selects an item, only the value is set. The alias is just there for the user facing display.
 
@@ -88,7 +88,7 @@ Use a value of 'null' to clear the current value.
 
 ## Lookup Table API
 
-See [Lookup Table Integration](../integration-points/lookup-table-integration.md) for details.
+Lookup tables can also be created, updated, and deleted through the Fig REST API. Prefer [provider-defined lookup tables](./30-provider-defined-lookup-tables.md) (`ILookupProvider` / `IKeyedLookupProvider`) so the application owns the data.
 
 ## Provider Defined Lookup Tables
 

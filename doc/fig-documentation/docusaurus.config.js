@@ -42,7 +42,7 @@ const config = {
           // Please change this to your repo.
           // Remove this to remove the "edit this page" links.
           editUrl:
-            'https://github.com/mzbrau/fig/tree/main/doc/fig-documentation',
+            'https://github.com/mzbrau/fig/tree/main/doc/fig-documentation/',
         },
         blog: false,
         /* blog: {
@@ -104,11 +104,11 @@ const config = {
               },
               {
                 label: 'Overview',
-                to: 'docs/category/overview',
+                to: '/docs/category/overview',
               },
               {
                 label: 'Features',
-                to: 'docs/category/features',
+                to: '/docs/category/features',
               },
             ],
           },
@@ -138,12 +138,12 @@ const config = {
               }, */
               {
                 label: 'GitHub',
-                href: 'https://github.com/facebook/docusaurus',
+                href: 'https://github.com/mzbrau/fig',
               },
             ],
           },
         ],
-        copyright: `Copyright © ${new Date().getFullYear()} Fig, Inc. Built with Docusaurus.`,
+        copyright: `Copyright © ${new Date().getFullYear()} Fig. Built with Docusaurus.`,
       },
       prism: {
         theme: lightCodeTheme,
