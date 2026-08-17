@@ -10,7 +10,7 @@
 
 
 <link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.17c59dc6.css">
-<script src="/assets/js/runtime~main.59c3cf43.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.735d325a.js" defer="defer"></script>
 <script src="/assets/js/main.5fac1b27.js" defer="defer"></script>
 </head>
 <body class="navigation-with-keyboard">
@@ -78,7 +78,7 @@
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="security">Security<a href="#security" class="hash-link" aria-label="Direct link to Security" title="Direct link to Security" translate="no">​</a></h2>
 <p>There are a number of security features related to this feature:</p>
 <ol>
-<li class="">Display scripts are disabled by default and must be enabled in the Fig settings by an administrator. If a client uses display scripts and they are disabled, a notification will be shown to let the user know that some features might not work.</li>
+<li class="">Display scripts (and the Dashboards feature, which also runs JavaScript) are disabled by default and must be enabled via <strong>Allow JavaScript</strong> in Fig configuration by an administrator. If a client uses display scripts and they are disabled, a notification will be shown to let the user know that some features might not work.</li>
 <li class="">Display scripts will be executed within the Web Assembly sandbox. Web assembly within the browser has a limited interface which for example restricts access to the users local computer. This limits the potential for any malicious activity.</li>
 <li class="">Display scripts are executed within the Jint runtime engine sandbox. The engine where the scripts are executed has a very limited context. The only available objects are the settings for that client and the only method is the log method. There are no libraries or packages available and only vanilla javascript code is permitted. This further limits what can be written.</li>
 <li class="">Display scripts cannot execute for longer than 5 seconds. In testing, most execute in under 300ms.</li>
