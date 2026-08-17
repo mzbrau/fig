@@ -10,6 +10,7 @@ public class SettingsPage : PageObjectModel
 
     public async Task SelectClient(string clientName)
     {
+        await DismissPostLoginDialogsAsync(TimeSpan.FromSeconds(1));
         var client = Page.Locator($"[data-test-id=\"{clientName}\"]");
         await client.WaitForAsync(new LocatorWaitForOptions { State = WaitForSelectorState.Visible });
         await client.ClickAsync();
@@ -123,4 +124,5 @@ public class SettingsPage : PageObjectModel
             Timeout = 30_000
         });
     }
+
 }

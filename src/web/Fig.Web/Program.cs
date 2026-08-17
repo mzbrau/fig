@@ -11,6 +11,7 @@ using Fig.Web.Dashboards.Facades;
 using Fig.Web.Dashboards.Runtime;
 using Fig.Web.Facades;
 using Fig.Web.Factories;
+using Fig.Web.Javascript;
 using Fig.Web.MarkdownReport;
 using Fig.Web.Notifications;
 using Fig.Web.ReleaseHighlights;
@@ -155,6 +156,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<IDisplayScriptStatusService, DisplayScriptStatusService>();
     builder.Services.AddScoped<IReleaseHighlightsCatalog, ReleaseHighlightsCatalog>();
     builder.Services.AddScoped<IReleaseHighlightsCoordinator, ReleaseHighlightsCoordinator>();
+    builder.Services.AddScoped<IJavascriptDisabledDialogCoordinator, JavascriptDisabledDialogCoordinator>();
     builder.Services.AddSingleton<IEventDistributor, EventDistributor>();
     builder.Services.AddHotKeys2();
     

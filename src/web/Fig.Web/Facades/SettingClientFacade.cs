@@ -1132,8 +1132,8 @@ public class SettingClientFacade : ISettingClientFacade
             {
                 if (clients.SelectMany(a => a.Settings).All(a => string.IsNullOrEmpty(a.DisplayScript)))
                 {
-                    _notificationService.Notify(_notificationFactory.Warning("Display Scripts Disabled",
-                        "Some clients had display scripts but they have been disabled. They can be enabled in the fig configuration page."));
+                    _notificationService.Notify(_notificationFactory.Warning("JavaScript Disabled",
+                        "Some clients had display scripts but they have been disabled. Dashboards are also unavailable. They can be enabled in the Fig configuration page."));
                 }
             }
         }

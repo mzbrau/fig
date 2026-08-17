@@ -9,6 +9,8 @@ Dashboards are configurable, read-only views of Fig status and settings data. Us
 
 Each dashboard is a **12-column grid** of trusted Fig UI components. Data for each component comes from a short **inline JavaScript** script that runs in the browser (via Jint). Scripts transform live Fig data (`fig.clients` and `fig.runSessions`) into the shape each component expects. Users cannot inject HTML or Razor—only data transformations.
 
+Dashboards require JavaScript execution. If **Allow JavaScript** is disabled in [Configuration](./7-configuration.md), the Dashboards feature is unavailable (navigation, pages, and API). Enable that setting to use dashboards.
+
 ![Dashboard list](./img/dashboard-list.png)
 
 ## Who can use dashboards

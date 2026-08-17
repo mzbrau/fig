@@ -16,6 +16,7 @@ public class DashboardTests : IntegrationTestBase
     [SetUp]
     public async Task SetUp()
     {
+        await SetConfiguration(CreateConfiguration(allowDisplayScripts: true));
         await DeleteAllDashboards();
     }
 
@@ -269,5 +270,25 @@ public class DashboardTests : IntegrationTestBase
         var login = await Login(user.Username, user.Password!);
 
         await ApiClient.GetAndVerify("/settinggroups", HttpStatusCode.OK, tokenOverride: login.Token);
+    }
+
+    [Test]
+    public async Task ShallDenyDashboardAccessWhenJavaScriptDisabled()
+    {
+        var created = await CreateDashboard(CreateTestDashboard("Blocked"));
+        await SetConfiguration(CreateConfiguration(allowDisplayScripts: false));
+
+        await ApiClient.GetAndVerify("/dashboards", HttpStatusCode.Unauthorized);
+        await ApiClient.GetAndVerify($"/dashboards/{created.Id}", HttpStatusCode.Unauthorized);
+
+        var createResponse = await CreateDashboardRaw(CreateTestDashboard("Nope"));
+        Assert.That(createResponse.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+
+        var putResponse = await ApiClient.Put<HttpResponseMessage>(
+            $"/dashboards/{created.Id}", created, authenticate: true, validateSuccess: false);
+        Assert.That(putResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+
+        var deleteResponse = await ApiClient.DeleteRaw($"/dashboards/{created.Id}");
+        Assert.That(deleteResponse.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
     }
 }

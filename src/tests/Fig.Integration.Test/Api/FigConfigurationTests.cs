@@ -1,7 +1,9 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
+using Fig.Contracts.Authentication;
 using Fig.Contracts.Configuration;
 using Fig.Test.Common;
 using Fig.Test.Common.TestSettings;
@@ -142,6 +144,33 @@ public class FigConfigurationTests : IntegrationTestBase
         httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {login.Token}");
         var response = await httpClient.PutAsync("/configuration/KeyVault", null);
         Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
+    }
+
+    [Test]
+    public async Task ShallExposeWebFeaturesToAuthenticatedNonAdministrators()
+    {
+        await SetConfiguration(CreateConfiguration(allowDisplayScripts: true));
+
+        var user = NewUser(username: $"features-{Guid.NewGuid():N}"[..20], role: Role.User);
+        await CreateUser(user);
+        var login = await Login(user.Username, user.Password!);
+
+        var features = await ApiClient.Get<FigWebFeaturesDataContract>(
+            "/configuration/features", tokenOverride: login.Token);
+
+        Assert.That(features, Is.Not.Null);
+        Assert.That(features!.AllowDisplayScripts, Is.True);
+
+        await SetConfiguration(CreateConfiguration(allowDisplayScripts: false));
+        features = await ApiClient.Get<FigWebFeaturesDataContract>(
+            "/configuration/features", tokenOverride: login.Token);
+        Assert.That(features!.AllowDisplayScripts, Is.False);
+    }
+
+    [Test]
+    public async Task ShallDenyWebFeaturesToUnauthenticatedUsers()
+    {
+        await ApiClient.GetAndVerify("/configuration/features", HttpStatusCode.Unauthorized, authenticate: false);
     }
 
     [Test]

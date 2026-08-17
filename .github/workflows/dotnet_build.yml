@@ -166,10 +166,90 @@ jobs:
           src/tests/Fig.Integration.Test/TestResults/**/coverage.cobertura.xml
         if-no-files-found: error
 
+  e2e:
+    name: playwright-e2e
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      FIG_INSECURE_SSL: '1'
+
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: ${{ env.DOTNET_VERSION }}
+
+    - name: Setup PowerShell
+      shell: bash
+      run: |
+        if ! command -v pwsh >/dev/null 2>&1; then
+          sudo apt-get update
+          sudo apt-get install -y powershell
+        fi
+
+    - uses: actions/cache@v4
+      with:
+        path: ~/.nuget/packages
+        key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+        restore-keys: |
+          nuget-${{ runner.os }}-
+
+    - uses: actions/cache@v4
+      with:
+        path: ${{ runner.temp }}/ms-playwright
+        key: playwright-${{ runner.os }}-${{ hashFiles('**/Fig.EndToEnd.Tests.csproj') }}
+        restore-keys: |
+          playwright-${{ runner.os }}-
+
+    - name: Restore
+      run: dotnet restore ./src/tests/Fig.EndToEnd.Tests/Fig.EndToEnd.Tests.csproj
+
+    - name: Build
+      run: dotnet build ./src/tests/Fig.EndToEnd.Tests/Fig.EndToEnd.Tests.csproj --configuration Release --no-restore
+
+    - name: Install Playwright OS dependencies
+      run: pwsh ./src/tests/Fig.EndToEnd.Tests/bin/Release/net10.0/playwright.ps1 install-deps chromium
+
+    - name: Generate HTTPS developer certificate
+      run: dotnet dev-certs https
+
+    - name: Run End-to-End Tests
+      run: >
+        dotnet test ./src/tests/Fig.EndToEnd.Tests/Fig.EndToEnd.Tests.csproj
+        --configuration Release
+        --no-build
+        --no-restore
+        --filter "Category=E2E&FullyQualifiedName!~DashboardPlaywrightTests"
+        --logger "trx;LogFileName=e2e-test-results.trx"
+        --results-directory ./src/tests/Fig.EndToEnd.Tests/TestResults
+        --verbosity normal
+      timeout-minutes: 35
+      env:
+        PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/ms-playwright
+
+    - name: Upload E2E Test Results
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: e2e-test-results
+        path: |
+          src/tests/Fig.EndToEnd.Tests/TestResults/*.trx
+          src/tests/Fig.EndToEnd.Tests/TestResults/**
+          **/playwright-report/**
+          **/test-results/**
+        if-no-files-found: error
+
   test-report:
     name: test-report
     runs-on: ubuntu-latest
-    needs: [build, unit-tests, integration-tests]
+    needs: [build, unit-tests, integration-tests, e2e]
     if: always()
     permissions:
       contents: read
@@ -195,6 +275,13 @@ jobs:
       with:
         name: integration-test-results
         path: integration-test-results/
+
+    - name: Download E2E Test Results
+      uses: actions/download-artifact@v4
+      continue-on-error: true
+      with:
+        name: e2e-test-results
+        path: e2e-test-results/
 
     - name: Download Build Diagnostics
       uses: actions/download-artifact@v4

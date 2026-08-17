@@ -31,16 +31,34 @@ public class ConfigurationFacade : IConfigurationFacade
 
     public ApiSecretRotationStatusDataContract? ApiSecretRotationStatus { get; private set; }
 
+    public bool WebFeaturesLoaded { get; private set; }
+
+    public bool AllowDisplayScripts { get; private set; }
+
+    public event Action? WebFeaturesChanged;
+
     public async Task LoadConfiguration()
     {
         var result = await _httpService.Get<FigConfigurationDataContract>("configuration");
 
         if (result == null)
-            return;        ConfigurationModel = _figConfigurationConverter.Convert(result);
-        _lastSavedModel = ConfigurationModel?.Clone() ?? new();
+            return;
+
+        ConfigurationModel = _figConfigurationConverter.Convert(result);
+        _lastSavedModel = ConfigurationModel.Clone();
+        SetAllowDisplayScripts(ConfigurationModel.AllowDisplayScripts);
 
         EventLogCount = (await _httpService.Get<EventLogCountDataContract>("events/count"))?.EventLogCount ?? 0;
         await RefreshApiSecretRotationStatus();
+    }
+
+    public async Task LoadWebFeatures()
+    {
+        var result = await _httpService.Get<FigWebFeaturesDataContract>("configuration/features", false);
+        if (result == null)
+            return;
+
+        SetAllowDisplayScripts(result.AllowDisplayScripts);
     }
 
     public async Task SaveConfiguration()
@@ -51,6 +69,7 @@ public class ConfigurationFacade : IConfigurationFacade
         {
             await _httpService.Put<FigConfigurationDataContract>("configuration", dataContract);
             _lastSavedModel = ConfigurationModel.Clone();
+            SetAllowDisplayScripts(ConfigurationModel.AllowDisplayScripts);
             _notificationService.Notify(_notificationFactory.Success("Success", "Configuration Updated Successfully"));
         }
         catch (Exception e)
@@ -58,6 +77,25 @@ public class ConfigurationFacade : IConfigurationFacade
             RevertChange();
             _notificationService.Notify(_notificationFactory.Failure("Failure", $"Failed to update configuration: {e.Message}"));
         }
+    }
+
+    public async Task<bool> EnableDisplayScripts()
+    {
+        var result = await _httpService.Get<FigConfigurationDataContract>("configuration");
+        if (result == null)
+        {
+            _notificationService.Notify(_notificationFactory.Failure(
+                "Failure",
+                "Could not load configuration, so JavaScript was not enabled."));
+            return false;
+        }
+
+        ConfigurationModel = _figConfigurationConverter.Convert(result);
+        _lastSavedModel = ConfigurationModel.Clone();
+        ConfigurationModel.AllowDisplayScripts = true;
+        await SaveConfiguration();
+        await LoadWebFeatures();
+        return true;
     }
 
     public async Task MigrateEncryptedData()
@@ -85,5 +123,14 @@ public class ConfigurationFacade : IConfigurationFacade
     private void RevertChange()
     {
         ConfigurationModel.Revert(_lastSavedModel);
+    }
+
+    private void SetAllowDisplayScripts(bool allowDisplayScripts)
+    {
+        var changed = !WebFeaturesLoaded || AllowDisplayScripts != allowDisplayScripts;
+        AllowDisplayScripts = allowDisplayScripts;
+        WebFeaturesLoaded = true;
+        if (changed)
+            WebFeaturesChanged?.Invoke();
     }
 }

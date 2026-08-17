@@ -1,6 +1,7 @@
 using System.Net;
 using Fig.Contracts.Authentication;
 using Fig.Web.Attributes;
+using Fig.Web.Facades;
 using Fig.Web.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components;
@@ -15,6 +16,9 @@ public class AppRouteView : RouteView
 
     [Inject]
     public IAccountService? AccountService { get; set; }
+
+    [Inject]
+    public IConfigurationFacade? ConfigurationFacade { get; set; }
 
     protected override void Render(RenderTreeBuilder builder)
     {
@@ -54,13 +58,27 @@ public class AppRouteView : RouteView
             return;
         }
 
+        var configurationFacade = ConfigurationFacade;
+        var featuresLoaded = configurationFacade?.WebFeaturesLoaded == true;
+        var allowDisplayScripts = configurationFacade?.AllowDisplayScripts == true;
+        var dashboardsEnabled = featuresLoaded && allowDisplayScripts;
+        var dashboardsDisabled = featuresLoaded && !allowDisplayScripts;
+        var isDashboardPath = NavigationManager is not null && IsDashboardPath(NavigationManager.Uri);
+
+        if (dashboardsDisabled && isDashboardPath && NavigationManager is not null)
+        {
+            NavigationManager.NavigateTo("/");
+            return;
+        }
+
         // Dashboard role may only visit dashboards-related pages (and account/login/manage).
+        // When dashboards are disabled (or features not yet loaded), they may stay on home (/).
         if (AccountService?.AuthenticatedUser?.Role == Role.Dashboard &&
             NavigationManager is not null &&
             !isDashboardOnlyPage &&
-            !IsDashboardAllowedPath(NavigationManager.Uri))
+            !IsDashboardAllowedPath(NavigationManager.Uri, dashboardsEnabled))
         {
-            NavigationManager.NavigateTo("/dashboards");
+            NavigationManager.NavigateTo(dashboardsEnabled ? "/dashboards" : "/");
             return;
         }
         
@@ -68,7 +86,16 @@ public class AppRouteView : RouteView
         base.Render(builder);
     }
 
-    private static bool IsDashboardAllowedPath(string uri)
+    private static bool IsDashboardPath(string uri)
+    {
+        if (!Uri.TryCreate(uri, UriKind.Absolute, out var absolute))
+            return false;
+
+        var path = absolute.AbsolutePath.TrimEnd('/');
+        return path.StartsWith("/dashboards", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsDashboardAllowedPath(string uri, bool dashboardsEnabled)
     {
         if (!Uri.TryCreate(uri, UriKind.Absolute, out var absolute))
             return false;
@@ -77,14 +104,17 @@ public class AppRouteView : RouteView
         if (string.IsNullOrEmpty(path))
             path = "/";
 
-        // Index — Dashboard role should land on /dashboards
+        if (path.StartsWith("/account", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (!dashboardsEnabled)
+            return path is "/" or "";
+
+        // Index — Dashboard role should land on /dashboards when enabled
         if (path is "/" or "")
             return false;
 
         if (path.StartsWith("/dashboards", StringComparison.OrdinalIgnoreCase))
-            return true;
-
-        if (path.StartsWith("/account", StringComparison.OrdinalIgnoreCase))
             return true;
 
         return false;

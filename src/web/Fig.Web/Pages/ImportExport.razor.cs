@@ -93,6 +93,8 @@ public partial class ImportExport : IDisposable
 
     [Inject] private IDashboardFacade DashboardFacade { get; set; } = null!;
 
+    [Inject] private IConfigurationFacade ConfigurationFacade { get; set; } = null!;
+
     private List<ImportTypeEnumerable> ImportTypes { get; } = new();
 
     // Only the import types that are applicable for group imports.
@@ -135,6 +137,7 @@ public partial class ImportExport : IDisposable
         }
 
         await DataFacade.RefreshDeferredClients();
+        await ConfigurationFacade.LoadWebFeatures();
         await base.OnInitializedAsync();
     }
 

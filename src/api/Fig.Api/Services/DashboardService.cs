@@ -21,16 +21,21 @@ public class DashboardService : AuthenticatedService, IDashboardService
     };
 
     private readonly IDashboardRepository _dashboardRepository;
+    private readonly IConfigurationRepository _configurationRepository;
 
-    public DashboardService(IDashboardRepository dashboardRepository)
+    public DashboardService(
+        IDashboardRepository dashboardRepository,
+        IConfigurationRepository configurationRepository)
     {
         _dashboardRepository = dashboardRepository;
+        _configurationRepository = configurationRepository;
     }
 
     public async Task<IEnumerable<DashboardDataContract>> GetAll()
     {
         var user = RequireAuthenticatedUser();
         EnsureCanViewDashboards(user);
+        await EnsureJavaScriptEnabled();
 
         var entities = await _dashboardRepository.GetAllDashboards();
         return entities
@@ -43,6 +48,7 @@ public class DashboardService : AuthenticatedService, IDashboardService
     {
         var user = RequireAuthenticatedUser();
         EnsureCanViewDashboards(user);
+        await EnsureJavaScriptEnabled();
 
         var entity = await _dashboardRepository.GetDashboard(id)
             ?? throw new KeyNotFoundException($"No dashboard found with id {id}");
@@ -57,6 +63,7 @@ public class DashboardService : AuthenticatedService, IDashboardService
     public async Task<DashboardDataContract> Create(DashboardDataContract dashboard)
     {
         RequireAuthenticatedUser();
+        await EnsureJavaScriptEnabled();
         await ValidateName(dashboard.Name);
         NormalizeDefinition(dashboard.Definition);
 
@@ -83,6 +90,7 @@ public class DashboardService : AuthenticatedService, IDashboardService
     public async Task<DashboardDataContract> Update(Guid id, DashboardDataContract dashboard, bool forceOverwrite = false)
     {
         RequireAuthenticatedUser();
+        await EnsureJavaScriptEnabled();
 
         var entity = await _dashboardRepository.GetDashboard(id, forUpdate: true)
             ?? throw new KeyNotFoundException($"No dashboard found with id {id}");
@@ -113,9 +121,20 @@ public class DashboardService : AuthenticatedService, IDashboardService
     public async Task Delete(Guid id)
     {
         RequireAuthenticatedUser();
+        await EnsureJavaScriptEnabled();
         var entity = await _dashboardRepository.GetDashboard(id, forUpdate: true)
             ?? throw new KeyNotFoundException($"No dashboard found with id {id}");
         await _dashboardRepository.DeleteDashboard(entity);
+    }
+
+    private async Task EnsureJavaScriptEnabled()
+    {
+        var configuration = await _configurationRepository.GetConfiguration();
+        if (!configuration.AllowDisplayScripts)
+        {
+            throw new UnauthorizedAccessException(
+                "Dashboards are disabled because JavaScript execution is turned off. Enable \"Allow JavaScript\" in Fig configuration.");
+        }
     }
 
     private async Task ValidateName(string name, Guid? excludeId = null)

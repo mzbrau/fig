@@ -1,14 +1,27 @@
 ﻿@page "/"
 @using Fig.Contracts.Authentication
 @using Fig.Web.Services
+@using Fig.Web.Facades
 @using Microsoft.AspNetCore.Authorization
 @attribute [Authorize]
+@implements IDisposable
 @inject IAccountService AccountService
 @inject NavigationManager NavigationManager
+@inject IConfigurationFacade ConfigurationFacade
 
 @if (AccountService.AuthenticatedUser?.Role == Role.Dashboard)
 {
-    <p class="p-3">Redirecting to dashboards…</p>
+    @if (ConfigurationFacade.WebFeaturesLoaded && !ConfigurationFacade.AllowDisplayScripts)
+    {
+        <div class="p-4">
+            <h3>Dashboards are disabled</h3>
+            <p>JavaScript execution is turned off in Fig configuration, so dashboards are unavailable. Ask an administrator to enable <strong>Allow JavaScript</strong> on the Configuration page.</p>
+        </div>
+    }
+    else
+    {
+        <p class="p-3">Redirecting to dashboards…</p>
+    }
 }
 else
 {
@@ -20,7 +33,30 @@ else
 @code {
     protected override void OnInitialized()
     {
-        if (AccountService.AuthenticatedUser?.Role == Role.Dashboard)
+        ConfigurationFacade.WebFeaturesChanged += OnWebFeaturesChanged;
+        TryRedirectDashboardRole();
+    }
+
+    private void OnWebFeaturesChanged()
+    {
+        TryRedirectDashboardRole();
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void TryRedirectDashboardRole()
+    {
+        if (AccountService.AuthenticatedUser?.Role != Role.Dashboard)
+            return;
+
+        if (ConfigurationFacade.WebFeaturesLoaded && !ConfigurationFacade.AllowDisplayScripts)
+            return;
+
+        if (ConfigurationFacade.AllowDisplayScripts)
             NavigationManager.NavigateTo("/dashboards");
+    }
+
+    public void Dispose()
+    {
+        ConfigurationFacade.WebFeaturesChanged -= OnWebFeaturesChanged;
     }
 }

@@ -1,0 +1,59 @@
+@using Fig.Web.Facades
+@using Fig.Web.Javascript
+@inject DialogService DialogService
+@inject IConfigurationFacade ConfigurationFacade
+@inject IJavascriptDisabledDialogCoordinator Coordinator
+
+<div class="p-3">
+    <p>
+        JavaScript execution is currently disabled in Fig configuration.
+        That means settings display scripts are not available, and the
+        <strong>Dashboards</strong> feature is turned off entirely.
+    </p>
+    <p>
+        You can enable JavaScript now, or leave it disabled if you do not trust all registering clients.
+    </p>
+
+    <div class="d-flex flex-wrap gap-2 justify-content-end mt-4">
+        <RadzenButton Text="Don't show again"
+                      ButtonStyle="ButtonStyle.Light"
+                      Variant="Variant.Flat"
+                      Disabled="@_busy"
+                      Click="DontShowAgain"/>
+        <RadzenButton Text="Dismiss"
+                      ButtonStyle="ButtonStyle.Secondary"
+                      Disabled="@_busy"
+                      Click="Dismiss"/>
+        <RadzenButton Text="Enable JavaScript"
+                      ButtonStyle="ButtonStyle.Primary"
+                      IsBusy="@_busy"
+                      BusyText="Enabling..."
+                      Click="Enable"/>
+    </div>
+</div>
+
+@code {
+    private bool _busy;
+
+    private void Dismiss() => DialogService.Close();
+
+    private async Task DontShowAgain()
+    {
+        await Coordinator.SuppressPermanently();
+        DialogService.Close();
+    }
+
+    private async Task Enable()
+    {
+        _busy = true;
+        try
+        {
+            if (await ConfigurationFacade.EnableDisplayScripts())
+                DialogService.Close(true);
+        }
+        finally
+        {
+            _busy = false;
+        }
+    }
+}

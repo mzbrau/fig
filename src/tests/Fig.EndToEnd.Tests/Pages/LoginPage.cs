@@ -28,5 +28,6 @@ public class LoginPage : PageObjectModel
                 State = WaitForSelectorState.Visible,
                 Timeout = 120_000
             });
+        await DismissPostLoginDialogsAsync();
     }
 }
