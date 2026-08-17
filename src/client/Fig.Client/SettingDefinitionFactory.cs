@@ -13,6 +13,7 @@ using Fig.Client.DefaultValue;
 using Fig.Client.Description;
 using Fig.Client.Exceptions;
 using Fig.Client.ExtensionMethods;
+using Fig.Client.Validation;
 using Fig.Common.NetStandard.ExtensionMethods;
 using Fig.Common.NetStandard.Utils;
 using Fig.Contracts;
@@ -44,6 +45,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         ApplyAutomaticHeadingGeneration(settingDetails, allSettings, setting, automaticallyGenerateHeadings);
         
         setting.DisplayOrder = displayOrder;
+        SettingDefinitionLengthValidator.Validate(setting);
         return setting;
     }
 
@@ -181,11 +183,24 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                     setting.LookupTableKey = lookupTableAttribute.LookupTableKey;
                 }
 
+                SettingDefinitionLengthValidator.ValidateMaxLength(
+                    setting.LookupTableKey,
+                    SettingDefinitionFieldLimits.StandardString,
+                    $"[LookupTable] on '{settingDetails.Name}': LookupTableKey");
+                SettingDefinitionLengthValidator.ValidateMaxLength(
+                    lookupTableAttribute.KeySettingName,
+                    SettingDefinitionFieldLimits.StandardString,
+                    $"[LookupTable] on '{settingDetails.Name}': KeySettingName");
+
                 ValidateKeySettingExists(lookupTableAttribute, setting, allSettings, settingDetails);
                 
                 setting.LookupKeySettingName = lookupTableAttribute.KeySettingName;
                 break;
             case GroupAttribute groupAttribute:
+                SettingDefinitionLengthValidator.ValidateMaxLength(
+                    groupAttribute.GroupName,
+                    SettingDefinitionFieldLimits.StandardString,
+                    $"[Group] on '{settingDetails.Name}': GroupName");
                 setting.Group = groupAttribute.GroupName;
                 break;
             case ValidValuesAttribute validValuesAttribute:
@@ -224,6 +239,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             case DependsOnAttribute dependsOnAttribute:
                 var resolvedDependsOnProperty = ValidateDependsOnAttribute(dependsOnAttribute, settingDetails.Name, allSettings);
                 
+                SettingDefinitionLengthValidator.ValidateMaxLength(
+                    resolvedDependsOnProperty,
+                    SettingDefinitionFieldLimits.StandardString,
+                    $"[DependsOn] on '{settingDetails.Name}': DependsOnProperty");
                 setting.DependsOnProperty = resolvedDependsOnProperty;
                 setting.DependsOnValidValues = dependsOnAttribute.ValidValues.ToList();
                 
@@ -232,6 +251,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                 break;
             case MigrateFromAttribute migrateFromAttribute:
                 setting.MigrateFrom = ResolveMigrateFromName(migrateFromAttribute, settingDetails.Name);
+                SettingDefinitionLengthValidator.ValidateMaxLength(
+                    setting.MigrateFrom,
+                    SettingDefinitionFieldLimits.StandardString,
+                    $"[MigrateFrom] on '{settingDetails.Name}': PreviousSettingName");
                 setting.MigrateFromMigrationMethodInfo = ValidateMigrateFromMigrationMethod(migrateFromAttribute, settingDetails);
                 setting.MigrateFromMigrationMethod = setting.MigrateFromMigrationMethodInfo?.Name;
                 break;
@@ -390,6 +413,15 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             ValidateGenericCategoryAttribute(categoryMetadata.ColorHex, propertyName);
         }
 
+        SettingDefinitionLengthValidator.ValidateMaxLength(
+            categoryMetadata.Name,
+            SettingDefinitionFieldLimits.StandardString,
+            $"[Category] on '{propertyName}': Name");
+        SettingDefinitionLengthValidator.ValidateMaxLength(
+            categoryMetadata.ColorHex,
+            SettingDefinitionFieldLimits.StandardString,
+            $"[Category] on '{propertyName}': ColorHex");
+
         setting.CategoryName = categoryMetadata.Name;
         setting.CategoryColor = categoryMetadata.ColorHex;
     }
@@ -402,6 +434,11 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
             throw new InvalidSettingException(
                 $"[DependsOn] on '{propertyName}': The dependent property name cannot be null or empty.");
         }
+
+        SettingDefinitionLengthValidator.ValidateMaxLength(
+            attribute.DependsOnProperty,
+            SettingDefinitionFieldLimits.StandardString,
+            $"[DependsOn] on '{propertyName}': DependsOnProperty");
         
         // Validate that at least one valid value is specified
         if (attribute.ValidValues == null || attribute.ValidValues.Length == 0)
@@ -486,6 +523,11 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
     {
         if (attribute.MigrationMethodName is null)
             return null;
+
+        SettingDefinitionLengthValidator.ValidateMaxLength(
+            attribute.MigrationMethodName,
+            SettingDefinitionFieldLimits.StandardString,
+            $"[MigrateFrom] on '{settingDetails.Name}': MigrationMethodName");
 
         if (string.IsNullOrWhiteSpace(attribute.MigrationMethodName))
         {
@@ -634,7 +676,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         else if (settingDetails.Property.PropertyType.IsSupportedDataGridType())
         {
             setting.ValueType = typeof(List<Dictionary<string, object>>);
-            var columns = CreateDataGridColumns(settingDetails.Property.PropertyType, setting.ValidValues);
+            var columns = CreateDataGridColumns(settingDetails.Property.PropertyType, setting.ValidValues, settingDetails.Name);
             var isLocked = GetIsLocked(settingDetails.Property);
             setting.DataGridDefinition = new DataGridDefinitionDataContract(columns, isLocked);
             var dataGridDefault = _dataGridDefaultValueProvider.Convert(settingDetails.Property.GetDefaultValue(settingAttribute, settingDetails.ParentInstance), columns);
@@ -728,7 +770,7 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
         return validValues;
     }
 
-    private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType, List<string>? parentValidValues)
+    private List<DataGridColumnDataContract> CreateDataGridColumns(Type propertyType, List<string>? parentValidValues, string settingName)
     {
         var result = new List<DataGridColumnDataContract>();
         if (!ListUtilities.TryGetGenericListType(propertyType, out var genericType))
@@ -745,6 +787,10 @@ internal class SettingDefinitionFactory : ISettingDefinitionFactory
                              BindingFlags.Public | BindingFlags.Instance)
                                        .Where(p => p.IsIncludedDataGridProperty()))
             {
+                SettingDefinitionLengthValidator.ValidateMaxLength(
+                    property.Name,
+                    SettingDefinitionFieldLimits.StandardString,
+                    $"DataGrid column name '{property.Name}' on '{settingName}'");
                 DataGridColumnDataContract column;
                 if (property.PropertyType.IsEnum())
                 {

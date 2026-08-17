@@ -9,6 +9,7 @@ using Fig.Client.Description;
 using Fig.Client.Enums;
 using Fig.Client.EnvironmentVariables;
 using Fig.Client.Exceptions;
+using Fig.Client.Validation;
 using Fig.Contracts.SettingDefinitions;
 
 namespace Fig.Client;
@@ -99,6 +100,31 @@ public abstract class SettingsBase
                                               $"Valid resource keys are: {string.Join(", ", validResourceKeys)}"));
         }
 
+        var resolvedInstance = GetInstance(clientName, instance);
+        try
+        {
+            SettingDefinitionLengthValidator.ValidateClientMetadata(clientName, resolvedInstance);
+        }
+        catch (Exception e)
+        {
+            exceptions.Add(e);
+        }
+
+        foreach (var setting in settings)
+        {
+            if (setting is null)
+                continue;
+
+            try
+            {
+                SettingDefinitionLengthValidator.Validate(setting);
+            }
+            catch (Exception e)
+            {
+                exceptions.Add(e);
+            }
+        }
+
         if (exceptions.Count > 0)
         {
             var errorMessages = exceptions.Select(e => $"  • {e.Message}").ToList();
@@ -108,7 +134,7 @@ public abstract class SettingsBase
         
         return new SettingsClientDefinitionDataContract(clientName,
             description,
-            GetInstance(clientName, instance),
+            resolvedInstance,
             settings.Any(a => !string.IsNullOrEmpty(a?.DisplayScript)),
             settings!,
             clientSettingOverrides,
