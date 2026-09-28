@@ -22,7 +22,8 @@ public class WebAuthenticationModeService : IWebAuthenticationModeService
 
     public Task Login(Fig.Web.Models.Authentication.LoginModel model) => _authenticationModeSelector.Current.Login(model);
 
-    public Task Logout() => _authenticationModeSelector.Current.Logout();
+    public Task Logout(bool showSessionExpiredNotice = false) =>
+        _authenticationModeSelector.Current.Logout(showSessionExpiredNotice);
 
     public Task<Guid> Register(Fig.Contracts.Authentication.RegisterUserRequestDataContract model) => _authenticationModeSelector.Current.Register(model);
 

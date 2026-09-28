@@ -27,6 +27,7 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
     private readonly NavigationManager _navigationManager;
     private readonly INotificationHistoryService _notificationHistoryService;
     private readonly NotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
 
     public KeycloakWebAuthenticationModeService(
         NavigationManager navigationManager,
@@ -36,6 +37,7 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         AuthenticationStateProvider authenticationStateProvider,
         INotificationHistoryService notificationHistoryService,
         NotificationService notificationService,
+        INotificationFactory notificationFactory,
         IOptions<WebSettings> webSettings)
     {
         _navigationManager = navigationManager;
@@ -45,6 +47,7 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         _authenticationStateProvider = authenticationStateProvider;
         _notificationHistoryService = notificationHistoryService;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
         _keycloakSettings = webSettings.Value.Authentication.Keycloak;
 
         _authenticationStateProvider.AuthenticationStateChanged += OnAuthenticationStateChanged;
@@ -74,12 +77,19 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         return BeginLoginAsync(returnUrl);
     }
 
-    public async Task Logout()
+    public async Task Logout(bool showSessionExpiredNotice = false)
     {
         ClearNotifications();
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
+
+        if (showSessionExpiredNotice)
+        {
+            _notificationService.Notify(_notificationFactory.Warning(
+                "Session Expired",
+                "Your session has expired. Please sign in again."));
+        }
 
         await _localStorageService.SetItem(WebAuthenticationConstants.PostLogoutLoginStorageKey, true);
         _navigationManager.NavigateToLogout("authentication/logout");

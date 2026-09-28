@@ -65,6 +65,19 @@ public class SettingClientFacadeRunSessionTests
     }
 
     [Test]
+    public async Task CheckClientRunSessions_ShouldNotUpdateCounts_WhenRefreshFails()
+    {
+        var baseClient = AddSettingClient("MyApp", instance: null);
+        baseClient.CurrentRunSessions = 3;
+        _runSessions.Add(CreateRunSession("MyApp", instance: null));
+        _clientStatusFacade.Setup(f => f.Refresh()).ReturnsAsync(false);
+
+        await _sut.CheckClientRunSessions();
+
+        Assert.That(baseClient.CurrentRunSessions, Is.EqualTo(3));
+    }
+
+    [Test]
     public async Task ShallCountInstanceRunSessionForBaseClientWhenNoInstancesDefined()
     {
         // When settings has no named instances, any run session (even with an instance) uses the base

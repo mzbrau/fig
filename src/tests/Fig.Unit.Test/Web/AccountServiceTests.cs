@@ -23,6 +23,7 @@ public class AccountServiceTests
     private Mock<IUserConverter> _userConverter = null!;
     private Mock<IEventDistributor> _eventDistributor = null!;
     private Mock<INotificationHistoryService> _notificationHistoryService = null!;
+    private Mock<INotificationFactory> _notificationFactory = null!;
     private TestNavigationManager _navigationManager = null!;
     private NotificationService _notificationService = null!;
     private FigManagedWebAuthenticationModeService _sut = null!;
@@ -35,8 +36,17 @@ public class AccountServiceTests
         _userConverter = new Mock<IUserConverter>();
         _eventDistributor = new Mock<IEventDistributor>();
         _notificationHistoryService = new Mock<INotificationHistoryService>();
+        _notificationFactory = new Mock<INotificationFactory>();
         _navigationManager = new TestNavigationManager();
         _notificationService = new NotificationService();
+
+        _notificationFactory.Setup(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns((string summary, string detail) => new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = summary,
+                Detail = detail
+            });
 
         _sut = new FigManagedWebAuthenticationModeService(
             _httpService.Object,
@@ -45,7 +55,8 @@ public class AccountServiceTests
             _userConverter.Object,
             _eventDistributor.Object,
             _notificationHistoryService.Object,
-            _notificationService);
+            _notificationService,
+            _notificationFactory.Object);
     }
 
     [Test]
@@ -167,7 +178,7 @@ public class AccountServiceTests
             []);
         var convertedUser = CreateAuthenticatedUser(response.Id, response.Token, false);
 
-        _httpService.Setup(a => a.Post<AuthenticateResponseDataContract>("/users/authenticate", It.IsAny<AuthenticateRequestDataContract>()))
+        _httpService.Setup(a => a.PostAnonymous<AuthenticateResponseDataContract>("/users/authenticate", It.IsAny<AuthenticateRequestDataContract>(), true))
             .ReturnsAsync(response);
         _userConverter.Setup(a => a.Convert(response)).Returns(convertedUser);
         _notificationService.Notify(NotificationSeverity.Success, "Old", "Toast", 1000);
@@ -177,6 +188,28 @@ public class AccountServiceTests
         _notificationHistoryService.Verify(a => a.Clear(), Times.Once);
         _localStorageService.Verify(a => a.SetItem("user", convertedUser), Times.Once);
         Assert.That(_notificationService.Messages, Is.Empty);
+    }
+
+    [Test]
+    public async Task Logout_ShouldShowSessionExpiredNotice_WhenRequested()
+    {
+        _navigationManager = new TestNavigationManager("http://localhost/dashboard");
+        _sut = new FigManagedWebAuthenticationModeService(
+            _httpService.Object,
+            _navigationManager,
+            _localStorageService.Object,
+            _userConverter.Object,
+            _eventDistributor.Object,
+            _notificationHistoryService.Object,
+            _notificationService,
+            _notificationFactory.Object);
+
+        await _sut.Logout(showSessionExpiredNotice: true);
+
+        _notificationFactory.Verify(x => x.Warning(
+            "Session Expired",
+            "Your session has expired. Please sign in again."), Times.Once);
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/login"));
     }
 
     private static AuthenticatedUserModel CreateAuthenticatedUser(Guid id, string token, bool passwordChangeRequired)
@@ -209,9 +242,9 @@ public class AccountServiceTests
 
     private sealed class TestNavigationManager : NavigationManager
     {
-        public TestNavigationManager()
+        public TestNavigationManager(string uri = "http://localhost/")
         {
-            Initialize("http://localhost/", "http://localhost/");
+            Initialize("http://localhost/", uri);
         }
 
         protected override void NavigateToCore(string uri, bool forceLoad)

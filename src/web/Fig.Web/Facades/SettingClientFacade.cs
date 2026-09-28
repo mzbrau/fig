@@ -846,7 +846,9 @@ public class SettingClientFacade : ISettingClientFacade
     
     public async Task CheckClientRunSessions()
     {
-        await _clientStatusFacade.Refresh();
+        if (!await _clientStatusFacade.Refresh())
+            return;
+
         var runSessions = _clientStatusFacade.ClientRunSessions;
 
         var clientToInstances =

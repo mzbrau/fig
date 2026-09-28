@@ -19,6 +19,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
     private readonly IEventDistributor _eventDistributor;
     private readonly INotificationHistoryService _notificationHistoryService;
     private readonly NotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
 
     public FigManagedWebAuthenticationModeService(
         IHttpService httpService,
@@ -27,7 +28,8 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
         IUserConverter userConverter,
         IEventDistributor eventDistributor,
         INotificationHistoryService notificationHistoryService,
-        NotificationService notificationService)
+        NotificationService notificationService,
+        INotificationFactory notificationFactory)
     {
         _httpService = httpService;
         _navigationManager = navigationManager;
@@ -36,6 +38,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
         _eventDistributor = eventDistributor;
         _notificationHistoryService = notificationHistoryService;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
     }
 
     public WebAuthMode Mode => WebAuthMode.FigManaged;
@@ -72,7 +75,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
     public async Task Login(LoginModel model)
     {
         var dataContract = new AuthenticateRequestDataContract(model.Username!, model.Password!);
-        var user = await _httpService.Post<AuthenticateResponseDataContract>("/users/authenticate", dataContract);
+        var user = await _httpService.PostAnonymous<AuthenticateResponseDataContract>("/users/authenticate", dataContract);
 
         if (user == null)
             throw new Exception("Invalid user");
@@ -82,12 +85,19 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
         await _localStorageService.SetItem(WebAuthenticationConstants.AuthenticatedUserStorageKey, AuthenticatedUser);
     }
 
-    public async Task Logout()
+    public async Task Logout(bool showSessionExpiredNotice = false)
     {
         ClearNotifications();
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
+
+        if (showSessionExpiredNotice)
+        {
+            _notificationService.Notify(_notificationFactory.Warning(
+                "Session Expired",
+                "Your session has expired. Please sign in again."));
+        }
 
         var currentUri = new Uri(_navigationManager.Uri);
         if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
@@ -96,7 +106,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
 
     public async Task<Guid> Register(RegisterUserRequestDataContract model)
     {
-        return await _httpService.Post<Guid>("/users/register", model);
+        return await _httpService.PostAnonymous<Guid>("/users/register", model);
     }
 
     public async Task<IList<UserDataContract>> GetAll()

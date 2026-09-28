@@ -15,7 +15,7 @@ public interface IWebAuthenticationModeService
 
     Task Login(LoginModel model);
 
-    Task Logout();
+    Task Logout(bool showSessionExpiredNotice = false);
 
     Task<Guid> Register(RegisterUserRequestDataContract model);
 

@@ -107,10 +107,9 @@ public class HttpServiceTests
         var result = await _sut.Get<object>("/users", false);
 
         Assert.That(result, Is.Null);
-        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout"));
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout?sessionExpired=1"));
         Assert.That(_httpMessageHandler.LastRequest?.Headers.Authorization?.Scheme, Is.EqualTo("Bearer"));
-        _notificationFactory.Verify(x => x.Warning("Session Expired",
-            "Your session has expired. Please sign in again."), Times.Once);
+        _notificationFactory.Verify(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Test]
@@ -142,9 +141,27 @@ public class HttpServiceTests
 
         Assert.That(result, Is.Null);
         Assert.That(_httpMessageHandler.SendCount, Is.EqualTo(0));
-        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout"));
-        _notificationFactory.Verify(x => x.Warning("Session Expired",
-            "Your session has expired. Please sign in again."), Times.Once);
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout?sessionExpired=1"));
+        _notificationFactory.Verify(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task PostAnonymous_ShouldSendRequestWithoutJwt_WhenExpiredTokenIsInStorage()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser(CreateJwt(DateTimeOffset.UtcNow.AddHours(-1))));
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        };
+
+        var result = await _sut.PostAnonymous<object>("/users/authenticate", new { Username = "a", Password = "b" });
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(_httpMessageHandler.SendCount, Is.EqualTo(1));
+        Assert.That(_httpMessageHandler.LastRequest?.Headers.Authorization, Is.Null);
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/dashboard"));
+        _notificationFactory.Verify(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Test]

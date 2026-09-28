@@ -86,6 +86,12 @@ public class HttpService : IHttpService
         return await SendRequest<T>(request);
     }
 
+    public async Task<T?> PostAnonymous<T>(string uri, object value, bool showNotifications = true)
+    {
+        var request = CreateRequest(HttpMethod.Post, uri, value);
+        return await SendRequest<T>(request, showNotifications, addJwtHeader: false);
+    }
+
     public async Task Put(string uri, object? value, int? timeoutOverrideSec = null)
     {
         var request = CreateRequest(HttpMethod.Put, uri, value);
@@ -443,13 +449,9 @@ public class HttpService : IHttpService
 
     private void HandleSessionExpired()
     {
-        _notificationService.Notify(_notificationFactory.Warning(
-            "Session Expired",
-            "Your session has expired. Please sign in again."));
-
         var currentUri = new Uri(_navigationManager.Uri);
         if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
-            _navigationManager.NavigateTo("account/logout");
+            _navigationManager.NavigateTo("account/logout?sessionExpired=1");
     }
 
     private async Task<bool> HandleErrorResponse(HttpResponseMessage response, bool showNotifications)
