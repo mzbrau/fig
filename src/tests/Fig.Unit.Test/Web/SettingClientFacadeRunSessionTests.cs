@@ -34,7 +34,7 @@ public class SettingClientFacadeRunSessionTests
     {
         _runSessions = new List<ClientRunSessionModel>();
         _clientStatusFacade = new Mock<IClientStatusFacade>();
-        _clientStatusFacade.Setup(f => f.Refresh()).Returns(Task.CompletedTask);
+        _clientStatusFacade.Setup(f => f.Refresh()).ReturnsAsync(true);
         _clientStatusFacade.Setup(f => f.ClientRunSessions).Returns(_runSessions);
         _clientStatusFacade.Setup(f => f.GetLastSeen(It.IsAny<string>(), It.IsAny<string?>())).Returns((LastSeenModel?)null);
 

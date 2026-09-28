@@ -39,6 +39,6 @@ public class AuthorizeAttribute : Attribute, IAuthorizationFilter
             throw new UnauthorizedAccessException($"Role {user.Role} not authorized for this endpoint. {context.HttpContext.Request} {metadata}");
         }
 
-        throw new UnauthorizedAccessException("Role not authorized for this endpoint");
+        throw new UnauthorizedAccessException("Authentication required for this endpoint");
     }
 }

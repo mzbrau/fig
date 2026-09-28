@@ -5,11 +5,13 @@ using Fig.Common.NetStandard.Json;
 using Fig.Contracts.Json;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Fig.Web;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Fig.Web.Services;
 using Fig.Web.Services.Authentication;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Moq;
 using Newtonsoft.Json;
 using NUnit.Framework;
@@ -51,13 +53,29 @@ public class HttpServiceTests
                 Summary = summary,
                 Detail = detail ?? string.Empty
             });
+        _notificationFactory.Setup(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()))
+            .Returns((string summary, string detail) => new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = summary,
+                Detail = detail
+            });
 
-        _sut = new HttpService(
+        _sut = CreateSut();
+    }
+
+    private HttpService CreateSut(WebAuthMode mode = WebAuthMode.FigManaged)
+    {
+        return new HttpService(
             _httpClientFactory.Object,
             _navigationManager,
             CreateAccessTokenProvider(),
             _notificationService,
-            _notificationFactory.Object);
+            _notificationFactory.Object,
+            Options.Create(new WebSettings
+            {
+                Authentication = new WebAuthenticationSettings { Mode = mode }
+            }));
     }
 
     private IFigApiAccessTokenProvider CreateAccessTokenProvider()
@@ -91,6 +109,8 @@ public class HttpServiceTests
         Assert.That(result, Is.Null);
         Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout"));
         Assert.That(_httpMessageHandler.LastRequest?.Headers.Authorization?.Scheme, Is.EqualTo("Bearer"));
+        _notificationFactory.Verify(x => x.Warning("Session Expired",
+            "Your session has expired. Please sign in again."), Times.Once);
     }
 
     [Test]
@@ -105,6 +125,46 @@ public class HttpServiceTests
         Assert.That(result, Is.Null);
         Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/dashboard"));
         Assert.That(_httpMessageHandler.LastRequest?.Headers.Authorization, Is.Null);
+        _notificationFactory.Verify(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Get_ShouldLogoutWithoutSendingRequest_WhenFigManagedJwtIsExpired()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser(CreateJwt(DateTimeOffset.UtcNow.AddHours(-1))));
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        };
+
+        var result = await _sut.Get<object>("/statuses");
+
+        Assert.That(result, Is.Null);
+        Assert.That(_httpMessageHandler.SendCount, Is.EqualTo(0));
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout"));
+        _notificationFactory.Verify(x => x.Warning("Session Expired",
+            "Your session has expired. Please sign in again."), Times.Once);
+    }
+
+    [Test]
+    public async Task Get_ShouldSendExpiredJwt_WhenKeycloakMode()
+    {
+        _sut = CreateSut(WebAuthMode.Keycloak);
+        var expiredToken = CreateJwt(DateTimeOffset.UtcNow.AddHours(-1));
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser(expiredToken));
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent("{}", Encoding.UTF8, "application/json")
+        };
+
+        var result = await _sut.Get<object>("/statuses");
+
+        Assert.That(result, Is.Not.Null);
+        Assert.That(_httpMessageHandler.SendCount, Is.EqualTo(1));
+        Assert.That(_httpMessageHandler.LastRequest?.Headers.Authorization?.Parameter, Is.EqualTo(expiredToken));
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/dashboard"));
     }
 
     [Test]
@@ -258,7 +318,7 @@ public class HttpServiceTests
         Assert.That(result.Value[0].Settings[0].Value, Is.TypeOf<StringSettingDataContract>());
     }
 
-    private static AuthenticatedUserModel CreateAuthenticatedUser()
+    private static AuthenticatedUserModel CreateAuthenticatedUser(string? token = null)
     {
         return new AuthenticatedUserModel
         {
@@ -266,8 +326,23 @@ public class HttpServiceTests
             Username = "user",
             FirstName = "Test",
             LastName = "User",
-            Token = "jwt-token"
+            Token = token ?? CreateJwt(DateTimeOffset.UtcNow.AddHours(1))
         };
+    }
+
+    private static string CreateJwt(DateTimeOffset expiry)
+    {
+        static string ToBase64Url(string value)
+        {
+            return Convert.ToBase64String(Encoding.UTF8.GetBytes(value))
+                .TrimEnd('=')
+                .Replace('+', '-')
+                .Replace('/', '_');
+        }
+
+        var header = ToBase64Url("{\"alg\":\"none\",\"typ\":\"JWT\"}");
+        var payload = ToBase64Url($"{{\"exp\":{expiry.ToUnixTimeSeconds()}}}");
+        return $"{header}.{payload}.sig";
     }
 
     private sealed class TestHttpMessageHandler : HttpMessageHandler
@@ -276,8 +351,11 @@ public class HttpServiceTests
 
         public HttpRequestMessage? LastRequest { get; private set; }
 
+        public int SendCount { get; private set; }
+
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
         {
+            SendCount++;
             LastRequest = request;
             return Task.FromResult(Response);
         }

@@ -53,9 +53,12 @@ public partial class Clients : IDisposable
         SetupRefreshTimer();
 
         _isRefreshInProgress = true;
-        await ClientStatusFacade.Refresh();
-        await _clientsGrid.Reload();
-        _lastRefreshed = DateTime.Now;
+        var refreshed = await ClientStatusFacade.Refresh();
+        if (refreshed)
+        {
+            await _clientsGrid.Reload();
+            _lastRefreshed = DateTime.Now;
+        }
         _isRefreshInProgress = false;
         await base.OnInitializedAsync();
     }
@@ -63,9 +66,12 @@ public partial class Clients : IDisposable
     private async Task OnRefresh()
     {
         _isRefreshInProgress = true;
-        await ClientStatusFacade.Refresh();
-        await _clientsGrid.Reload();
-        _lastRefreshed = DateTime.Now;
+        var refreshed = await ClientStatusFacade.Refresh();
+        if (refreshed)
+        {
+            await _clientsGrid.Reload();
+            _lastRefreshed = DateTime.Now;
+        }
         _isRefreshInProgress = false;
     }
 

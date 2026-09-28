@@ -8,7 +8,7 @@ public interface IClientStatusFacade
     
     int ConnectedClientsCount => ClientRunSessions.Count;
 
-    Task Refresh();
+    Task<bool> Refresh();
 
     LastSeenModel? GetLastSeen(string clientName, string? instance);
 
