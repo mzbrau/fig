@@ -89,6 +89,7 @@ async Task BuildApplication(WebAssemblyHostBuilder builder)
     builder.Services.AddScoped<FigManagedWebAuthenticationModeService>();
     builder.Services.AddScoped<IWebAuthenticationModeService, WebAuthenticationModeService>();
     builder.Services.AddScoped<IFigApiAccessTokenProvider, FigApiAccessTokenProvider>();
+    builder.Services.AddScoped<ISessionExpiryCoordinator, SessionExpiryCoordinator>();
     builder.Services.AddScoped<IAccountService, AccountService>();
     builder.Services.AddScoped<IHttpService, HttpService>();
     builder.Services.AddScoped<IAssistantContextService, AssistantContextService>();

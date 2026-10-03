@@ -37,7 +37,10 @@ public class DashboardDataProvider : IDashboardDataProvider
 
     public async Task RefreshStatusAsync()
     {
-        await _clientStatusFacade.Refresh();
+        var refreshed = await _clientStatusFacade.Refresh();
+        if (!refreshed)
+            return;
+
         _statusCache = ProjectRunSessions(_clientStatusFacade.ClientRunSessions).ToList();
         StatusLastRefreshUtc = DateTime.UtcNow;
         RebuildCurrent();

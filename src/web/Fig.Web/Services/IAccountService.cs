@@ -15,7 +15,9 @@ public interface IAccountService
 
     Task Login(LoginModel model);
 
-    Task Logout();
+    Task Reauthenticate(string password);
+
+    Task Logout(bool showSessionExpiredNotice = false);
 
     Task<Guid> Register(RegisterUserRequestDataContract model);
 

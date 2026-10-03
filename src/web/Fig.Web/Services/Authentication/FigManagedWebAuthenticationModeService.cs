@@ -6,9 +6,7 @@ using Fig.Web.Events;
 using Fig.Web.Models.Authentication;
 using Fig.Web.Notifications;
 using Microsoft.AspNetCore.Components;
-using Newtonsoft.Json;
 using Radzen;
-using System.Text;
 
 namespace Fig.Web.Services.Authentication;
 
@@ -21,6 +19,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
     private readonly IEventDistributor _eventDistributor;
     private readonly INotificationHistoryService _notificationHistoryService;
     private readonly NotificationService _notificationService;
+    private readonly INotificationFactory _notificationFactory;
 
     public FigManagedWebAuthenticationModeService(
         IHttpService httpService,
@@ -29,7 +28,8 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
         IUserConverter userConverter,
         IEventDistributor eventDistributor,
         INotificationHistoryService notificationHistoryService,
-        NotificationService notificationService)
+        NotificationService notificationService,
+        INotificationFactory notificationFactory)
     {
         _httpService = httpService;
         _navigationManager = navigationManager;
@@ -38,6 +38,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
         _eventDistributor = eventDistributor;
         _notificationHistoryService = notificationHistoryService;
         _notificationService = notificationService;
+        _notificationFactory = notificationFactory;
     }
 
     public WebAuthMode Mode => WebAuthMode.FigManaged;
@@ -74,7 +75,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
     public async Task Login(LoginModel model)
     {
         var dataContract = new AuthenticateRequestDataContract(model.Username!, model.Password!);
-        var user = await _httpService.Post<AuthenticateResponseDataContract>("/users/authenticate", dataContract);
+        var user = await _httpService.PostAnonymous<AuthenticateResponseDataContract>("/users/authenticate", dataContract);
 
         if (user == null)
             throw new Exception("Invalid user");
@@ -84,12 +85,37 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
         await _localStorageService.SetItem(WebAuthenticationConstants.AuthenticatedUserStorageKey, AuthenticatedUser);
     }
 
-    public async Task Logout()
+    public async Task Reauthenticate(string password)
+    {
+        if (AuthenticatedUser is null || string.IsNullOrWhiteSpace(AuthenticatedUser.Username))
+            throw new InvalidOperationException("No authenticated user to reauthenticate.");
+
+        if (string.IsNullOrWhiteSpace(password))
+            throw new ArgumentException("Password is required.", nameof(password));
+
+        var dataContract = new AuthenticateRequestDataContract(AuthenticatedUser.Username, password);
+        var user = await _httpService.PostAnonymous<AuthenticateResponseDataContract>("/users/authenticate", dataContract);
+
+        if (user == null)
+            throw new Exception("Invalid username or password.");
+
+        AuthenticatedUser = _userConverter.Convert(user);
+        await _localStorageService.SetItem(WebAuthenticationConstants.AuthenticatedUserStorageKey, AuthenticatedUser);
+    }
+
+    public async Task Logout(bool showSessionExpiredNotice = false)
     {
         ClearNotifications();
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
+
+        if (showSessionExpiredNotice)
+        {
+            _notificationService.Notify(_notificationFactory.Warning(
+                "Session Expired",
+                "Your session has expired. Please sign in again."));
+        }
 
         var currentUri = new Uri(_navigationManager.Uri);
         if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
@@ -98,7 +124,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
 
     public async Task<Guid> Register(RegisterUserRequestDataContract model)
     {
-        return await _httpService.Post<Guid>("/users/register", model);
+        return await _httpService.PostAnonymous<Guid>("/users/register", model);
     }
 
     public async Task<IList<UserDataContract>> GetAll()
@@ -144,7 +170,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
             return Task.FromResult(false);
 
         // Non-admin roles cannot call GET /users; JWT expiry is sufficient for restore.
-        return Task.FromResult(!IsJwtExpired(AuthenticatedUser.Token));
+        return Task.FromResult(!JwtTokenHelper.IsExpired(AuthenticatedUser.Token));
     }
 
     private async Task LogoutSilently()
@@ -153,37 +179,6 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
         AuthenticatedUser = null;
         await _localStorageService.RemoveItem(WebAuthenticationConstants.AuthenticatedUserStorageKey);
         await _eventDistributor.PublishAsync(EventConstants.LogoutEvent);
-    }
-
-    private static bool IsJwtExpired(string? token)
-    {
-        if (string.IsNullOrWhiteSpace(token))
-            return true;
-
-        try
-        {
-            var parts = token.Split('.');
-            if (parts.Length < 2)
-                return true;
-
-            var payload = parts[1]
-                .Replace('-', '+')
-                .Replace('_', '/');
-
-            payload = payload.PadRight(payload.Length + ((4 - payload.Length % 4) % 4), '=');
-
-            var json = Encoding.UTF8.GetString(Convert.FromBase64String(payload));
-            var data = JsonConvert.DeserializeObject<Dictionary<string, object>>(json);
-            if (data == null || !data.TryGetValue("exp", out var expiryValue))
-                return true;
-
-            var expiry = Convert.ToInt64(expiryValue);
-            return DateTimeOffset.UtcNow >= DateTimeOffset.FromUnixTimeSeconds(expiry);
-        }
-        catch
-        {
-            return true;
-        }
     }
 
     private void ClearNotifications()
