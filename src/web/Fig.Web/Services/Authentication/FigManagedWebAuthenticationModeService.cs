@@ -85,6 +85,24 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
         await _localStorageService.SetItem(WebAuthenticationConstants.AuthenticatedUserStorageKey, AuthenticatedUser);
     }
 
+    public async Task Reauthenticate(string password)
+    {
+        if (AuthenticatedUser is null || string.IsNullOrWhiteSpace(AuthenticatedUser.Username))
+            throw new InvalidOperationException("No authenticated user to reauthenticate.");
+
+        if (string.IsNullOrWhiteSpace(password))
+            throw new ArgumentException("Password is required.", nameof(password));
+
+        var dataContract = new AuthenticateRequestDataContract(AuthenticatedUser.Username, password);
+        var user = await _httpService.PostAnonymous<AuthenticateResponseDataContract>("/users/authenticate", dataContract);
+
+        if (user == null)
+            throw new Exception("Invalid username or password.");
+
+        AuthenticatedUser = _userConverter.Convert(user);
+        await _localStorageService.SetItem(WebAuthenticationConstants.AuthenticatedUserStorageKey, AuthenticatedUser);
+    }
+
     public async Task Logout(bool showSessionExpiredNotice = false)
     {
         ClearNotifications();

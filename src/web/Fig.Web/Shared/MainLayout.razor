@@ -1,5 +1,6 @@
 @using Fig.Common.Events
 @using Fig.Web.Services
+@using Fig.Web.Services.Authentication
 @using Fig.Contracts.Authentication
 @using Fig.Web.Events
 @using Fig.Web.Notifications
@@ -23,6 +24,9 @@
 @inject IReleaseHighlightsCoordinator ReleaseHighlightsCoordinator
 @inject IConfigurationFacade ConfigurationFacade
 @inject IJavascriptDisabledDialogCoordinator JavascriptDisabledDialogCoordinator
+@inject ISessionExpiryCoordinator SessionExpiryCoordinator
+@inject NotificationService NotificationService
+@inject INotificationFactory NotificationFactory
 
 @if (AccountService.IsInitialized)
 {
@@ -203,6 +207,7 @@ else
     private bool _releaseHighlightsDialogOpen;
     private Guid? _javascriptDisabledCheckedUserId;
     private bool _javascriptDisabledDialogOpen;
+    private bool _sessionReauthDialogOpen;
 
     private bool IsWallboardMode
     {
@@ -233,6 +238,8 @@ else
         DisplayScriptStatusService.OnChange += OnDisplayScriptStatusChanged;
         ConfigurationFacade.WebFeaturesChanged += OnWebFeaturesChanged;
         NavigationManager.LocationChanged += OnLocationChanged;
+        SessionExpiryCoordinator.ReauthenticationRequired += OnReauthenticationRequired;
+        SessionExpiryCoordinator.SessionExpiringSoon += OnSessionExpiringSoon;
 
         await EnsureAuthenticatedSessionReady();
 
@@ -258,13 +265,78 @@ else
     private async Task EnsureAuthenticatedSessionReady()
     {
         if (!LoggedIn)
+        {
+            SessionExpiryCoordinator.StopMonitoring();
             return;
+        }
+
+        SessionExpiryCoordinator.StartMonitoring();
 
         if (!ConfigurationFacade.WebFeaturesLoaded)
             await ConfigurationFacade.LoadWebFeatures();
 
         await TryOpenJavascriptDisabledDialog();
         await TryOpenReleaseHighlights();
+    }
+
+    private void OnReauthenticationRequired()
+    {
+        InvokeAsync(OpenSessionReauthDialogAsync);
+    }
+
+    private void OnSessionExpiringSoon()
+    {
+        InvokeAsync(() =>
+        {
+            var message = NotificationFactory.Warning(
+                "Session expires soon",
+                "Save any unsaved changes, or click here to extend your session.");
+            message.Click = _ => SessionExpiryCoordinator.RequestReauthentication();
+            NotificationService.Notify(message);
+        });
+    }
+
+    private async Task OpenSessionReauthDialogAsync()
+    {
+        if (_sessionReauthDialogOpen || !LoggedIn)
+            return;
+
+        _sessionReauthDialogOpen = true;
+        try
+        {
+            var title = SessionExpiryCoordinator.LogoutOnAbandon
+                ? "Session Expired"
+                : "Extend Session";
+            var result = await DialogService.OpenAsync<SessionReauthDialog>(
+                title,
+                new Dictionary<string, object?>
+                {
+                    ["SessionAlreadyExpired"] = SessionExpiryCoordinator.LogoutOnAbandon
+                },
+                new DialogOptions
+                {
+                    Width = "420px",
+                    CloseDialogOnOverlayClick = false,
+                    CloseDialogOnEsc = false,
+                    Style = "background: #1e1e1e;"
+                });
+
+            if (result is true)
+            {
+                SessionExpiryCoordinator.MarkReauthenticationCompleted();
+            }
+            else
+            {
+                var logoutOnAbandon = SessionExpiryCoordinator.LogoutOnAbandon;
+                SessionExpiryCoordinator.MarkReauthenticationAbandoned();
+                if (logoutOnAbandon)
+                    await AccountService.Logout(showSessionExpiredNotice: true);
+            }
+        }
+        finally
+        {
+            _sessionReauthDialogOpen = false;
+        }
     }
 
     private void OnWebFeaturesChanged() => OnNotificationChanged();
@@ -484,6 +556,7 @@ else
         _releaseHighlightsDialogOpen = false;
         _javascriptDisabledCheckedUserId = null;
         _javascriptDisabledDialogOpen = false;
+        SessionExpiryCoordinator.StopMonitoring();
         ReleaseHighlightsCoordinator.ResetSession();
     }
 
@@ -495,5 +568,8 @@ else
         DisplayScriptStatusService.OnChange -= OnDisplayScriptStatusChanged;
         ConfigurationFacade.WebFeaturesChanged -= OnWebFeaturesChanged;
         NavigationManager.LocationChanged -= OnLocationChanged;
+        SessionExpiryCoordinator.ReauthenticationRequired -= OnReauthenticationRequired;
+        SessionExpiryCoordinator.SessionExpiringSoon -= OnSessionExpiringSoon;
+        SessionExpiryCoordinator.StopMonitoring();
     }
 }

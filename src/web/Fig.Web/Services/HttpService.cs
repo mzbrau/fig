@@ -22,6 +22,7 @@ public class HttpService : IHttpService
 {
     private readonly HttpClient _httpClient;
     private readonly IFigApiAccessTokenProvider _accessTokenProvider;
+    private readonly ISessionExpiryCoordinator _sessionExpiryCoordinator;
     private readonly NotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
     private readonly NavigationManager _navigationManager;
@@ -31,6 +32,7 @@ public class HttpService : IHttpService
         IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
         IFigApiAccessTokenProvider accessTokenProvider,
+        ISessionExpiryCoordinator sessionExpiryCoordinator,
         NotificationService notificationService,
         INotificationFactory notificationFactory,
         IOptions<WebSettings> webSettings)
@@ -39,6 +41,7 @@ public class HttpService : IHttpService
         _httpClient.Timeout = TimeSpan.FromHours(1);
         _navigationManager = navigationManager;
         _accessTokenProvider = accessTokenProvider;
+        _sessionExpiryCoordinator = sessionExpiryCoordinator;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
         _authenticationMode = webSettings.Value.Authentication.Mode;
@@ -450,8 +453,16 @@ public class HttpService : IHttpService
     private void HandleSessionExpired()
     {
         var currentUri = new Uri(_navigationManager.Uri);
-        if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
-            _navigationManager.NavigateTo("account/logout?sessionExpired=1");
+        if (currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (_authenticationMode == WebAuthMode.FigManaged)
+        {
+            _sessionExpiryCoordinator.NotifySessionExpired();
+            return;
+        }
+
+        _navigationManager.NavigateTo("account/logout?sessionExpired=1");
     }
 
     private async Task<bool> HandleErrorResponse(HttpResponseMessage response, bool showNotifications)

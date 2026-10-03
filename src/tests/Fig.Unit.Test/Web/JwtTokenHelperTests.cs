@@ -37,7 +37,33 @@ public class JwtTokenHelperTests
         Assert.That(JwtTokenHelper.IsExpired(token), Is.False);
     }
 
-    private static string CreateJwt(DateTimeOffset expiry)
+    [Test]
+    public void TryGetExpiry_ReturnsExpiry_WhenPresent()
+    {
+        var expiry = DateTimeOffset.UtcNow.AddMinutes(30);
+        var token = CreateJwt(expiry, DateTimeOffset.UtcNow);
+
+        Assert.That(JwtTokenHelper.TryGetExpiry(token, out var parsed), Is.True);
+        Assert.That(parsed.ToUnixTimeSeconds(), Is.EqualTo(expiry.ToUnixTimeSeconds()));
+    }
+
+    [Test]
+    public void TryGetIssuedAt_ReturnsIssuedAt_WhenPresent()
+    {
+        var issuedAt = DateTimeOffset.UtcNow.AddMinutes(-10);
+        var token = CreateJwt(DateTimeOffset.UtcNow.AddHours(1), issuedAt);
+
+        Assert.That(JwtTokenHelper.TryGetIssuedAt(token, out var parsed), Is.True);
+        Assert.That(parsed.ToUnixTimeSeconds(), Is.EqualTo(issuedAt.ToUnixTimeSeconds()));
+    }
+
+    [Test]
+    public void TryGetExpiry_ReturnsFalse_ForMalformedToken()
+    {
+        Assert.That(JwtTokenHelper.TryGetExpiry("not-a-jwt", out _), Is.False);
+    }
+
+    private static string CreateJwt(DateTimeOffset expiry, DateTimeOffset? issuedAt = null)
     {
         static string ToBase64Url(string value)
         {
@@ -48,7 +74,10 @@ public class JwtTokenHelperTests
         }
 
         var header = ToBase64Url("{\"alg\":\"none\",\"typ\":\"JWT\"}");
-        var payload = ToBase64Url($"{{\"exp\":{expiry.ToUnixTimeSeconds()}}}");
+        var payloadJson = issuedAt is null
+            ? $"{{\"exp\":{expiry.ToUnixTimeSeconds()}}}"
+            : $"{{\"iat\":{issuedAt.Value.ToUnixTimeSeconds()},\"exp\":{expiry.ToUnixTimeSeconds()}}}";
+        var payload = ToBase64Url(payloadJson);
         return $"{header}.{payload}.sig";
     }
 }

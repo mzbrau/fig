@@ -212,6 +212,79 @@ public class AccountServiceTests
         Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/login"));
     }
 
+    [Test]
+    public async Task Reauthenticate_ShouldUpdateTokenWithoutLogoutEvent()
+    {
+        var loginResponse = new AuthenticateResponseDataContract(
+            Guid.NewGuid(),
+            "user",
+            "Test",
+            "User",
+            Role.User,
+            CreateJwt(DateTimeOffset.UtcNow.AddMinutes(5)),
+            false,
+            []);
+        var loggedInUser = CreateAuthenticatedUser(loginResponse.Id, loginResponse.Token, false);
+        var refreshedResponse = new AuthenticateResponseDataContract(
+            loginResponse.Id,
+            loginResponse.Username,
+            loginResponse.FirstName,
+            loginResponse.LastName,
+            Role.User,
+            CreateJwt(DateTimeOffset.UtcNow.AddHours(1)),
+            false,
+            []);
+        var refreshedUser = CreateAuthenticatedUser(refreshedResponse.Id, refreshedResponse.Token, false);
+
+        _httpService.SetupSequence(a => a.PostAnonymous<AuthenticateResponseDataContract>(
+                "/users/authenticate",
+                It.IsAny<AuthenticateRequestDataContract>(),
+                true))
+            .ReturnsAsync(loginResponse)
+            .ReturnsAsync(refreshedResponse);
+        _userConverter.Setup(a => a.Convert(loginResponse)).Returns(loggedInUser);
+        _userConverter.Setup(a => a.Convert(refreshedResponse)).Returns(refreshedUser);
+
+        await _sut.Login(new LoginModel { Username = "user", Password = "password" });
+        await _sut.Reauthenticate("password");
+
+        Assert.That(_sut.AuthenticatedUser, Is.EqualTo(refreshedUser));
+        _localStorageService.Verify(a => a.SetItem("user", refreshedUser), Times.Once);
+        _eventDistributor.Verify(a => a.PublishAsync(EventConstants.LogoutEvent), Times.Never);
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/"));
+    }
+
+    [Test]
+    public async Task Reauthenticate_ShouldNotClearUser_WhenPasswordIsWrong()
+    {
+        var loginResponse = new AuthenticateResponseDataContract(
+            Guid.NewGuid(),
+            "user",
+            "Test",
+            "User",
+            Role.User,
+            CreateJwt(DateTimeOffset.UtcNow.AddMinutes(5)),
+            false,
+            []);
+        var loggedInUser = CreateAuthenticatedUser(loginResponse.Id, loginResponse.Token, false);
+
+        _httpService.SetupSequence(a => a.PostAnonymous<AuthenticateResponseDataContract>(
+                "/users/authenticate",
+                It.IsAny<AuthenticateRequestDataContract>(),
+                true))
+            .ReturnsAsync(loginResponse)
+            .ReturnsAsync((AuthenticateResponseDataContract?)null);
+        _userConverter.Setup(a => a.Convert(loginResponse)).Returns(loggedInUser);
+
+        await _sut.Login(new LoginModel { Username = "user", Password = "password" });
+        var exception = Assert.ThrowsAsync<Exception>(async () => await _sut.Reauthenticate("bad-password"));
+
+        Assert.That(exception!.Message, Does.Contain("Invalid"));
+        Assert.That(_sut.AuthenticatedUser, Is.EqualTo(loggedInUser));
+        _localStorageService.Verify(a => a.RemoveItem("user"), Times.Never);
+        _eventDistributor.Verify(a => a.PublishAsync(EventConstants.LogoutEvent), Times.Never);
+    }
+
     private static AuthenticatedUserModel CreateAuthenticatedUser(Guid id, string token, bool passwordChangeRequired)
     {
         return new AuthenticatedUserModel

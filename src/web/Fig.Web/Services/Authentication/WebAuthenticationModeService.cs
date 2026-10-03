@@ -22,6 +22,8 @@ public class WebAuthenticationModeService : IWebAuthenticationModeService
 
     public Task Login(Fig.Web.Models.Authentication.LoginModel model) => _authenticationModeSelector.Current.Login(model);
 
+    public Task Reauthenticate(string password) => _authenticationModeSelector.Current.Reauthenticate(password);
+
     public Task Logout(bool showSessionExpiredNotice = false) =>
         _authenticationModeSelector.Current.Logout(showSessionExpiredNotice);
 

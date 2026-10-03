@@ -25,6 +25,7 @@ public class HttpServiceTests
     private Mock<IHttpClientFactory> _httpClientFactory = null!;
     private Mock<ILocalStorageService> _localStorageService = null!;
     private Mock<INotificationFactory> _notificationFactory = null!;
+    private Mock<ISessionExpiryCoordinator> _sessionExpiryCoordinator = null!;
     private TestNavigationManager _navigationManager = null!;
     private NotificationService _notificationService = null!;
     private TestHttpMessageHandler _httpMessageHandler = null!;
@@ -36,6 +37,7 @@ public class HttpServiceTests
         _httpClientFactory = new Mock<IHttpClientFactory>();
         _localStorageService = new Mock<ILocalStorageService>();
         _notificationFactory = new Mock<INotificationFactory>();
+        _sessionExpiryCoordinator = new Mock<ISessionExpiryCoordinator>();
         _navigationManager = new TestNavigationManager("http://localhost/dashboard");
         _notificationService = new NotificationService();
         _httpMessageHandler = new TestHttpMessageHandler();
@@ -70,6 +72,7 @@ public class HttpServiceTests
             _httpClientFactory.Object,
             _navigationManager,
             CreateAccessTokenProvider(),
+            _sessionExpiryCoordinator.Object,
             _notificationService,
             _notificationFactory.Object,
             Options.Create(new WebSettings
@@ -98,7 +101,7 @@ public class HttpServiceTests
     }
 
     [Test]
-    public async Task Get_ShouldNavigateToLogout_WhenJwtWasAttachedAndResponseIsUnauthorized()
+    public async Task Get_ShouldNotifySessionExpired_WhenJwtWasAttachedAndResponseIsUnauthorized()
     {
         _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
             .ReturnsAsync(CreateAuthenticatedUser());
@@ -107,13 +110,14 @@ public class HttpServiceTests
         var result = await _sut.Get<object>("/users", false);
 
         Assert.That(result, Is.Null);
-        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout?sessionExpired=1"));
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/dashboard"));
         Assert.That(_httpMessageHandler.LastRequest?.Headers.Authorization?.Scheme, Is.EqualTo("Bearer"));
+        _sessionExpiryCoordinator.Verify(x => x.NotifySessionExpired(), Times.Once);
         _notificationFactory.Verify(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Test]
-    public async Task Get_ShouldNotNavigateToLogout_WhenNoJwtWasAttached()
+    public async Task Get_ShouldNotNotifySessionExpired_WhenNoJwtWasAttached()
     {
         _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
             .ReturnsAsync((AuthenticatedUserModel?)null);
@@ -124,11 +128,12 @@ public class HttpServiceTests
         Assert.That(result, Is.Null);
         Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/dashboard"));
         Assert.That(_httpMessageHandler.LastRequest?.Headers.Authorization, Is.Null);
+        _sessionExpiryCoordinator.Verify(x => x.NotifySessionExpired(), Times.Never);
         _notificationFactory.Verify(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
     }
 
     [Test]
-    public async Task Get_ShouldLogoutWithoutSendingRequest_WhenFigManagedJwtIsExpired()
+    public async Task Get_ShouldNotifySessionExpiredWithoutSendingRequest_WhenFigManagedJwtIsExpired()
     {
         _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
             .ReturnsAsync(CreateAuthenticatedUser(CreateJwt(DateTimeOffset.UtcNow.AddHours(-1))));
@@ -141,8 +146,24 @@ public class HttpServiceTests
 
         Assert.That(result, Is.Null);
         Assert.That(_httpMessageHandler.SendCount, Is.EqualTo(0));
-        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout?sessionExpired=1"));
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/dashboard"));
+        _sessionExpiryCoordinator.Verify(x => x.NotifySessionExpired(), Times.Once);
         _notificationFactory.Verify(x => x.Warning(It.IsAny<string>(), It.IsAny<string>()), Times.Never);
+    }
+
+    [Test]
+    public async Task Get_ShouldNavigateToLogout_WhenKeycloakResponseIsUnauthorized()
+    {
+        _sut = CreateSut(WebAuthMode.Keycloak);
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser());
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.Unauthorized);
+
+        var result = await _sut.Get<object>("/users", false);
+
+        Assert.That(result, Is.Null);
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/account/logout?sessionExpired=1"));
+        _sessionExpiryCoordinator.Verify(x => x.NotifySessionExpired(), Times.Never);
     }
 
     [Test]

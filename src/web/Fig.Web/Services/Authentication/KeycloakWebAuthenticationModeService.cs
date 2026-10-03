@@ -77,6 +77,11 @@ public class KeycloakWebAuthenticationModeService : IWebAuthenticationModeServic
         return BeginLoginAsync(returnUrl);
     }
 
+    public Task Reauthenticate(string password)
+    {
+        throw new NotSupportedException("Password reauthentication is not supported in Keycloak mode.");
+    }
+
     public async Task Logout(bool showSessionExpiredNotice = false)
     {
         ClearNotifications();
