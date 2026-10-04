@@ -102,7 +102,7 @@ public class AccountServiceTests
     }
 
     [Test]
-    public void Update_ShouldNotLogout_WhenPutFails()
+    public async Task Update_ShouldNotLogout_WhenPutFails()
     {
         var userId = Guid.NewGuid();
         var user = CreateAuthenticatedUser(userId, CreateJwt(DateTimeOffset.UtcNow.AddMinutes(5)), true);
@@ -110,7 +110,7 @@ public class AccountServiceTests
         _httpService.Setup(a => a.PutOrThrow($"/users/{userId}", It.IsAny<object?>(), null))
             .ThrowsAsync(new HttpRequestException("update failed"));
 
-        Assert.ThrowsAsync<HttpRequestException>(async () =>
+        await Assert.ThrowsAsync<HttpRequestException>(async () =>
         {
             await _sut.Initialize();
             await _sut.Update(userId, new UpdateUserRequestDataContract { Password = "new-password!" });
@@ -277,7 +277,7 @@ public class AccountServiceTests
         _userConverter.Setup(a => a.Convert(loginResponse)).Returns(loggedInUser);
 
         await _sut.Login(new LoginModel { Username = "user", Password = "password" });
-        var exception = Assert.ThrowsAsync<Exception>(async () => await _sut.Reauthenticate("bad-password"));
+        var exception = await Assert.ThrowsAsync<Exception>(async () => await _sut.Reauthenticate("bad-password"));
 
         Assert.That(exception!.Message, Does.Contain("Invalid"));
         Assert.That(_sut.AuthenticatedUser, Is.EqualTo(loggedInUser));

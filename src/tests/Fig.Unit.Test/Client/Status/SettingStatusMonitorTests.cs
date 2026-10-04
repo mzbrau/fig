@@ -220,7 +220,7 @@ public class SettingStatusMonitorTests
 
         // Act & Assert - Should not throw when no health report is available
         Assert.DoesNotThrow(() => _statusMonitor.SetFailedRegistration("Registration failed"));
-        Assert.DoesNotThrowAsync(async () => await _statusMonitor.SyncStatus());
+        await Assert.DoesNotThrowAsync(async () => await _statusMonitor.SyncStatus());
 
         // Verify request was still made (health will be null in the status request)
         var statusRequest = GetCapturedStatusRequest();

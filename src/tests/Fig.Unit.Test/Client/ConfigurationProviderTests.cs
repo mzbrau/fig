@@ -401,7 +401,7 @@ public class ConfigurationProviderTests
     }
 
     [Test]
-    public void ApplyAsync_WhenRemoteUpdateFails_DoesNotReloadConfiguration()
+    public async Task ApplyAsync_WhenRemoteUpdateFails_DoesNotReloadConfiguration()
     {
         var apiHandlerMock = new Mock<IApiCommunicationHandler>();
         var bridgeMock = apiHandlerMock.As<IFigClientBridge>();
@@ -418,7 +418,7 @@ public class ConfigurationProviderTests
             .Build();
         var updater = new SettingUpdater<AllSettingsAndTypes>();
 
-        Assert.ThrowsAsync<FigSettingUpdateException>(async () =>
+        await Assert.ThrowsAsync<FigSettingUpdateException>(async () =>
             await updater.Set(a => a.StringSetting, "updated").ApplyAsync());
         apiHandlerMock.Verify(a => a.RequestConfiguration(), Times.Once);
     }
@@ -447,7 +447,7 @@ public class ConfigurationProviderTests
         var updater = new SettingUpdater<AllSettingsAndTypes>();
         var optionsMonitor = serviceProvider.GetRequiredService<IOptionsMonitor<AllSettingsAndTypes>>();
 
-        var exception = Assert.ThrowsAsync<FigSettingRefreshException>(async () =>
+        var exception = await Assert.ThrowsAsync<FigSettingRefreshException>(async () =>
             await updater.Set(a => a.StringSetting, "updated").ApplyAsync());
 
         Assert.That(exception!.InnerException, Is.TypeOf<HttpRequestException>());

@@ -1,6 +1,7 @@
 using Fig.Client.ConfigurationProvider;
 using Microsoft.Extensions.Logging;
 using Moq;
+using System.Threading.Tasks;
 using NUnit.Framework;
 using System;
 using System.Runtime.InteropServices;
@@ -64,23 +65,23 @@ public class ValidatedHttpClientFactoryTests
     }
 
     [Test]
-    public void CreateClient_ThrowsException_WhenApiUrisIsNull()
+    public async Task CreateClient_ThrowsException_WhenApiUrisIsNull()
     {
         // Arrange
         var factory = new ValidatedHttpClientFactory(_loggerMock.Object);
 
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(async () => await factory.CreateClient(null));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await factory.CreateClient(null));
     }
 
     [Test]
-    public void CreateClient_ThrowsException_WhenApiUrisIsEmpty()
+    public async Task CreateClient_ThrowsException_WhenApiUrisIsEmpty()
     {
         // Arrange
         var factory = new ValidatedHttpClientFactory(_loggerMock.Object);
 
         // Act & Assert
-        Assert.ThrowsAsync<ArgumentException>(async () => await factory.CreateClient(new System.Collections.Generic.List<string>()));
+        await Assert.ThrowsAsync<ArgumentException>(async () => await factory.CreateClient(new System.Collections.Generic.List<string>()));
     }
 
     [Test]

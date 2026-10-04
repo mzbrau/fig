@@ -38,7 +38,7 @@ public class DatabaseMigrationServiceTests
     }
 
     [Test]
-    public void RunMigrationsAsync_ShouldThrowException_WhenMigrationsHaveNonSequentialNumbers()
+    public async Task RunMigrationsAsync_ShouldThrowException_WhenMigrationsHaveNonSequentialNumbers()
     {
         // Arrange
         var migrations = new IDatabaseMigration[]
@@ -50,7 +50,7 @@ public class DatabaseMigrationServiceTests
         _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _service.RunMigrationsAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.RunMigrationsAsync());
 
         Assert.That(ex!.Message, Does.Contain("Expected migration number 2, but found 3"));
     }
@@ -113,7 +113,7 @@ public class DatabaseMigrationServiceTests
     }
 
     [Test]
-    public void RunMigrationsAsync_ShouldThrowException_WhenMigrationFails()
+    public async Task RunMigrationsAsync_ShouldThrowException_WhenMigrationFails()
     {
         // Arrange
         var migrations = new IDatabaseMigration[]
@@ -131,7 +131,7 @@ public class DatabaseMigrationServiceTests
         _service = new DatabaseMigrationService(_mockRepository.Object, migrations, _mockLogger.Object, _mockServiceProvider.Object);
 
         // Act & Assert
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => _service.RunMigrationsAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _service.RunMigrationsAsync());
         Assert.That(ex!.Message, Does.Contain("Migration 1 failed"));
     }
 

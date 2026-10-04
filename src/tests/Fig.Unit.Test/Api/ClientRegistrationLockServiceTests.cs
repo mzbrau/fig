@@ -159,7 +159,7 @@ public class ClientRegistrationLockServiceTests
 
         // Act & Assert
         cts.CancelAfter(100);
-        Assert.ThrowsAsync<OperationCanceledException>(async () =>
+        await Assert.ThrowsAsync<OperationCanceledException>(async () =>
         {
             await _lockService.AcquireLockAsync(clientName, cts.Token);
         });

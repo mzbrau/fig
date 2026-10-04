@@ -98,7 +98,7 @@ public class DataCleanupWorkerTests
             startupDelay: TimeSpan.Zero,
             cleanupInterval: TimeSpan.FromHours(1));
 
-        Assert.DoesNotThrowAsync(async () => await worker.PerformCleanup());
+        await Assert.DoesNotThrowAsync(async () => await worker.PerformCleanup());
     }
 
     private sealed class StubPeriodicTimer : IPeriodicTimer

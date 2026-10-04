@@ -85,11 +85,11 @@ public class DpapiSecretProviderTests
     }
 
     [Test]
-    public void GetSecret_WhenSecretMissingAndAutoCreateDisabled_Throws()
+    public async Task GetSecret_WhenSecretMissingAndAutoCreateDisabled_Throws()
     {
         var provider = new TestDpapiSecretProvider(false, new Dictionary<string, string>());
 
-        var ex = Assert.ThrowsAsync<SecretNotFoundException>(async () => await provider.GetSecret("Test Client"));
+        var ex = await Assert.ThrowsAsync<SecretNotFoundException>(async () => await provider.GetSecret("Test Client"));
 
         Assert.That(ex!.Message, Does.Contain("user or machine environment variable"));
     }

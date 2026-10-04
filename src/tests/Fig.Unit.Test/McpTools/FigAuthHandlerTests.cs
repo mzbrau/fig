@@ -151,7 +151,7 @@ public class FigAuthHandlerTests
     }
 
     [Test]
-    public void SendAsync_AuthFailure_ShouldThrowHttpRequestException()
+    public async Task SendAsync_AuthFailure_ShouldThrowHttpRequestException()
     {
         var innerHandler = new TestInnerHandler();
         innerHandler.QueueResponse(new HttpResponseMessage(HttpStatusCode.Forbidden)
@@ -162,7 +162,7 @@ public class FigAuthHandlerTests
         using var handler = CreateHandler(innerHandler);
         using var client = new HttpClient(handler) { BaseAddress = new Uri("https://localhost:7281/") };
 
-        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+        var ex = await Assert.ThrowsAsync<HttpRequestException>(async () =>
             await client.GetAsync("clients"));
         Assert.That(ex!.Message, Does.Contain("authentication failed"));
     }
