@@ -124,7 +124,7 @@ public class FigManagedWebAuthenticationModeService : IWebAuthenticationModeServ
 
     public async Task<Guid> Register(RegisterUserRequestDataContract model)
     {
-        return await _httpService.PostAnonymous<Guid>("/users/register", model);
+        return await _httpService.Post<Guid>("/users/register", model);
     }
 
     public async Task<IList<UserDataContract>> GetAll()

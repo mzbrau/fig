@@ -167,6 +167,24 @@ public class HttpServiceTests
     }
 
     [Test]
+    public async Task Get_ShouldNotNotifySessionExpired_WhenResponseIsForbidden()
+    {
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(CreateAuthenticatedUser());
+        _httpMessageHandler.Response = new HttpResponseMessage(HttpStatusCode.Forbidden)
+        {
+            Content = new StringContent(
+                "{\"ErrorType\":\"403\",\"Message\":\"Role User not authorized for this endpoint\",\"Detail\":null,\"Reference\":\"abc\"}")
+        };
+
+        var result = await _sut.Get<object>("/users", false);
+
+        Assert.That(result, Is.Null);
+        Assert.That(_navigationManager.Uri, Is.EqualTo("http://localhost/dashboard"));
+        _sessionExpiryCoordinator.Verify(x => x.NotifySessionExpired(), Times.Never);
+    }
+
+    [Test]
     public async Task PostAnonymous_ShouldSendRequestWithoutJwt_WhenExpiredTokenIsInStorage()
     {
         _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))

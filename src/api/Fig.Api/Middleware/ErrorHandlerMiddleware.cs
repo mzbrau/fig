@@ -47,6 +47,7 @@ public class ErrorHandlerMiddleware
             var mappedStatusCode = ex switch
             {
                 UnauthorizedAccessException => (int)HttpStatusCode.Unauthorized,
+                ForbiddenAccessException => (int)HttpStatusCode.Forbidden,
 
                 UserExistsException => (int)HttpStatusCode.BadRequest,
                 InvalidSettingException => (int)HttpStatusCode.BadRequest,

@@ -134,7 +134,10 @@ public sealed class SessionExpiryCoordinator : ISessionExpiryCoordinator
 
         var remaining = expiry - DateTimeOffset.UtcNow;
         if (remaining <= TimeSpan.Zero)
+        {
+            NotifySessionExpired();
             return;
+        }
 
         bool shouldWarn;
         lock (_sync)

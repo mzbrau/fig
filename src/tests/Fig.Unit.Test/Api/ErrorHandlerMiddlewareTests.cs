@@ -89,6 +89,7 @@ public class ErrorHandlerMiddlewareTests
     private static IEnumerable<TestCaseData> StatusMappingCases()
     {
         yield return Case(new UnauthorizedAccessException("denied"), HttpStatusCode.Unauthorized);
+        yield return Case(new ForbiddenAccessException("role denied"), HttpStatusCode.Forbidden);
 
         yield return Case(new UserExistsException("bob"), HttpStatusCode.BadRequest);
         yield return Case(new InvalidSettingException("bad setting"), HttpStatusCode.BadRequest);

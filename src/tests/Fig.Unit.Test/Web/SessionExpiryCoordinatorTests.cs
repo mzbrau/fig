@@ -111,6 +111,27 @@ public class SessionExpiryCoordinatorTests
     }
 
     [Test]
+    public async Task CheckExpiryAsync_NotifiesSessionExpired_WhenTokenAlreadyExpired()
+    {
+        var issuedAt = DateTimeOffset.UtcNow.AddHours(-2);
+        var expiry = DateTimeOffset.UtcNow.AddMinutes(-1);
+        var token = CreateJwt(issuedAt, expiry);
+        _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
+            .ReturnsAsync(new AuthenticatedUserModel { Token = token, Username = "user" });
+
+        var sut = CreateSut(WebAuthMode.FigManaged);
+        var raiseCount = 0;
+        sut.ReauthenticationRequired += () => raiseCount++;
+
+        await sut.CheckExpiryAsync();
+        await sut.CheckExpiryAsync();
+
+        Assert.That(raiseCount, Is.EqualTo(1));
+        Assert.That(sut.IsReauthenticationPending, Is.True);
+        Assert.That(sut.LogoutOnAbandon, Is.True);
+    }
+
+    [Test]
     public void MarkReauthenticationCompleted_AllowsAnotherPrompt()
     {
         var sut = CreateSut(WebAuthMode.FigManaged);

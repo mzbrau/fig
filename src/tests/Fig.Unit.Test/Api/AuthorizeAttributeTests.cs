@@ -1,4 +1,5 @@
 using Fig.Api.Attributes;
+using Fig.Api.Exceptions;
 using Fig.Contracts.Authentication;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +39,7 @@ public class AuthorizeAttributeTests
             [],
             false);
 
-        var exception = Assert.Throws<UnauthorizedAccessException>(() => attribute.OnAuthorization(context));
+        var exception = Assert.Throws<ForbiddenAccessException>(() => attribute.OnAuthorization(context));
 
         Assert.That(exception!.Message, Does.StartWith("Role ReadOnly not authorized for this endpoint"));
     }
