@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
     
-    <Sdk Name="Aspire.AppHost.Sdk" Version="13.6.0" />
+    <Sdk Name="Aspire.AppHost.Sdk" Version="13.5.4" />
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
@@ -13,8 +13,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.0" />
-        <PackageReference Include="Aspire.Hosting.Keycloak" Version="13.1.1-preview.1.26105.8" />
+        <PackageReference Include="Aspire.Hosting.AppHost" Version="13.5.4" />
+        <PackageReference Include="Aspire.Hosting.Keycloak" Version="13.5.4-preview.1.26464.4" />
     </ItemGroup>
 
     <ItemGroup>

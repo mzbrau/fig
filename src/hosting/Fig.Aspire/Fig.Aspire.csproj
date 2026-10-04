@@ -29,7 +29,7 @@
     </PropertyGroup>
     
     <ItemGroup>
-        <PackageReference Include="Aspire.Hosting.AppHost" Version="13.6.0" />
+        <PackageReference Include="Aspire.Hosting.AppHost" Version="13.5.4" />
         <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.401">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
