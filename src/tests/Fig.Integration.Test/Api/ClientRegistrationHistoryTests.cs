@@ -123,7 +123,7 @@ public class ClientRegistrationHistoryTests : IntegrationTestBase
         await RegisterSettings<ThreeSettings>();
 
         var response = await TryGetClientRegistrationHistory(loginResult.Token);
-        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
+        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Forbidden));
     }
 
     [Test]
@@ -136,7 +136,7 @@ public class ClientRegistrationHistoryTests : IntegrationTestBase
         await RegisterSettings<ThreeSettings>();
 
         var response = await TryClearClientRegistrationHistory(loginResult.Token);
-        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
+        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Forbidden));
     }
 
     private async Task<ClientRegistrationHistoryCollectionDataContract> GetClientRegistrationHistory()

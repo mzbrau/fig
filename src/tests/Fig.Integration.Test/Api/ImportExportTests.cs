@@ -71,7 +71,7 @@ public class ImportExportTests : IntegrationTestBase
 
         var result = await httpClient.GetAsync("/data");
 
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status403Forbidden),
             "Only administrators are able to export data");
     }
 
@@ -314,8 +314,8 @@ public class ImportExportTests : IntegrationTestBase
         var data = await ExportData();
 
         var result = await ImportData(data, loginResult.Token, false);
-        
-        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
 
     [Test]

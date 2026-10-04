@@ -74,7 +74,7 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
 
         var result = await httpClient.GetAsync("/valueonlydata");
 
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status403Forbidden),
             "Only administrators are able to export data");
     }
     
@@ -192,8 +192,8 @@ public class ValueOnlyImportExportTests : IntegrationTestBase
         var data = await ExportValueOnlyData();
 
         var result = await ImportValueOnlyData(data, loginResult.Token);
-        
-        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
     
     [Test]

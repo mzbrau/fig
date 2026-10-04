@@ -55,7 +55,7 @@ public class DiagnosticsIntegrationTests : IntegrationTestBase
             tokenOverride: $"Bearer {login.Token}",
             validateSuccess: false);
 
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
 
     [Test]

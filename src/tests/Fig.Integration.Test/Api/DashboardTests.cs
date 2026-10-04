@@ -231,7 +231,7 @@ public class DashboardTests : IntegrationTestBase
         await CreateUser(user);
         var login = await Login(user.Username, user.Password!);
 
-        await ApiClient.GetAndVerify("/dashboards", HttpStatusCode.Unauthorized, tokenOverride: login.Token);
+        await ApiClient.GetAndVerify("/dashboards", HttpStatusCode.Forbidden, tokenOverride: login.Token);
     }
 
     [Test]
@@ -244,11 +244,11 @@ public class DashboardTests : IntegrationTestBase
         var login = await Login(user.Username, user.Password!);
 
         var createResponse = await CreateDashboardRaw(CreateTestDashboard("Hack"), login.Token);
-        Assert.That(createResponse.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(createResponse.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
 
         var putResponse = await ApiClient.Put<HttpResponseMessage>(
             $"/dashboards/{created.Id}", created, authenticate: true, tokenOverride: login.Token, validateSuccess: false);
-        Assert.That(putResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(putResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
 
     [Test]

@@ -101,7 +101,7 @@ public class FigConfigurationTests : IntegrationTestBase
         var result = await SetConfiguration(CreateConfiguration(allowNewRegistrations: false), loginResult.Token, false);
 
         Assert.That(result.IsSuccessStatusCode, Is.False);
-        Assert.That((int)result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
+        Assert.That((int)result.StatusCode, Is.EqualTo(StatusCodes.Status403Forbidden),
             "Only administrators can set configuration");
     }
 
@@ -143,7 +143,7 @@ public class FigConfigurationTests : IntegrationTestBase
         using var httpClient = GetHttpClient();
         httpClient.DefaultRequestHeaders.Add("Authorization", $"Bearer {login.Token}");
         var response = await httpClient.PutAsync("/configuration/KeyVault", null);
-        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Unauthorized));
+        Assert.That(response.StatusCode, Is.EqualTo(System.Net.HttpStatusCode.Forbidden));
     }
 
     [Test]

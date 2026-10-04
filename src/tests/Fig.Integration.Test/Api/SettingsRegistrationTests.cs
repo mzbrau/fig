@@ -274,7 +274,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
 
         var result = await httpClient.PutAsync(uri, content);
         
-        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(result.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
 
     [Test]
