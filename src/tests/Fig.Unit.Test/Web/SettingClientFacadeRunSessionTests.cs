@@ -34,7 +34,7 @@ public class SettingClientFacadeRunSessionTests
     {
         _runSessions = new List<ClientRunSessionModel>();
         _clientStatusFacade = new Mock<IClientStatusFacade>();
-        _clientStatusFacade.Setup(f => f.Refresh()).Returns(Task.CompletedTask);
+        _clientStatusFacade.Setup(f => f.Refresh()).ReturnsAsync(true);
         _clientStatusFacade.Setup(f => f.ClientRunSessions).Returns(_runSessions);
         _clientStatusFacade.Setup(f => f.GetLastSeen(It.IsAny<string>(), It.IsAny<string?>())).Returns((LastSeenModel?)null);
 
@@ -62,6 +62,19 @@ public class SettingClientFacadeRunSessionTests
         await _sut.CheckClientRunSessions();
 
         Assert.That(baseClient.CurrentRunSessions, Is.EqualTo(1));
+    }
+
+    [Test]
+    public async Task CheckClientRunSessions_ShouldNotUpdateCounts_WhenRefreshFails()
+    {
+        var baseClient = AddSettingClient("MyApp", instance: null);
+        baseClient.CurrentRunSessions = 3;
+        _runSessions.Add(CreateRunSession("MyApp", instance: null));
+        _clientStatusFacade.Setup(f => f.Refresh()).ReturnsAsync(false);
+
+        await _sut.CheckClientRunSessions();
+
+        Assert.That(baseClient.CurrentRunSessions, Is.EqualTo(3));
     }
 
     [Test]

@@ -68,7 +68,7 @@ public class ReportsTests : IntegrationTestBase
         var loginResult = await Login(user.Username!, user.Password!);
         var response = await ApiClient.GetRaw("/reports", $"Bearer {loginResult.Token}");
 
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
 
     [Test]
@@ -488,7 +488,7 @@ public class ReportsTests : IntegrationTestBase
             validateSuccess: false);
 
         Assert.That(response, Is.Not.Null);
-        Assert.That(response!.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(response!.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
 
     [Test]

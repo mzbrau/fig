@@ -27,12 +27,12 @@ public class ClientStatusFacade : IClientStatusFacade
 
     public List<ClientRunSessionModel> ClientRunSessions { get; } = new();
 
-    public async Task Refresh()
+    public async Task<bool> Refresh()
     {
         var result = await _httpService.Get<List<ClientStatusDataContract>>("statuses");
 
         if (result == null)
-            return;
+            return false;
 
         _lastSeenByClient.Clear();
         foreach (var status in result)
@@ -50,6 +50,7 @@ public class ClientStatusFacade : IClientStatusFacade
         await _eventDistributor.PublishAsync(EventConstants.ClientRunSessionsChanged);
         
         Console.WriteLine($"Loaded {ClientRunSessions.Count} client run sessions");
+        return true;
     }
 
     public LastSeenModel? GetLastSeen(string clientName, string? instance)

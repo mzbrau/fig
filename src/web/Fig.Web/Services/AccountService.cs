@@ -30,9 +30,14 @@ public class AccountService : IAccountService
         await _webAuthenticationModeService.Login(model);
     }
 
-    public async Task Logout()
+    public async Task Reauthenticate(string password)
     {
-        await _webAuthenticationModeService.Logout();
+        await _webAuthenticationModeService.Reauthenticate(password);
+    }
+
+    public async Task Logout(bool showSessionExpiredNotice = false)
+    {
+        await _webAuthenticationModeService.Logout(showSessionExpiredNotice);
     }
 
     public async Task<Guid> Register(RegisterUserRequestDataContract model)

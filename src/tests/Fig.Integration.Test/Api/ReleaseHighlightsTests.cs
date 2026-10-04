@@ -71,8 +71,8 @@ public class ReleaseHighlightsTests : IntegrationTestBase
             tokenOverride: bearerToken,
             validateSuccess: false);
 
-        Assert.That(getResponse.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(getResponse.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
         Assert.That(postResponse, Is.Not.Null);
-        Assert.That(postResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(postResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
 }

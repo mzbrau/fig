@@ -152,8 +152,8 @@ public class TimeMachineTests : IntegrationTestBase
                                                $"?startTime={Uri.EscapeDataString(startTime.ToString("o"))}" +
                                                $"&endTime={Uri.EscapeDataString(endTime.ToString("o"))}");
 
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
-            "Only administrators are able to export data");
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status403Forbidden),
+            "Only administrators are able to get checkpoints");
     }
     
     [Test]

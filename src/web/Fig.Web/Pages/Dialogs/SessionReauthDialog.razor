@@ -1,0 +1,105 @@
+@using Fig.Web.Services
+@inject DialogService DialogService
+@inject IAccountService AccountService
+
+<div class="p-3">
+    <p class="mb-3">
+        @if (SessionAlreadyExpired)
+        {
+            <text>
+                Your session has expired. Enter your password to continue without losing unsaved changes.
+                Any action that just failed may need to be retried after signing in.
+            </text>
+        }
+        else
+        {
+            <text>
+                Your session will expire soon. Enter your password to extend it without losing unsaved changes.
+            </text>
+        }
+    </p>
+
+    <div class="form-group mb-3">
+        <label class="white-text">Username</label>
+        <RadzenTextBox Value="@Username" Disabled="true" Style="width: 100%" data-test-id="SessionReauthUsername" />
+    </div>
+
+    <div class="form-group mb-3">
+        <label class="white-text">Password</label>
+        <RadzenPassword @bind-Value="_password"
+                        Style="width: 100%"
+                        data-test-id="SessionReauthPassword"
+                        Name="SessionReauthPassword"
+                        @onkeydown="OnPasswordKeyDown" />
+    </div>
+
+    @if (!string.IsNullOrEmpty(_errorMessage))
+    {
+        <div class="login-error-banner mb-3">
+            <span>@_errorMessage</span>
+        </div>
+    }
+
+    <div class="d-flex gap-2 justify-content-end">
+        <RadzenButton Text="Sign out"
+                      ButtonStyle="ButtonStyle.Secondary"
+                      Disabled="_loading"
+                      Click="@SignOut"
+                      data-test-id="SessionReauthSignOut" />
+        <RadzenButton Text="Sign in"
+                      ButtonStyle="ButtonStyle.Primary"
+                      IsBusy="_loading"
+                      BusyText="Signing in..."
+                      Click="@SignIn"
+                      data-test-id="SessionReauthSignIn" />
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public bool SessionAlreadyExpired { get; set; } = true;
+
+    private string? _password;
+    private string? _errorMessage;
+    private bool _loading;
+
+    private string Username => AccountService.AuthenticatedUser?.Username ?? string.Empty;
+
+    private async Task OnPasswordKeyDown(KeyboardEventArgs args)
+    {
+        if (args.Key == "Enter")
+            await SignIn();
+    }
+
+    private async Task SignIn()
+    {
+        if (string.IsNullOrWhiteSpace(_password))
+        {
+            _errorMessage = "Password is required.";
+            return;
+        }
+
+        _loading = true;
+        _errorMessage = null;
+        try
+        {
+            await AccountService.Reauthenticate(_password);
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = string.IsNullOrWhiteSpace(ex.Message)
+                ? "Invalid username or password."
+                : ex.Message;
+        }
+        finally
+        {
+            _loading = false;
+        }
+    }
+
+    private void SignOut()
+    {
+        DialogService.Close(false);
+    }
+}

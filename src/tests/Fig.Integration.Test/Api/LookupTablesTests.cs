@@ -149,7 +149,7 @@ public class LookupTablesTests : IntegrationTestBase
         var newItem = new LookupTableDataContract(null, "Animals", lookupTable, false);
         var createResponse = await ApiClient.Post("/lookuptables", newItem,
             authenticate: true, validateSuccess: false, tokenOverride: loginResult.Token);
-        Assert.That(createResponse.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(createResponse.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
 
         await AddLookupTable(newItem);
         var existingItem = (await GetAllLookupTables()).Single();
@@ -161,14 +161,14 @@ public class LookupTablesTests : IntegrationTestBase
             tokenOverride: loginResult.Token,
             validateSuccess: false);
         Assert.That(updateResponse, Is.Not.Null);
-        Assert.That(updateResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(updateResponse!.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
 
         var deleteError = await ApiClient.Delete(
             $"/lookuptables/{existingItem.Id}",
             tokenOverride: loginResult.Token,
             validateSuccess: false);
         Assert.That(deleteError, Is.Not.Null);
-        Assert.That(deleteError!.ErrorType, Is.EqualTo(((int)HttpStatusCode.Unauthorized).ToString()));
+        Assert.That(deleteError!.ErrorType, Is.EqualTo(((int)HttpStatusCode.Forbidden).ToString()));
     }
 
     [Test]

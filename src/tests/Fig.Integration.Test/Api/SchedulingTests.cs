@@ -181,7 +181,7 @@ public class SchedulingTests : IntegrationTestBase
     }
 
     [Test]
-    public async Task ShallReturnUnauthorizedWhenNonAdminTriesToRescheduleChanges()
+    public async Task ShallReturnForbiddenWhenNonAdminTriesToRescheduleChanges()
     {
         // Arrange
         var secret = GetNewSecret();
@@ -208,11 +208,11 @@ public class SchedulingTests : IntegrationTestBase
         var rescheduleResult = await RescheduleChange(change.Id, newExecuteAt, false, loginResult.Token);
         
         // Assert
-        Assert.That(rescheduleResult?.ErrorType, Is.EqualTo(StatusCodes.Status401Unauthorized.ToString()));
+        Assert.That(rescheduleResult?.ErrorType, Is.EqualTo(StatusCodes.Status403Forbidden.ToString()));
     }
 
     [Test]
-    public async Task ShallReturnUnauthorizedWhenNonAdminTriesToDeleteChanges()
+    public async Task ShallReturnForbiddenWhenNonAdminTriesToDeleteChanges()
     {
         // Arrange
         var secret = GetNewSecret();
@@ -238,7 +238,7 @@ public class SchedulingTests : IntegrationTestBase
         var deleteResult = await DeleteScheduledChange(change.Id, false, tokenOverride: loginResult.Token);
         
         // Assert
-        Assert.That(deleteResult?.ErrorType, Is.EqualTo(StatusCodes.Status401Unauthorized.ToString()));
+        Assert.That(deleteResult?.ErrorType, Is.EqualTo(StatusCodes.Status403Forbidden.ToString()));
     }
 
     [Test]

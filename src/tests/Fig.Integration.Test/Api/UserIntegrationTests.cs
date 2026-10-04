@@ -374,7 +374,7 @@ public class UserIntegrationTests : IntegrationTestBase
         var uri = "/users/register";
         var result = await httpClient.PostAsync(uri, data);
 
-        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status401Unauthorized),
+        Assert.That((int) result.StatusCode, Is.EqualTo(StatusCodes.Status403Forbidden),
             "Users should not be able to create other users");
     }
 

@@ -44,7 +44,7 @@ public class AssistantIntegrationTests : IntegrationTestBase
 
         await ApiClient.GetAndVerify(
             "/assistant/status",
-            HttpStatusCode.Unauthorized,
+            HttpStatusCode.Forbidden,
             tokenOverride: $"Bearer {login.Token}");
     }
 
@@ -115,7 +115,7 @@ public class AssistantIntegrationTests : IntegrationTestBase
             tokenOverride: $"Bearer {login.Token}",
             validateSuccess: false);
 
-        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Unauthorized));
+        Assert.That(response.StatusCode, Is.EqualTo(HttpStatusCode.Forbidden));
     }
 
     private static AssistantChatRequestDataContract CreateChatRequest()

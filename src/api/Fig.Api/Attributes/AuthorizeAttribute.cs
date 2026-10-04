@@ -1,3 +1,4 @@
+using Fig.Api.Exceptions;
 using Fig.Contracts.Authentication;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using Microsoft.AspNetCore.Mvc.Filters;
@@ -36,9 +37,9 @@ public class AuthorizeAttribute : Attribute, IAuthorizationFilter
                 metadata = $"({controllerName} -> {actionName})";
             }
 
-            throw new UnauthorizedAccessException($"Role {user.Role} not authorized for this endpoint. {context.HttpContext.Request} {metadata}");
+            throw new ForbiddenAccessException($"Role {user.Role} not authorized for this endpoint. {context.HttpContext.Request} {metadata}");
         }
 
-        throw new UnauthorizedAccessException("Role not authorized for this endpoint");
+        throw new UnauthorizedAccessException("Authentication required for this endpoint");
     }
 }

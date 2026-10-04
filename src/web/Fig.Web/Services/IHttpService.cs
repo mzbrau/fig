@@ -15,6 +15,8 @@ public interface IHttpService
     Task Post(string uri, object value);
     
     Task<T?> Post<T>(string uri, object value);
+
+    Task<T?> PostAnonymous<T>(string uri, object value, bool showNotifications = true);
     
     Task Put(string uri, object? value, int? timeoutOverrideSec = null);
 

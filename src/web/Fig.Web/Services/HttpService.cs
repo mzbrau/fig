@@ -12,6 +12,7 @@ using Fig.Contracts.SettingDefinitions;
 using Fig.Web.Notifications;
 using Fig.Web.Services.Authentication;
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Radzen;
 
@@ -21,23 +22,29 @@ public class HttpService : IHttpService
 {
     private readonly HttpClient _httpClient;
     private readonly IFigApiAccessTokenProvider _accessTokenProvider;
+    private readonly ISessionExpiryCoordinator _sessionExpiryCoordinator;
     private readonly NotificationService _notificationService;
     private readonly INotificationFactory _notificationFactory;
     private readonly NavigationManager _navigationManager;
+    private readonly WebAuthMode _authenticationMode;
 
     public HttpService(
         IHttpClientFactory httpClientFactory,
         NavigationManager navigationManager,
         IFigApiAccessTokenProvider accessTokenProvider,
+        ISessionExpiryCoordinator sessionExpiryCoordinator,
         NotificationService notificationService,
-        INotificationFactory notificationFactory)
+        INotificationFactory notificationFactory,
+        IOptions<WebSettings> webSettings)
     {
         _httpClient = httpClientFactory.CreateClient(HttpClientNames.FigApi);
         _httpClient.Timeout = TimeSpan.FromHours(1);
         _navigationManager = navigationManager;
         _accessTokenProvider = accessTokenProvider;
+        _sessionExpiryCoordinator = sessionExpiryCoordinator;
         _notificationService = notificationService;
         _notificationFactory = notificationFactory;
+        _authenticationMode = webSettings.Value.Authentication.Mode;
         Console.WriteLine($"Initializing httpservice with API address {_httpClient.BaseAddress}");
     }
 
@@ -82,6 +89,12 @@ public class HttpService : IHttpService
         return await SendRequest<T>(request);
     }
 
+    public async Task<T?> PostAnonymous<T>(string uri, object value, bool showNotifications = true)
+    {
+        var request = CreateRequest(HttpMethod.Post, uri, value);
+        return await SendRequest<T>(request, showNotifications, addJwtHeader: false);
+    }
+
     public async Task Put(string uri, object? value, int? timeoutOverrideSec = null)
     {
         var request = CreateRequest(HttpMethod.Put, uri, value);
@@ -115,7 +128,8 @@ public class HttpService : IHttpService
     public async Task<string?> PostForString(string uri, object value, bool showNotifications = true)
     {
         var request = CreateRequest(HttpMethod.Post, uri, value);
-        await AddJwtHeader(request);
+        if (!await TryAddJwtHeader(request))
+            return null;
 
         try
         {
@@ -166,7 +180,8 @@ public class HttpService : IHttpService
 
     private async Task SendRequest(HttpRequestMessage request, int? timeoutOverrideSec = null)
     {
-        await AddJwtHeader(request);
+        if (!await TryAddJwtHeader(request))
+            return;
 
         try
         {
@@ -192,7 +207,8 @@ public class HttpService : IHttpService
 
     private async Task SendRequestOrThrow(HttpRequestMessage request, int? timeoutOverrideSec = null)
     {
-        await AddJwtHeader(request);
+        if (!await TryAddJwtHeader(request))
+            throw new UnauthorizedAccessException("Your session has expired. Please sign in again.");
 
         try
         {
@@ -220,7 +236,8 @@ public class HttpService : IHttpService
 
     private async Task<T?> SendRequest<T>(HttpRequestMessage request, bool showNotifications = true, bool addJwtHeader = true)
     {
-        await AddJwtHeader(request, addJwtHeader);
+        if (!await TryAddJwtHeader(request, addJwtHeader))
+            return default;
 
         try
         {
@@ -275,7 +292,8 @@ public class HttpService : IHttpService
         HttpRequestMessage request,
         bool showNotifications = true)
     {
-        await AddJwtHeader(request);
+        if (!await TryAddJwtHeader(request))
+            return new TimedHttpResult<T>(default, 0, 0);
 
         try
         {
@@ -401,18 +419,27 @@ public class HttpService : IHttpService
             string.IsNullOrWhiteSpace(instance) ? string.Empty : $" ({instance})";
     }
 
-    private async Task AddJwtHeader(HttpRequestMessage request, bool addJwtHeader = true)
+    private async Task<bool> TryAddJwtHeader(HttpRequestMessage request, bool addJwtHeader = true)
     {
         if (!addJwtHeader)
-            return;
+            return true;
 
         var isApiUrl = !request.RequestUri?.IsAbsoluteUri == true;
         if (!isApiUrl)
-            return;
+            return true;
 
         var token = await _accessTokenProvider.GetAccessTokenAsync();
-        if (!string.IsNullOrWhiteSpace(token))
-            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        if (string.IsNullOrWhiteSpace(token))
+            return true;
+
+        if (_authenticationMode == WebAuthMode.FigManaged && JwtTokenHelper.IsExpired(token))
+        {
+            HandleSessionExpired();
+            return false;
+        }
+
+        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+        return true;
     }
 
     private void HandleUnauthorizedResponse(HttpRequestMessage request)
@@ -420,11 +447,22 @@ public class HttpService : IHttpService
         if (request.Headers.Authorization is null)
             return;
 
+        HandleSessionExpired();
+    }
+
+    private void HandleSessionExpired()
+    {
         var currentUri = new Uri(_navigationManager.Uri);
-        if (!currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+        if (currentUri.AbsolutePath.Contains("/account/login", StringComparison.OrdinalIgnoreCase))
+            return;
+
+        if (_authenticationMode == WebAuthMode.FigManaged)
         {
-            _navigationManager.NavigateTo("account/logout");
+            _sessionExpiryCoordinator.NotifySessionExpired();
+            return;
         }
+
+        _navigationManager.NavigateTo("account/logout?sessionExpired=1");
     }
 
     private async Task<bool> HandleErrorResponse(HttpResponseMessage response, bool showNotifications)
