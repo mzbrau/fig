@@ -88,7 +88,7 @@ public class SecurityReportExecuteTests
     }
 
     [Test]
-    public void SecretHygieneReport_ExecuteAsync_ThrowsWhenScopedClientMissing()
+    public async Task SecretHygieneReport_ExecuteAsync_ThrowsWhenScopedClientMissing()
     {
         var clients = new Mock<ISettingClientRepository>();
         clients.Setup(r => r.GetClient("Missing", null)).ReturnsAsync((SettingClientBusinessEntity?)null);
@@ -97,7 +97,7 @@ public class SecurityReportExecuteTests
         var report = new SecretHygieneReport(clients.Object, rotationRepo.Object);
         ReportTestFixtures.Authenticate(report);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => report.ExecuteAsync(new SecretHygieneParameters
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => report.ExecuteAsync(new SecretHygieneParameters
         {
             ClientName = "Missing"
         }));

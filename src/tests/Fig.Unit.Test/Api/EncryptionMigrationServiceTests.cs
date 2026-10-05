@@ -60,7 +60,7 @@ public class EncryptionMigrationServiceTests
     }
 
     [Test]
-    public void ValidateActiveApiHosts_Succeeds_WhenNoHostsHaveConfigurationError()
+    public async Task ValidateActiveApiHosts_Succeeds_WhenNoHostsHaveConfigurationError()
     {
         var apiStatusRepository = new Mock<IApiStatusRepository>();
         apiStatusRepository
@@ -79,7 +79,7 @@ public class EncryptionMigrationServiceTests
 
         var sut = CreateService(apiStatusRepository.Object);
 
-        Assert.DoesNotThrowAsync(async () => await sut.ValidateActiveApiHosts());
+        await Assert.DoesNotThrowAsync(async () => await sut.ValidateActiveApiHosts());
     }
 
     private static EncryptionMigrationService CreateService(IApiStatusRepository apiStatusRepository)

@@ -68,7 +68,7 @@ public class AuthMiddlewareTests
     }
 
     [Test]
-    public void Invoke_ShouldRejectForcedPasswordChangeUser_OnOtherPutEndpoint()
+    public async Task Invoke_ShouldRejectForcedPasswordChangeUser_OnOtherPutEndpoint()
     {
         var context = CreateContext(
             HttpMethods.Put,
@@ -77,7 +77,7 @@ public class AuthMiddlewareTests
             nameof(SettingGroupsController.UpdateGroup),
             _user.Id);
 
-        var exception = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             await _sut.Invoke(context, [_authenticatedService.Object], _userAuthenticationModeService.Object));
 
         Assert.That(exception!.Message, Does.Contain("Password change is required"));
@@ -85,7 +85,7 @@ public class AuthMiddlewareTests
     }
 
     [Test]
-    public void Invoke_ShouldRejectForcedPasswordChangeUser_WhenUpdatingDifferentUser()
+    public async Task Invoke_ShouldRejectForcedPasswordChangeUser_WhenUpdatingDifferentUser()
     {
         var otherUserId = Guid.NewGuid();
         var context = CreateContext(
@@ -95,7 +95,7 @@ public class AuthMiddlewareTests
             nameof(UsersController.Update),
             otherUserId);
 
-        var exception = Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
+        var exception = await Assert.ThrowsAsync<UnauthorizedAccessException>(async () =>
             await _sut.Invoke(context, [_authenticatedService.Object], _userAuthenticationModeService.Object));
 
         Assert.That(exception!.Message, Does.Contain("Password change is required"));

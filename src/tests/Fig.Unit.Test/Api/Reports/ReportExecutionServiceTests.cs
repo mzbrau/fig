@@ -19,18 +19,18 @@ public class ReportExecutionServiceTests
     }
 
     [Test]
-    public void ExecuteAsync_ThrowsWhenReportMissing()
+    public async Task ExecuteAsync_ThrowsWhenReportMissing()
     {
         var registry = new Mock<IReportRegistry>();
         registry.Setup(r => r.Get("missing")).Returns((IReport?)null);
         var service = CreateService(registry.Object);
 
-        Assert.ThrowsAsync<ReportNotFoundException>(() =>
+        await Assert.ThrowsAsync<ReportNotFoundException>(() =>
             service.ExecuteAsync("missing", new ReportExecutionRequestDataContract(new Dictionary<string, object?>())));
     }
 
     [Test]
-    public void ExecuteAsync_ThrowsWhenParametersInvalid()
+    public async Task ExecuteAsync_ThrowsWhenParametersInvalid()
     {
         var report = CreateStubReport();
         var registry = new Mock<IReportRegistry>();
@@ -43,12 +43,12 @@ public class ReportExecutionServiceTests
         var service = CreateService(registry.Object, binder.Object);
         ReportTestFixtures.Authenticate(service);
 
-        Assert.ThrowsAsync<ReportParameterValidationException>(() =>
+        await Assert.ThrowsAsync<ReportParameterValidationException>(() =>
             service.ExecuteAsync("stub", new ReportExecutionRequestDataContract(new Dictionary<string, object?>())));
     }
 
     [Test]
-    public void ExecuteAsync_ThrowsWhenFormatUnsupported()
+    public async Task ExecuteAsync_ThrowsWhenFormatUnsupported()
     {
         var report = CreateStubReport();
         var registry = new Mock<IReportRegistry>();
@@ -68,12 +68,12 @@ public class ReportExecutionServiceTests
             Mock.Of<ILogger<ReportExecutionService>>());
         ReportTestFixtures.Authenticate(service);
 
-        Assert.ThrowsAsync<NotSupportedException>(() =>
+        await Assert.ThrowsAsync<NotSupportedException>(() =>
             service.ExecuteAsync("stub", new ReportExecutionRequestDataContract(new Dictionary<string, object?>())));
     }
 
     [Test]
-    public void ExecuteAsync_RequiresAuthenticatedUser()
+    public async Task ExecuteAsync_RequiresAuthenticatedUser()
     {
         var report = CreateStubReport();
         var registry = new Mock<IReportRegistry>();
@@ -97,7 +97,7 @@ public class ReportExecutionServiceTests
             Mock.Of<IEncryptionService>(),
             Mock.Of<ILogger<ReportExecutionService>>());
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() =>
             service.ExecuteAsync("stub", new ReportExecutionRequestDataContract(new Dictionary<string, object?>())));
     }
 

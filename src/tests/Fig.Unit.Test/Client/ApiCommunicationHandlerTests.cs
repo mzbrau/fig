@@ -326,7 +326,7 @@ public class ApiCommunicationHandlerTests
 
         var handler = CreateHandler();
 
-        var ex = Assert.ThrowsAsync<FigClientNotFoundException>(() => handler.RequestConfiguration());
+        var ex = await Assert.ThrowsAsync<FigClientNotFoundException>(() => handler.RequestConfiguration());
         Assert.That(ex!.ClientName, Is.EqualTo("TestClient"));
     }
 
@@ -360,12 +360,12 @@ public class ApiCommunicationHandlerTests
     }
 
     [Test]
-    public void GetMigrateFromMigrationRequests_WhenCapabilityIsMissing_ShouldThrow()
+    public async Task GetMigrateFromMigrationRequests_WhenCapabilityIsMissing_ShouldThrow()
     {
         var handler = CreateHandler();
         var settings = CreateSettingsWithMigrationMethod();
 
-        var ex = Assert.ThrowsAsync<FigRegistrationException>(() =>
+        var ex = await Assert.ThrowsAsync<FigRegistrationException>(() =>
             handler.GetMigrateFromMigrationRequests(settings));
 
         Assert.That(ex!.Result?.ErrorType, Is.EqualTo("UnsupportedCapability"));
@@ -468,14 +468,14 @@ public class ApiCommunicationHandlerTests
     }
 
     [Test]
-    public void UpdateSettings_WhenCapabilityIsMissing_ShouldThrow()
+    public async Task UpdateSettings_WhenCapabilityIsMissing_ShouldThrow()
     {
         var handler = CreateHandler();
         var updates = new SettingValueUpdatesDataContract(
             [new SettingDataContract("Setting1", new StringSettingDataContract("Value1"))],
             "Test update");
 
-        var ex = Assert.ThrowsAsync<FigSettingUpdateException>(() => handler.UpdateSettings(updates));
+        var ex = await Assert.ThrowsAsync<FigSettingUpdateException>(() => handler.UpdateSettings(updates));
 
         Assert.That(ex!.Result?.ErrorType, Is.EqualTo("UnsupportedCapability"));
     }
@@ -497,7 +497,7 @@ public class ApiCommunicationHandlerTests
                 [new SettingDataContract("Setting1", new StringSettingDataContract("Value1"))]),
             "Test update");
 
-        Assert.DoesNotThrowAsync(async () => await handler.UpdateSettings(updates));
+        await Assert.DoesNotThrowAsync(async () => await handler.UpdateSettings(updates));
     }
 
 #if DEBUG

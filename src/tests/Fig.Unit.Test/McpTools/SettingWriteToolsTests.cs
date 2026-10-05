@@ -59,9 +59,9 @@ public class SettingWriteToolsTests
     }
 
     [Test]
-    public void UpdateSettingValues_WithNullJson_ShouldThrowArgumentException()
+    public async Task UpdateSettingValues_WithNullJson_ShouldThrowArgumentException()
     {
-        Assert.ThrowsAsync<ArgumentException>(async () =>
+        await Assert.ThrowsAsync<ArgumentException>(async () =>
             await SettingWriteTools.UpdateSettingValues(
                 _apiClient.Object, "Client", "null", null, CancellationToken.None));
     }
@@ -105,9 +105,9 @@ public class SettingWriteToolsTests
     }
 
     [Test]
-    public void RequestClientRestart_WithInvalidGuid_ShouldThrowFormatException()
+    public async Task RequestClientRestart_WithInvalidGuid_ShouldThrowFormatException()
     {
-        Assert.ThrowsAsync<FormatException>(async () =>
+        await Assert.ThrowsAsync<FormatException>(async () =>
             await SettingWriteTools.RequestClientRestart(
                 _apiClient.Object, "not-a-guid", CancellationToken.None));
     }

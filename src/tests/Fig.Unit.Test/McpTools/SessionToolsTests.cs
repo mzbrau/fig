@@ -100,9 +100,9 @@ public class SessionToolsTests
     }
 
     [Test]
-    public void GetCustomStatusProperties_WithInstanceButNoClientName_ShouldThrow()
+    public async Task GetCustomStatusProperties_WithInstanceButNoClientName_ShouldThrow()
     {
-        Assert.ThrowsAsync<ArgumentException>(async () =>
+        await Assert.ThrowsAsync<ArgumentException>(async () =>
             await SessionTools.GetCustomStatusProperties(_apiClient.Object, null, "prod", CancellationToken.None));
     }
 }

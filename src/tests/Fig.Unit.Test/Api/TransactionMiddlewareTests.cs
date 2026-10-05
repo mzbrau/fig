@@ -58,7 +58,7 @@ public class TransactionMiddlewareTests
         var middleware = CreateMiddleware(_ => throw new InvalidOperationException("fail"));
         var context = CreateContext();
 
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await middleware.Invoke(context, _session.Object));
 
         Assert.That(ex!.Message, Is.EqualTo("fail"));
@@ -117,7 +117,7 @@ public class TransactionMiddlewareTests
         var middleware = CreateMiddleware(_ => throw new Exception("boom"));
         var context = CreateContext();
 
-        Assert.ThrowsAsync<Exception>(async () => await middleware.Invoke(context, _session.Object));
+        await Assert.ThrowsAsync<Exception>(async () => await middleware.Invoke(context, _session.Object));
 
         _transaction.Verify(t => t.RollbackAsync(It.IsAny<CancellationToken>()), Times.Never);
     }

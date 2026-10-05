@@ -16,7 +16,7 @@ public class CustomActionReadToolsIntegrationTests : McpToolIntegrationTestBase
     {
         var randomExecutionId = Guid.NewGuid().ToString();
 
-        var ex = Assert.ThrowsAsync<HttpRequestException>(async () =>
+        var ex = await Assert.ThrowsAsync<HttpRequestException>(async () =>
             await CustomActionReadTools.GetCustomActionStatus(
                 McpApiClient, randomExecutionId, CancellationToken.None));
 

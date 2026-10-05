@@ -49,14 +49,14 @@ public class ClientAndUserReportExecuteTests
     }
 
     [Test]
-    public void UserActivityReport_ExecuteAsync_RejectsInvertedRange()
+    public async Task UserActivityReport_ExecuteAsync_RejectsInvertedRange()
     {
         var (from, to) = ReportTestFixtures.DefaultRange();
         var eventLog = new Mock<IEventLogRepository>();
         var report = new UserActivityReport(eventLog.Object);
         ReportTestFixtures.Authenticate(report);
 
-        Assert.ThrowsAsync<ReportParameterValidationException>(() => report.ExecuteAsync(new UserActivityParameters
+        await Assert.ThrowsAsync<ReportParameterValidationException>(() => report.ExecuteAsync(new UserActivityParameters
         {
             Username = "alice",
             From = to,
@@ -206,13 +206,13 @@ public class ClientAndUserReportExecuteTests
     }
 
     [Test]
-    public void ClientStatusReport_ExecuteAsync_ThrowIfNoAccess_DeniesFilteredUser()
+    public async Task ClientStatusReport_ExecuteAsync_ThrowIfNoAccess_DeniesFilteredUser()
     {
         var repo = new Mock<ISettingClientRepository>();
         var report = new ClientStatusReport(repo.Object);
         ReportTestFixtures.Authenticate(report, ReportTestFixtures.CreateFilteredUser("^Other$"));
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => report.ExecuteAsync(new ClientStatusParameters
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => report.ExecuteAsync(new ClientStatusParameters
         {
             ClientName = "MyApp"
         }));
@@ -221,7 +221,7 @@ public class ClientAndUserReportExecuteTests
     }
 
     [Test]
-    public void ClientStatusReport_ExecuteAsync_ThrowsWhenClientMissing()
+    public async Task ClientStatusReport_ExecuteAsync_ThrowsWhenClientMissing()
     {
         var repo = new Mock<ISettingClientRepository>();
         repo.Setup(r => r.GetClient("Missing", null)).ReturnsAsync((SettingClientBusinessEntity?)null);
@@ -229,7 +229,7 @@ public class ClientAndUserReportExecuteTests
         var report = new ClientStatusReport(repo.Object);
         ReportTestFixtures.Authenticate(report);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => report.ExecuteAsync(new ClientStatusParameters
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => report.ExecuteAsync(new ClientStatusParameters
         {
             ClientName = "Missing"
         }));
@@ -295,7 +295,7 @@ public class ClientAndUserReportExecuteTests
     }
 
     [Test]
-    public void ClientHistoryReport_ExecuteAsync_ThrowIfNoAccess_DeniesFilteredUser()
+    public async Task ClientHistoryReport_ExecuteAsync_ThrowIfNoAccess_DeniesFilteredUser()
     {
         var (from, to) = ReportTestFixtures.DefaultRange();
         var report = new ClientHistoryReport(
@@ -304,7 +304,7 @@ public class ClientAndUserReportExecuteTests
             Mock.Of<ISettingClientRepository>());
         ReportTestFixtures.Authenticate(report, ReportTestFixtures.CreateFilteredUser("^Other$"));
 
-        Assert.ThrowsAsync<UnauthorizedAccessException>(() => report.ExecuteAsync(new ClientHistoryParameters
+        await Assert.ThrowsAsync<UnauthorizedAccessException>(() => report.ExecuteAsync(new ClientHistoryParameters
         {
             ClientName = "MyApp",
             From = from,
@@ -359,13 +359,13 @@ public class ClientAndUserReportExecuteTests
     }
 
     [Test]
-    public void ClientUptimeReport_ExecuteAsync_RejectsInvertedRange()
+    public async Task ClientUptimeReport_ExecuteAsync_RejectsInvertedRange()
     {
         var (from, to) = ReportTestFixtures.DefaultRange();
         var report = new ClientUptimeReport(Mock.Of<IEventLogRepository>(), Mock.Of<IClientStatusRepository>());
         ReportTestFixtures.Authenticate(report);
 
-        Assert.ThrowsAsync<ReportParameterValidationException>(() => report.ExecuteAsync(new ClientUptimeParameters
+        await Assert.ThrowsAsync<ReportParameterValidationException>(() => report.ExecuteAsync(new ClientUptimeParameters
         {
             ClientName = "MyApp",
             From = to,
@@ -496,7 +496,7 @@ public class ClientAndUserReportExecuteTests
     }
 
     [Test]
-    public void SettingHistoryReport_ExecuteAsync_ThrowsWhenSettingMissing()
+    public async Task SettingHistoryReport_ExecuteAsync_ThrowsWhenSettingMissing()
     {
         var client = ReportTestFixtures.CreateClient("MyApp", null, ReportTestFixtures.CreateSetting("Port", "443"));
 
@@ -508,7 +508,7 @@ public class ClientAndUserReportExecuteTests
         var report = new SettingHistoryReport(clientRepo.Object, historyRepo.Object);
         ReportTestFixtures.Authenticate(report);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => report.ExecuteAsync(new SettingHistoryParameters
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => report.ExecuteAsync(new SettingHistoryParameters
         {
             ClientName = "MyApp",
             SettingName = "Missing"

@@ -149,7 +149,7 @@ public class SettingsRegistrationTests : IntegrationTestBase
     [TestCase(null)]
     [TestCase("")]
     [TestCase("tooshort")]
-    public async Task ShallNotAcceptRegistrationWithoutValidClientSecret(string clientSecret, bool provideSecret = true)
+    public async Task ShallNotAcceptRegistrationWithoutValidClientSecret(string? clientSecret, bool provideSecret = true)
     {
         var settings = new ThreeSettings();
         var dataContract = settings.CreateDataContract(settings.ClientName);

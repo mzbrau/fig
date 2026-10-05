@@ -66,7 +66,7 @@ public class FigSettingsBindingVerifierTests
     }
 
     [Test]
-    public void VerifyOptionsMonitorReloadsAsyncShallFailWhenSettingsAreNotConfigured()
+    public async Task VerifyOptionsMonitorReloadsAsyncShallFailWhenSettingsAreNotConfigured()
     {
         var settings = new BindingVerifierSettings
         {
@@ -76,7 +76,7 @@ public class FigSettingsBindingVerifierTests
         var reloader = new ConfigReloader<BindingVerifierSettings>();
         using var services = BuildServices(settings, (collection, _) => collection.AddOptions(), reloader);
 
-        var exception = Assert.ThrowsAsync<FigSettingsBindingVerificationException>(async () =>
+        var exception = await Assert.ThrowsAsync<FigSettingsBindingVerificationException>(async () =>
             await FigSettingsBindingVerifier.VerifyOptionsMonitorReloadsAsync(
                 services,
                 reloader,
@@ -161,14 +161,14 @@ public class FigSettingsBindingVerifierTests
     }
 
     [Test]
-    public void AutoMutateShallFailWhenSettingsAreNotBound()
+    public async Task AutoMutateShallFailWhenSettingsAreNotBound()
     {
         var settings = new MultiTypeSettings();
         var reloader = new ConfigReloader<MultiTypeSettings>();
         using var services = BuildMultiTypeServices(settings, reloader,
             (collection, _) => collection.AddOptions());
 
-        var exception = Assert.ThrowsAsync<FigSettingsBindingVerificationException>(async () =>
+        var exception = await Assert.ThrowsAsync<FigSettingsBindingVerificationException>(async () =>
             await FigSettingsBindingVerifier.VerifyOptionsMonitorReloadsAsync(
                 services, reloader, settings, timeout: TimeSpan.Zero));
 
@@ -188,14 +188,14 @@ public class FigSettingsBindingVerifierTests
     }
 
     [Test]
-    public void AutoMutateShallThrowInvalidOperationWhenNoMutableProperties()
+    public async Task AutoMutateShallThrowInvalidOperationWhenNoMutableProperties()
     {
         var settings = new NoMutableSettings();
         var reloader = new ConfigReloader<NoMutableSettings>();
         using var services = BuildNoMutableServices(settings, reloader,
             (collection, configuration) => collection.Configure<NoMutableSettings>(configuration));
 
-        Assert.ThrowsAsync<InvalidOperationException>(async () =>
+        await Assert.ThrowsAsync<InvalidOperationException>(async () =>
             await FigSettingsBindingVerifier.VerifyOptionsMonitorReloadsAsync(services, reloader, settings));
     }
 
@@ -221,14 +221,14 @@ public class FigSettingsBindingVerifierTests
     }
 
     [Test]
-    public void AutoMutateFailureMessageShallListAllFailingProperties()
+    public async Task AutoMutateFailureMessageShallListAllFailingProperties()
     {
         var settings = new MultiTypeSettings();
         var reloader = new ConfigReloader<MultiTypeSettings>();
         using var services = BuildMultiTypeServices(settings, reloader,
             (collection, _) => collection.AddOptions());
 
-        var exception = Assert.ThrowsAsync<FigSettingsBindingVerificationException>(async () =>
+        var exception = await Assert.ThrowsAsync<FigSettingsBindingVerificationException>(async () =>
             await FigSettingsBindingVerifier.VerifyOptionsMonitorReloadsAsync(
                 services, reloader, settings, timeout: TimeSpan.Zero));
 

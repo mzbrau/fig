@@ -81,7 +81,7 @@ public class SettingUpdaterTests
 
         await updater.Set(s => s.Name, "NewName").ApplyAsync();
 
-        var ex = Assert.ThrowsAsync<InvalidOperationException>(() => updater.ApplyAsync());
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => updater.ApplyAsync());
         Assert.That(ex!.Message, Is.EqualTo("At least one setting update must be supplied."));
     }
 
@@ -99,11 +99,11 @@ public class SettingUpdaterTests
     }
 
     [Test]
-    public void ApplyAsync_WhenFigIsNotInitialized_ShouldThrow()
+    public async Task ApplyAsync_WhenFigIsNotInitialized_ShouldThrow()
     {
         var updater = new SettingUpdater<UpdaterTestSettings>();
 
-        var ex = Assert.ThrowsAsync<ConfigurationException>(() =>
+        var ex = await Assert.ThrowsAsync<ConfigurationException>(() =>
             updater.Set(s => s.Name, "NewName").ApplyAsync());
 
         Assert.That(ex!.Message, Does.Contain(typeof(UpdaterTestSettings).FullName));

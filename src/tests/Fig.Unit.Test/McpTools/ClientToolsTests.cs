@@ -70,7 +70,7 @@ public class ClientToolsTests
 
         _apiClient.Verify(x => x.GetClientDescriptionsAsync(It.IsAny<CancellationToken>()), Times.Once);
         var deserialized = JsonConvert.DeserializeObject<ClientsDescriptionDataContract>(result);
-        Assert.That(deserialized!.Clients, Has.Count.EqualTo(2));
+        Assert.That(deserialized!.Clients.Count(), Is.EqualTo(2));
     }
 
     [Test]

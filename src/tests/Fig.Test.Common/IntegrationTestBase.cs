@@ -1030,7 +1030,7 @@ public abstract class IntegrationTestBase
 
     protected string GetNewSecret()
     {
-        return Guid.NewGuid().ToString();
+        return TestClientSecrets.New();
     }
 
     protected string GetConfigImportPath()

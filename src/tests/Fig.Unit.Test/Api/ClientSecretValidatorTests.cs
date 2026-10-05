@@ -1,4 +1,5 @@
 using Fig.Api.Validators;
+using Fig.Test.Common;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Api;
@@ -18,6 +19,28 @@ public class ClientSecretValidatorTests
     public void IsValid_ShouldMatchLengthAndUniqueCharacterRules(string clientSecret, bool expected)
     {
         Assert.That(_sut.IsValid(clientSecret), Is.EqualTo(expected));
+    }
+
+    [Test]
+    public void TestClientSecrets_New_AlwaysPassesValidator()
+    {
+        // A bare Guid.ToString() can occasionally fail uniqueness (hex alphabet is small).
+        // TestClientSecrets.New() must always satisfy ClientSecretValidator.
+        for (var i = 0; i < 1000; i++)
+        {
+            var secret = TestClientSecrets.New();
+            Assert.That(_sut.IsValid(secret), Is.True, $"Generated secret failed validation: {secret}");
+        }
+    }
+
+    [Test]
+    public void GuidToString_IsNotAssumedValid()
+    {
+        // Documents why TestClientSecrets exists: low-entropy GUID strings can fail.
+        // Construct a GUID-shaped secret with fewer than 10 unique characters.
+        const string lowEntropyGuidShapedSecret = "00000000-0000-4000-8000-000000000000";
+        Assert.That(lowEntropyGuidShapedSecret.Length, Is.GreaterThanOrEqualTo(32));
+        Assert.That(_sut.IsValid(lowEntropyGuidShapedSecret), Is.False);
     }
 
     private static IEnumerable<TestCaseData> ValidityMatrix()

@@ -66,6 +66,12 @@ public class HttpServiceTests
         _sut = CreateSut();
     }
 
+    [TearDown]
+    public void TearDown()
+    {
+        _httpMessageHandler.Dispose();
+    }
+
     private HttpService CreateSut(WebAuthMode mode = WebAuthMode.FigManaged)
     {
         return new HttpService(
@@ -255,7 +261,7 @@ public class HttpServiceTests
     }
 
     [Test]
-    public void PutOrThrow_ShouldThrowApiMessageAndNotNotify_WhenErrorResponseUsesErrorResultContract()
+    public async Task PutOrThrow_ShouldThrowApiMessageAndNotNotify_WhenErrorResponseUsesErrorResultContract()
     {
         _localStorageService.Setup(x => x.GetItem<AuthenticatedUserModel>("user"))
             .ReturnsAsync(CreateAuthenticatedUser());
@@ -265,7 +271,7 @@ public class HttpServiceTests
                 "{\"ErrorType\":\"400\",\"Message\":\"PreviousSecret is required\",\"Detail\":null,\"Reference\":\"abc\"}")
         };
 
-        var exception = Assert.ThrowsAsync<HttpRequestException>(async () =>
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(async () =>
             await _sut.PutOrThrow("/encryptionmigration", null));
 
         Assert.That(exception!.Message, Is.EqualTo("PreviousSecret is required"));

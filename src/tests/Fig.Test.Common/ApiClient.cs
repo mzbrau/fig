@@ -353,7 +353,7 @@ public class ApiClient
     
     private string GetNewSecret()
     {
-        return Guid.NewGuid().ToString();
+        return TestClientSecrets.New();
     }
     
     private HttpClient GetHttpClient()

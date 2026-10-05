@@ -264,7 +264,7 @@ public class AnalyticsReportExecuteTests
     }
 
     [Test]
-    public void BlastRadiusReport_ExecuteAsync_ThrowsWhenClientMissing()
+    public async Task BlastRadiusReport_ExecuteAsync_ThrowsWhenClientMissing()
     {
         var clients = new Mock<ISettingClientRepository>();
         clients.Setup(r => r.GetClient("Missing", null)).ReturnsAsync((SettingClientBusinessEntity?)null);
@@ -276,7 +276,7 @@ public class AnalyticsReportExecuteTests
         var report = new BlastRadiusReport(clients.Object, groups.Object, statuses.Object, eventLog.Object);
         ReportTestFixtures.Authenticate(report);
 
-        Assert.ThrowsAsync<KeyNotFoundException>(() => report.ExecuteAsync(new BlastRadiusParameters
+        await Assert.ThrowsAsync<KeyNotFoundException>(() => report.ExecuteAsync(new BlastRadiusParameters
         {
             ClientName = "Missing",
             SettingName = "Any"
@@ -372,7 +372,7 @@ public class AnalyticsReportExecuteTests
     }
 
     [Test]
-    public void StaleConfigReport_ExecuteAsync_ThrowsWhenStaleDaysBelowOne()
+    public async Task StaleConfigReport_ExecuteAsync_ThrowsWhenStaleDaysBelowOne()
     {
         var (from, to) = ReportTestFixtures.DefaultRange(7);
         var report = new StaleConfigReport(
@@ -381,7 +381,7 @@ public class AnalyticsReportExecuteTests
             Mock.Of<IEventLogRepository>());
         ReportTestFixtures.Authenticate(report);
 
-        Assert.ThrowsAsync<ReportParameterValidationException>(() => report.ExecuteAsync(new StaleConfigParameters
+        await Assert.ThrowsAsync<ReportParameterValidationException>(() => report.ExecuteAsync(new StaleConfigParameters
         {
             From = from,
             To = to,

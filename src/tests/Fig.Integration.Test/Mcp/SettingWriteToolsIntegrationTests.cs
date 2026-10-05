@@ -40,21 +40,21 @@ public class SettingWriteToolsIntegrationTests : McpToolIntegrationTestBase
     }
 
     [Test]
-    public void ToggleLiveReload_WithInvalidSessionId_ThrowsHttpRequestException()
+    public async Task ToggleLiveReload_WithInvalidSessionId_ThrowsHttpRequestException()
     {
         var fakeSessionId = Guid.NewGuid().ToString();
 
-        Assert.ThrowsAsync<HttpRequestException>(async () =>
+        await Assert.ThrowsAsync<HttpRequestException>(async () =>
             await SettingWriteTools.ToggleLiveReload(
                 McpApiClient, fakeSessionId, true, CancellationToken.None));
     }
 
     [Test]
-    public void RequestClientRestart_WithInvalidSessionId_ThrowsHttpRequestException()
+    public async Task RequestClientRestart_WithInvalidSessionId_ThrowsHttpRequestException()
     {
         var fakeSessionId = Guid.NewGuid().ToString();
 
-        Assert.ThrowsAsync<HttpRequestException>(async () =>
+        await Assert.ThrowsAsync<HttpRequestException>(async () =>
             await SettingWriteTools.RequestClientRestart(
                 McpApiClient, fakeSessionId, CancellationToken.None));
     }

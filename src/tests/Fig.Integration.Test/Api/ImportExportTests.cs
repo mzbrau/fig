@@ -170,7 +170,7 @@ public class ImportExportTests : IntegrationTestBase
         Assert.That(encryptedData.Clients.Count, Is.EqualTo(1));
         Assert.That(
             encryptedData.Clients.Single().Settings
-                .First(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value,
+                .First(a => a.Name == nameof(SecretSettings.SecretWithDefault)).Value?.GetValue(),
             Is.Not.EqualTo(secretDefaultValue));
         Assert.That(encryptedData.Clients.Single().Settings
             .First(a => a.Name == nameof(SecretSettings.SecretWithDefault))
