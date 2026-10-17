@@ -24,43 +24,8 @@ window.monacoIntegration = {
                 document.head.appendChild(cssLink);
             }
             
-            // Configure Monaco Environment for local workers
-            window.MonacoEnvironment = {
-                getWorkerUrl: function (moduleId, label) {
-                    const getWorkerScript = (workerPath) => {
-                        const loaderPath = '/lib/monaco-editor/vs/base/worker/workerMain.js';
-                        const fullWorkerPath = '/lib/monaco-editor/vs' + workerPath;
-                        
-                        // We need to load the loader (workerMain.js) first, then the worker
-                        // Using a data URI to create a worker that imports both
-                        const script = `
-                            self.MonacoEnvironment = {
-                                baseUrl: '${window.location.origin}/lib/monaco-editor/'
-                            };
-                            importScripts('${window.location.origin}${loaderPath}');
-                            importScripts('${window.location.origin}${fullWorkerPath}');
-                        `;
-                        return `data:text/javascript;charset=utf-8,${encodeURIComponent(script)}`;
-                    };
-
-                    // Route to the appropriate worker based on the language
-                    if (label === 'json') {
-                        return getWorkerScript('/language/json/jsonWorker.js');
-                    }
-                    if (label === 'css' || label === 'scss' || label === 'less') {
-                        return getWorkerScript('/language/css/cssWorker.js');
-                    }
-                    if (label === 'html' || label === 'handlebars' || label === 'razor') {
-                        return getWorkerScript('/language/html/htmlWorker.js');
-                    }
-                    if (label === 'typescript' || label === 'javascript') {
-                        return getWorkerScript('/language/typescript/tsWorker.js');
-                    }
-                    
-                    // Default to base worker for editor features
-                    return '/lib/monaco-editor/vs/base/worker/workerMain.js';
-                }
-            };
+            // Monaco 0.57+ AMD editor.main configures MonacoEnvironment.getWorker itself.
+            // Do not set a custom getWorkerUrl that references removed workerMain.js paths.
             
             // Create script element to load Monaco's loader if not already loaded
             if (typeof require === 'undefined') {
