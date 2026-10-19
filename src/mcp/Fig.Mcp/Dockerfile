@@ -9,7 +9,7 @@ RUN apt-get update \
     && apt-get install -y curl \
     && rm -rf /var/lib/apt/lists/*
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0.13 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.402 AS build
 ARG VERSION=0.0.0
 WORKDIR /src
 
