@@ -1,6 +1,6 @@
 # Run from src directory
 # docker build -f mcp/Fig.Mcp/Dockerfile -t fig.mcp .
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.13 AS base
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
@@ -9,7 +9,7 @@ RUN apt-get update \
     && apt-get install -y curl \
     && rm -rf /var/lib/apt/lists/*
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.13 AS build
 ARG VERSION=0.0.0
 WORKDIR /src
 

@@ -1,7 +1,7 @@
 # From source directory (src)
 # docker build -f web/Fig.Web/Dockerfile -t fig.web .
 
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0.13 AS build
 ARG VERSION=0.0.0
 WORKDIR /src
 
