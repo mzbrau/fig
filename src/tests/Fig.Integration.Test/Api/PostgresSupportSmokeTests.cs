@@ -15,7 +15,6 @@ using Fig.Datalayer.BusinessEntities;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using NHibernate;
 using NUnit.Framework;
@@ -35,16 +34,16 @@ public class PostgresSupportSmokeTests
     private WebApplicationFactory<ApiSettings>? _app;
     private HttpClient? _client;
     private string _figAppDataDir = string.Empty;
+    private string? _previousFigAppDataDir;
+    private string? _previousDisableRegistrationChecksum;
 
     [OneTimeSetUp]
     public async Task OneTimeSetUp()
     {
         try
         {
-            // Ryuk requires a Docker Hub pull that may fail in authenticated CI/dev environments.
-            Environment.SetEnvironmentVariable("TESTCONTAINERS_RYUK_DISABLED", "true");
-
             // Override with FIG_TEST_POSTGRES_IMAGE when Docker Hub cannot pull the default tag.
+            // Set TESTCONTAINERS_RYUK_DISABLED externally when Ryuk pulls are blocked.
             var postgresImage = Environment.GetEnvironmentVariable("FIG_TEST_POSTGRES_IMAGE")
                 ?? "postgres:16";
 
@@ -56,11 +55,15 @@ public class PostgresSupportSmokeTests
 
             await _postgres.StartAsync();
         }
-        catch (Exception ex)
+        catch (Exception ex) when (IsDockerUnavailable(ex))
         {
             Assert.Ignore($"PostgreSQL Testcontainers unavailable (Docker required): {ex.Message}");
             return;
         }
+
+        _previousFigAppDataDir = Environment.GetEnvironmentVariable("FIG_APP_DATA_DIR");
+        _previousDisableRegistrationChecksum =
+            Environment.GetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM");
 
         _figAppDataDir = Path.Combine(
             TestContext.CurrentContext.WorkDirectory,
@@ -134,8 +137,10 @@ public class PostgresSupportSmokeTests
         if (_postgres is not null)
             await _postgres.DisposeAsync();
 
-        Environment.SetEnvironmentVariable("FIG_APP_DATA_DIR", null);
-        Environment.SetEnvironmentVariable("FIG_DISABLE_REGISTRATION_CHECKSUM", null);
+        Environment.SetEnvironmentVariable("FIG_APP_DATA_DIR", _previousFigAppDataDir);
+        Environment.SetEnvironmentVariable(
+            "FIG_DISABLE_REGISTRATION_CHECKSUM",
+            _previousDisableRegistrationChecksum);
 
         if (!string.IsNullOrEmpty(_figAppDataDir) && Directory.Exists(_figAppDataDir))
         {
@@ -185,5 +190,24 @@ public class PostgresSupportSmokeTests
 
         var healthResponse = await _client.GetAsync("/_health");
         Assert.That(healthResponse.StatusCode, Is.EqualTo(HttpStatusCode.OK));
+    }
+
+    private static bool IsDockerUnavailable(Exception ex)
+    {
+        for (var current = ex; current is not null; current = current.InnerException)
+        {
+            var message = current.Message;
+            if (message.Contains("Cannot connect to the Docker daemon", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("docker.sock", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("The system cannot find the file specified", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("No such file or directory", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("Docker is either not running or not accessible", StringComparison.OrdinalIgnoreCase) ||
+                message.Contains("Is the docker daemon running", StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 }

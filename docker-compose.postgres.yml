@@ -13,7 +13,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     volumes:
       - fig-postgres-data:/var/lib/postgresql/data
     healthcheck:
@@ -36,8 +36,10 @@ services:
       - FIG_DB_NAME=${FIG_DB_NAME}
       - FIG_USER_NAME=${FIG_USER_NAME}
       - FIG_DB_PASSWORD=${FIG_DB_PWD}
+      - CONNECTION_ENV_FILE=/fig-config/connection.env
     volumes:
       - ./scripts/setup_fig_db_postgres.sh:/usr/local/bin/setup_fig_db_postgres.sh
+      - ./.fig-postgres-config:/fig-config
     entrypoint: ["/bin/bash", "-c", "chmod +x /usr/local/bin/setup_fig_db_postgres.sh && /usr/local/bin/setup_fig_db_postgres.sh"]
 
   fig-api:
@@ -49,8 +51,16 @@ services:
       fig-setup:
         condition: service_completed_successfully
     environment:
-      - ApiSettings__DbConnectionString=Host=fig-db;Port=5432;Database=${FIG_DB_NAME};Username=${FIG_USER_NAME};Password=${FIG_DB_PWD}
       - ApiSettings__DatabaseProvider=PostgreSql
+    volumes:
+      - ./.fig-postgres-config:/fig-config:ro
+    # Source the Npgsql connection string written by fig-setup (shell-safe + password-escaped).
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        . /fig-config/connection.env
+        exec dotnet Fig.Api.dll
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
       start_period: 30s
@@ -86,7 +96,7 @@ services:
     environment:
       - McpSettings__FigApiBaseUrl=http://fig-api:8080
       - McpSettings__Username=${FIG_MCP_USERNAME:-admin}
-      - McpSettings__Password=${FIG_MCP_PASSWORD}
+      - McpSettings__Password=${FIG_MCP_PASSWORD:?Set FIG_MCP_PASSWORD in .env.postgres}
       - McpSettings__Transport=http
 
 volumes:

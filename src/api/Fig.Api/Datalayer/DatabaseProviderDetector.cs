@@ -53,10 +53,18 @@ public static class DatabaseProviderDetector
 
     public static bool IsPostgreSql(string connectionString)
     {
-        if (connectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase))
-            return true;
-
         var builder = new DbConnectionStringBuilder { ConnectionString = connectionString };
+
+        // Restrict "postgres" matching to host-like keys so SQL Server catalogs,
+        // passwords, or application names containing "postgres" are not misclassified.
+        foreach (var key in new[] { "Host", "Server", "Data Source" })
+        {
+            if (builder.TryGetValue(key, out var hostValue) &&
+                hostValue?.ToString()?.Contains("postgres", StringComparison.OrdinalIgnoreCase) == true)
+            {
+                return true;
+            }
+        }
 
         // Npgsql uses Host= (SQL Server uses Server= / Data Source=)
         if (builder.ContainsKey("Host"))

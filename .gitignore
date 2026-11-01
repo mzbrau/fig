@@ -433,6 +433,9 @@ yarn-error.log*
 # Environment files with secrets
 .env
 **/.env
+.env.postgres
+**/.env.postgres
+.fig-postgres-config/
 **/secrets/
 
 # Stryker mutation testing output

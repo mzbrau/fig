@@ -52,7 +52,7 @@ Aspire can inject the connection string as `Fig` — see [.NET Aspire Integratio
 
 ## PostgreSQL
 
-Set an Npgsql-style connection string. Fig detects PostgreSQL from `Host=`, `Username=`, `Port=5432`, or the word `postgres` in the string. You can also set `ApiSettings:DatabaseProvider` to `PostgreSql`.
+Set an Npgsql-style connection string. Fig detects PostgreSQL from `Host=`, `Username=`, `Port=5432`, or a host/server value containing `postgres` (for example `Server=postgres-host`). You can also set `ApiSettings:DatabaseProvider` to `PostgreSql`.
 
 ```
 Host=myServer;Port=5432;Database=fig;Username=fig_login;Password=...
@@ -67,7 +67,7 @@ Host=myServer;Port=5432;Database=fig;Username=fig_login;Password=...
 
 ### Docker Compose (PostgreSQL)
 
-1. Copy [`.env.postgres.example`](https://github.com/mzbrau/fig/blob/main/.env.postgres.example) to `.env.postgres` and set `POSTGRES_PASSWORD`, `FIG_DB_PWD`, and related values.
+1. Copy [`.env.postgres.example`](https://github.com/mzbrau/fig/blob/main/.env.postgres.example) to `.env.postgres` and set `POSTGRES_PASSWORD`, `FIG_DB_PWD`, `FIG_MCP_PASSWORD`, and related values.
 2. From the repository root:
 
 ```bash
