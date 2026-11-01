@@ -223,6 +223,7 @@ public class DatabaseMigrationServiceTests
         public string Description { get; }
         public string SqlServerScript => $"SQL Server SQL for {Description}";
         public string SqliteScript => $"SQLite SQL for {Description}";
+        public string PostgresScript => $"Postgres SQL for {Description}";
 
         public TestMigration(int executionNumber, string description)
         {
@@ -239,6 +240,7 @@ public class DatabaseMigrationServiceTests
         public string Description { get; }
         public string SqlServerScript => $"SQL Server SQL for {Description}";
         public string SqliteScript => $"SQLite SQL for {Description}";
+        public string PostgresScript => $"Postgres SQL for {Description}";
 
         public TestMigrationWithCode(int executionNumber, string description, Func<Task> codeToExecute)
         {

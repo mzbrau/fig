@@ -6,7 +6,7 @@ sidebar_position: 14
 
 ## How do I run Fig locally?
 
-The fastest path is the [fig-quick-start](https://github.com/mzbrau/fig-quick-start) repository, or [Aspire](./guides/9-aspire-integration.md). For a SQL Server deployment, copy `.env.example` to `.env` and run `docker compose up` from the Fig repository root. Fig Web is then at `http://localhost:7148` (user `admin` / password `admin`) and the API at `http://localhost:7281`.
+The fastest path is the [fig-quick-start](https://github.com/mzbrau/fig-quick-start) repository, or [Aspire](./guides/9-aspire-integration.md). For a SQL Server deployment (recommended for production), copy `.env.example` to `.env` and run `docker compose up` from the Fig repository root. For PostgreSQL, copy `.env.postgres.example` to `.env.postgres` and run `docker compose -f docker-compose.postgres.yml --env-file .env.postgres up`. Fig Web is then at `http://localhost:7148` (user `admin` / password `admin`) and the API at `http://localhost:7281`. See [Database](./database.md).
 
 ## How to build and run containers locally?
 

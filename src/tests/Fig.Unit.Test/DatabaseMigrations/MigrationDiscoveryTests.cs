@@ -21,6 +21,7 @@ public class MigrationDiscoveryTests
         Assert.That(migration.Description, Is.EqualTo("Disable time machine feature in configuration table"));
         Assert.That(migration.SqlServerScript, Is.Not.Empty);
         Assert.That(migration.SqliteScript, Is.Not.Empty);
+        Assert.That(migration.PostgresScript, Is.Not.Empty);
     }
     
     [Test]
@@ -52,6 +53,17 @@ public class MigrationDiscoveryTests
     }
 
     [Test]
+    public void Migration_002_PostgresScript_ShouldUpdateEnableTimeMachine()
+    {
+        var migration = new Migration_002_DisableTimeMachine();
+
+        var script = migration.PostgresScript;
+
+        Assert.That(script, Does.Contain("UPDATE configuration"));
+        Assert.That(script, Does.Contain("enable_time_machine = FALSE"));
+    }
+
+    [Test]
     public void Migration_007_ShouldBeDiscoverable()
     {
         // Arrange & Act
@@ -62,6 +74,7 @@ public class MigrationDiscoveryTests
         Assert.That(migration.Description, Is.EqualTo("Backfill migrate-from migrations to enabled for existing configuration rows"));
         Assert.That(migration.SqlServerScript, Is.Not.Empty);
         Assert.That(migration.SqliteScript, Is.Not.Empty);
+        Assert.That(migration.PostgresScript, Is.Not.Empty);
     }
 
     [Test]
@@ -101,6 +114,35 @@ public class MigrationDiscoveryTests
         Assert.That(migration.Description, Is.EqualTo("Backfill password change required flag to false for existing users"));
         Assert.That(migration.SqlServerScript, Is.Not.Empty);
         Assert.That(migration.SqliteScript, Is.Not.Empty);
+        Assert.That(migration.PostgresScript, Is.Not.Empty);
+    }
+
+    [Test]
+    public void Migration_008_PostgresScript_ShouldBackfillPasswordChangeRequiredColumn()
+    {
+        var migration = new Migration_008_AddUserPasswordChangeRequired();
+
+        Assert.That(migration.PostgresScript, Does.Contain("UPDATE users"));
+        Assert.That(migration.PostgresScript, Does.Contain("password_change_required = FALSE"));
+    }
+
+    [Test]
+    public void AllMigrations_ShouldImplementPostgresScript()
+    {
+        var assembly = Assembly.Load("Fig.Api");
+        var migrationType = typeof(IDatabaseMigration);
+        var migrations = assembly.GetTypes()
+            .Where(t => migrationType.IsAssignableFrom(t) && !t.IsInterface && !t.IsAbstract)
+            .Select(t => Activator.CreateInstance(t) as IDatabaseMigration)
+            .Where(m => m != null)
+            .ToList();
+
+        Assert.That(migrations, Is.Not.Empty);
+        foreach (var migration in migrations)
+        {
+            Assert.That(migration!.PostgresScript, Is.Not.Null,
+                $"Migration {migration.ExecutionNumber} should implement PostgresScript");
+        }
     }
 
     [Test]

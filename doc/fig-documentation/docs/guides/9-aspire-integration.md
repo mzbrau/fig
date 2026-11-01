@@ -74,14 +74,26 @@ var figWeb = builder.AddFigWeb("fig-web", image: "myregistry.example.com/myorg/f
 
 ## Database Configuration
 
-By default, Fig API uses an embedded SQLite database. For production use, you can configure it to use SQL Server.
+By default, Fig API uses an embedded SQLite database. For production, use **SQL Server** (recommended) or **PostgreSQL**. See [Database](../database.md).
 
-1. Add your connection string to the AppHost's configuration (e.g., user secrets):
+1. Add your connection string to the AppHost's configuration (e.g., user secrets).
+
+SQL Server:
 
 ```json
 {
   "ConnectionStrings": {
     "FigDb": "Server=myServerAddress;Database=myDataBase;User Id=myUsername;Password=myPassword;"
+  }
+}
+```
+
+PostgreSQL:
+
+```json
+{
+  "ConnectionStrings": {
+    "FigDb": "Host=myServerAddress;Port=5432;Database=myDataBase;Username=myUsername;Password=myPassword;"
   }
 }
 ```

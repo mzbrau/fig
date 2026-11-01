@@ -14,7 +14,8 @@ The Fig API can be configured from:
 
 | Setting | Description | Default |
 | ------- | ----------- | ------- |
-| `DbConnectionString` | Database connection string. SQLite by default; any NHibernate-supported SQL database works. See [Database](./database.md). | `Data Source=fig.db;Version=3;New=True` |
+| `DbConnectionString` | Database connection string. SQLite by default; SQL Server (recommended for production) and PostgreSQL are also supported. See [Database](./database.md). | `Data Source=fig.db;Version=3;New=True` |
+| `DatabaseProvider` | Optional explicit provider (`Sqlite`, `SqlServer`, or `PostgreSql`) when the connection string is ambiguous. | _(unset — auto-detect)_ |
 | `Secret` | Used to sign auth tokens and encrypt setting values at rest. Use a long random value. | (required) |
 | `TokenLifeMinutes` | Lifetime of Fig-managed JWT auth tokens, in minutes. | `10080` (7 days) |
 | `PreviousSecret` | Previous API secret, used during [API secret migration](./guides/1-api-secret-migration.md). | empty |

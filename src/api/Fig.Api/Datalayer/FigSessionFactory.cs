@@ -12,6 +12,7 @@ using NHibernate.Cfg;
 using NHibernate.Cfg.MappingSchema;
 using NHibernate.Mapping.ByCode;
 using NHibernate.Tool.hbm2ddl;
+using Npgsql;
 
 namespace Fig.Api.Datalayer;
 
@@ -25,7 +26,7 @@ public class FigSessionFactory : IFigSessionFactory
     private bool _isDatabaseNewlyCreated;
     private HbmMapping? _mapping;
     private ISessionFactory? _sessionFactory;
-    private bool? _isSqlLite;
+    private DatabaseProvider? _databaseProvider;
 
     public FigSessionFactory(ILogger<FigSessionFactory> logger, IOptions<ApiSettings> settings, IConfiguration appConfiguration)
     {
@@ -80,7 +81,7 @@ public class FigSessionFactory : IFigSessionFactory
 
     private void CheckForUserTableCreation(string sql)
     {
-        if (sql.Contains(UserTableCreationPart))
+        if (sql.Contains(UserTableCreationPart, StringComparison.OrdinalIgnoreCase))
             _isDatabaseNewlyCreated = true;
 
         // ReSharper disable once TemplateIsNotCompileTimeConstantProblem
@@ -107,47 +108,31 @@ public class FigSessionFactory : IFigSessionFactory
 
     private string GetDialect(string? connectionString)
     {
-        return IsSqlLite(connectionString)
-            ? "NHibernate.Dialect.SQLiteDialect"
-            : "NHibernate.Dialect.MsSql2012Dialect";
+        return ResolveProvider(connectionString) switch
+        {
+            DatabaseProvider.Sqlite => "NHibernate.Dialect.SQLiteDialect",
+            DatabaseProvider.PostgreSql => "NHibernate.Dialect.PostgreSQL83Dialect",
+            _ => "NHibernate.Dialect.MsSql2012Dialect"
+        };
     }
 
     private string GetDriverClass(string? connectionString)
     {
-        return IsSqlLite(connectionString)
-            ? typeof(RetryingSQLiteDriver).AssemblyQualifiedName!
-            : "NHibernate.Driver.MicrosoftDataSqlClientDriver";
-    }
-    
-    private bool IsSqlLite(string? connectionString)
-    {
-        if (_isSqlLite is not null)
-            return _isSqlLite.Value;
-        
-        if (string.IsNullOrWhiteSpace(connectionString))
-            throw new ArgumentException("Connection string cannot be null or empty.", nameof(connectionString));
-
-        var builder = new DbConnectionStringBuilder { ConnectionString = connectionString };
-
-        // Check for SQLite indicators
-        object? uri = null;
-        if (builder.TryGetValue("Data Source", out var dataSource) || 
-            builder.TryGetValue("URI", out uri))
+        return ResolveProvider(connectionString) switch
         {
-            string dataSourceValue = dataSource?.ToString() ?? uri?.ToString() ?? string.Empty;
-            if (!string.IsNullOrEmpty(dataSourceValue) && 
-                (dataSourceValue.EndsWith(".sqlite", StringComparison.OrdinalIgnoreCase) ||
-                 dataSourceValue.EndsWith(".db", StringComparison.OrdinalIgnoreCase) ||
-                 dataSourceValue.Equals(":memory:", StringComparison.OrdinalIgnoreCase) ||
-                 dataSourceValue.StartsWith("file:", StringComparison.OrdinalIgnoreCase)))
-            {
-                _isSqlLite = true;
-                return _isSqlLite.Value;
-            }
-        }
+            DatabaseProvider.Sqlite => typeof(RetryingSQLiteDriver).AssemblyQualifiedName!,
+            DatabaseProvider.PostgreSql => "NHibernate.Driver.NpgsqlDriver",
+            _ => "NHibernate.Driver.MicrosoftDataSqlClientDriver"
+        };
+    }
 
-        _isSqlLite = false;
-        return _isSqlLite.Value;
+    private DatabaseProvider ResolveProvider(string? connectionString)
+    {
+        if (_databaseProvider is not null)
+            return _databaseProvider.Value;
+
+        _databaseProvider = DatabaseProviderDetector.Detect(connectionString, _settings.Value.DatabaseProvider);
+        return _databaseProvider.Value;
     }
 
     private HbmMapping CreateMapping()
@@ -225,33 +210,58 @@ public class FigSessionFactory : IFigSessionFactory
             return null;
         }
 
-        if (IsSqlLite(connectionString))
+        var provider = ResolveProvider(connectionString);
+
+        switch (provider)
         {
-            var sqliteBuilder = new DbConnectionStringBuilder { ConnectionString = connectionString };
-            sqliteBuilder.TryGetValue("Data Source", out var dataSource);
-            var providerVersion = typeof(System.Data.SQLite.SQLiteConnection).Assembly.GetName().Version;
-            _logger.LogInformation(
-                "Using SQLite via System.Data.SQLite {ProviderVersion} with native e_sqlite3 (SourceGear.sqlite3 RID assets). Data Source: {DataSource}",
-                providerVersion,
-                dataSource?.ToString() ?? "(unknown)");
-        }
-        else
-        {
-            var builder = new SqlConnectionStringBuilder(connectionString);
-            
-            // Log the connection string (with masked password)
-            var logBuilder = new SqlConnectionStringBuilder(connectionString);
-            if (!string.IsNullOrWhiteSpace(logBuilder.Password))
+            case DatabaseProvider.Sqlite:
             {
-                logBuilder.Password = "******";
+                var sqliteBuilder = new DbConnectionStringBuilder { ConnectionString = connectionString };
+                sqliteBuilder.TryGetValue("Data Source", out var dataSource);
+                var providerVersion = typeof(System.Data.SQLite.SQLiteConnection).Assembly.GetName().Version;
+                _logger.LogInformation(
+                    "Using SQLite via System.Data.SQLite {ProviderVersion} with native e_sqlite3 (SourceGear.sqlite3 RID assets). Data Source: {DataSource}",
+                    providerVersion,
+                    dataSource?.ToString() ?? "(unknown)");
+                break;
             }
-            _logger.LogInformation("Connecting to database with connection string {ConnectionString}", logBuilder.ToString());
-            
-            // Update connection string with MultipleActiveResultSets if needed
-            if (!builder.MultipleActiveResultSets)
+            case DatabaseProvider.PostgreSql:
             {
-                builder.MultipleActiveResultSets = true;
+                var builder = new NpgsqlConnectionStringBuilder(connectionString);
+                var logBuilder = new NpgsqlConnectionStringBuilder(connectionString);
+                if (!string.IsNullOrWhiteSpace(logBuilder.Password))
+                {
+                    logBuilder.Password = "******";
+                }
+
+                _logger.LogInformation(
+                    "Using PostgreSQL via Npgsql. Connecting with connection string {ConnectionString}",
+                    logBuilder.ToString());
                 connectionString = builder.ConnectionString;
+                break;
+            }
+            default:
+            {
+                var builder = new SqlConnectionStringBuilder(connectionString);
+
+                // Log the connection string (with masked password)
+                var logBuilder = new SqlConnectionStringBuilder(connectionString);
+                if (!string.IsNullOrWhiteSpace(logBuilder.Password))
+                {
+                    logBuilder.Password = "******";
+                }
+
+                _logger.LogInformation("Connecting to SQL Server with connection string {ConnectionString}",
+                    logBuilder.ToString());
+
+                // Update connection string with MultipleActiveResultSets if needed
+                if (!builder.MultipleActiveResultSets)
+                {
+                    builder.MultipleActiveResultSets = true;
+                    connectionString = builder.ConnectionString;
+                }
+
+                break;
             }
         }
 

@@ -29,6 +29,7 @@ public class Migration_004_PopulateClientRegistrationHistoryTests
     {
         Assert.That(_migration.SqlServerScript, Is.EqualTo(string.Empty));
         Assert.That(_migration.SqliteScript, Is.EqualTo(string.Empty));
+        Assert.That(_migration.PostgresScript, Is.EqualTo(string.Empty));
     }
 
     [Test]

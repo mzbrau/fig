@@ -24,6 +24,8 @@ public class Migration_004_PopulateClientRegistrationHistory : IDatabaseMigratio
     
     public string SqliteScript => string.Empty; // No SQL needed, using code execution
 
+    public string PostgresScript => string.Empty; // No SQL needed, using code execution
+
     public async Task? ExecuteCode(IServiceProvider serviceProvider)
     {
         var logger = serviceProvider.GetRequiredService<ILogger<Migration_004_PopulateClientRegistrationHistory>>();

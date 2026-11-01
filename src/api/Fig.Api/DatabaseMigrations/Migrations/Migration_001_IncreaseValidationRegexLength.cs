@@ -12,6 +12,8 @@ public class Migration_001_IncreaseValidationRegexLength : IDatabaseMigration
     
     public string SqliteScript => GetSqliteScript();
 
+    public string PostgresScript => GetPostgresScript();
+
     private static string GetSqlServerScript()
     {
         return @"
@@ -45,6 +47,30 @@ END
 -- The column definition change will be handled by schema updates
 -- This is a no-op for SQLite databases
 SELECT 'SQLite does not enforce VARCHAR constraints - validation_regex column length is effectively unlimited' as migration_result;
+";
+    }
+
+    private static string GetPostgresScript()
+    {
+        return @"
+-- Widen validation_regex to text when it is a bounded character type
+DO $$
+BEGIN
+    IF EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'settings'
+          AND column_name = 'validation_regex'
+          AND data_type IN ('character varying', 'character')
+          AND (character_maximum_length IS NOT NULL)
+    ) THEN
+        ALTER TABLE settings
+        ALTER COLUMN validation_regex TYPE text;
+        RAISE NOTICE 'Altered settings.validation_regex column type to text';
+    ELSE
+        RAISE NOTICE 'validation_regex column either does not exist or is already unlimited text';
+    END IF;
+END $$;
 ";
     }
 }
