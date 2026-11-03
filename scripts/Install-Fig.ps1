@@ -334,7 +334,7 @@ function Setup-Database {
 
 function Get-ShouldAddClientSecret {
     while ($true) {
-        $response = Read-Host "Do you want to add a client secret environment variable now? (Note that your client will need to run as the same user running this script) (Yes/No)"
+        $response = Read-Host "Do you want to add a client secret environment variable now? (Yes/No)"
         $response = $response.Trim().ToLower()
 
         if ($response -eq 'yes' -or $response -eq 'y') {
@@ -363,7 +363,7 @@ function Set-ClientSecret {
         $encryptedGuid = [System.Security.Cryptography.ProtectedData]::Protect(
             [System.Text.Encoding]::UTF8.GetBytes($guidString),
             $null,
-            [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+            [System.Security.Cryptography.DataProtectionScope]::LocalMachine)
         $envVarName = "FIG_${clientName}_SECRET"
         $encryptedGuidBase64 = [System.Convert]::ToBase64String($encryptedGuid)
 

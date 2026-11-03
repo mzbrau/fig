@@ -68,7 +68,7 @@ Settings marked with the `[Secret]` attribute receive special handling:
 
 - The plain setting name is **not** included in the file
 - Instead, the setting appears as `<SettingName>_FigEncrypted` with a [DPAPI](https://learn.microsoft.com/en-us/dotnet/standard/security/how-to-use-data-protection)-encrypted value
-- The encrypted value is tied to the **currently logged-in user** on the machine where the command is run
+- When using the default `DpapiSecretProvider`, the encrypted value uses DPAPI **LocalMachine** scope on the machine where the command is run (any local process that can read the file can decrypt). A custom `IAppSettingsEncryptionProvider` uses that provider's own format instead.
 
 :::warning Windows Only
 DPAPI encryption is supported only on Windows. On Linux and macOS, secret settings are omitted from the generated file and a warning is printed to the console.

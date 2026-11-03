@@ -18,7 +18,7 @@ The offline workflow has two phases:
 - Windows machine (DPAPI encryption is Windows-only)
 - The application must use Fig.Client and pass `CommandLineArgs` in `FigOptions`
 - The `Fig.Client.SecretProvider.Dpapi` NuGet package must be referenced and `DpapiSecretProvider` added to `ClientSecretProviders`
-- The same Windows user account must be used both to generate the file and to run the application
+- Generate and run on the **same Windows machine** (DPAPI LocalMachine scope); any local account that can read the file can decrypt
 
 ## Step 1: Configure Your Application
 
@@ -56,7 +56,7 @@ myapp.exe --printappsettings ApiUrl=https://api.company.com Password=MySecretPas
 ```
 
 :::tip
-You must run this command **as the same Windows user account** that will run the application in production. DPAPI encryption is tied to the user identity.
+You must run this command **on the same Windows machine** that will run the application in production. DPAPI encryption uses LocalMachine scope and is tied to that machine (any local account that can read the file can decrypt).
 :::
 
 The command will:
@@ -74,7 +74,7 @@ The command will:
 }
 ```
 
-Notice that `Password` appears as `Password_FigEncrypted` — the value is DPAPI-encrypted and tied to the Windows user who generated it (unreadable by others). **Do not commit production secrets to source control**, even in encrypted form. For production environments, use file system permissions, an external secret manager, or environment variables to distribute this file securely.
+Notice that `Password` appears as `Password_FigEncrypted` — the value is DPAPI-encrypted for this machine (LocalMachine scope). **Do not commit production secrets to source control**, even in encrypted form. For production environments, use file system permissions, an external secret manager, or environment variables to distribute this file securely.
 
 Settings marked `[Secret]` are always stored encrypted. Other settings use their default values unless overridden.
 
@@ -110,18 +110,20 @@ Use `--figoffline` when you have encrypted settings in `appsettings.json`. Use `
 
 ## Security Considerations
 
-- DPAPI-encrypted values are tied to the **user account** on the **machine** where they were created
-- The encrypted value **cannot** be used on a different machine or by a different user
+- DPAPI-encrypted values are tied to the **machine** where they were created (LocalMachine scope)
+- The encrypted value **cannot** be used on a different machine
+- Any process on that machine that can read the file can decrypt LocalMachine DPAPI values — protect the file with ACLs
 - If you need to rotate the encrypted values (e.g., password changed), regenerate the `appsettings.json` using `--printappsettings` with the new value
-- Encrypted `appsettings.json` files are safer than plain text but should still be protected with appropriate file system permissions
+- After upgrading from CurrentUser DPAPI, regenerate `_FigEncrypted` values on the target machine
 
 ## Troubleshooting
 
 **Secret setting shows the default value instead of the configured one**  
 Ensure that:
-- The application is running as the same Windows user who generated the file
+- The application is running on the same Windows machine that generated the file
 - The `_FigEncrypted` key in `appsettings.json` is properly formed (no typos in the suffix)
 - The `appsettings.json` is in a location that the application reads from
+- After a Fig upgrade from CurrentUser DPAPI, regenerate the file with `--printappsettings`
 
 **Settings are not being read from appsettings.json**  
 The application's startup must add `appsettings.json` as a configuration source before calling `AddFig<T>()`. Example:

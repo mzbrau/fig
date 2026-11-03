@@ -61,7 +61,7 @@ public class ReleaseHighlightsCoordinatorTests
         var result = await _sut.GetAutoOpenDialog();
 
         Assert.That(result, Is.Not.Null);
-        Assert.That(result!.Items.Count, Is.EqualTo(25));
+        Assert.That(result!.Items.Count, Is.EqualTo(26));
         Assert.That(result.StartIndex, Is.EqualTo(0));
         Assert.That(result.Items.Select(x => x.ReleaseVersion).Distinct(),
             Is.EquivalentTo(new[] { "3.0", "3.1", "3.3", "3.4", "3.5", "3.6", "3.7", "4.0" }));
@@ -76,7 +76,8 @@ public class ReleaseHighlightsCoordinatorTests
                 "4.0-offline-appsettings",
                 "4.0-registration-checksum",
                 "4.0-instance-override",
-                "4.0-change-dialog-context-menu"
+                "4.0-change-dialog-context-menu",
+                "4.0-dpapi-localmachine"
             }));
     }
 

@@ -18,7 +18,7 @@ The Fig API can be configured from:
 | `Secret` | Used to sign auth tokens and encrypt setting values at rest. Use a long random value. | (required) |
 | `TokenLifeMinutes` | Lifetime of Fig-managed JWT auth tokens, in minutes. | `10080` (7 days) |
 | `PreviousSecret` | Previous API secret, used during [API secret migration](./guides/1-api-secret-migration.md). | empty |
-| `SecretsDpapiEncrypted` | When `true`, `Secret` and `PreviousSecret` are DPAPI-encrypted (Windows only). | `false` |
+| `SecretsDpapiEncrypted` | When `true`, `Secret` and `PreviousSecret` are DPAPI-encrypted with LocalMachine scope (Windows only). Legacy CurrentUser ciphertext is still accepted. Re-encrypt after upgrading from CurrentUser DPAPI. | `false` |
 | `WebClientAddresses` | Allowed Fig Web origins for CORS. | localhost ports used in development |
 | `ForceAdminDefaultPasswordChange` | Require the default `admin` user to change password on first login. | `false` |
 | `ImportFolderPath` | Absolute path for file-based imports. Empty or invalid disables file import. Supports environment-variable expansion (for example `%APPDATA%/Fig/ConfigImport`). | empty |

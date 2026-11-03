@@ -52,13 +52,12 @@ public class ViewModel : INotifyPropertyChanged
         }
     }
 
-    public string CurrentUserExplanation =>
-        $"{Environment.UserName}";
+    public string MachineExplanation => Environment.MachineName;
 
     private string EncryptText(string plainText)
     {
         var bytes = Encoding.UTF8.GetBytes(plainText);
-        var protectedData = ProtectedData.Protect(bytes, null, DataProtectionScope.CurrentUser);
+        var protectedData = ProtectedData.Protect(bytes, null, DataProtectionScope.LocalMachine);
         return Convert.ToBase64String(protectedData);
     }
 
@@ -66,8 +65,17 @@ public class ViewModel : INotifyPropertyChanged
     {
         try
         {
-            return Encoding.UTF8.GetString(
-                ProtectedData.Unprotect(Convert.FromBase64String(encryptedText), null, DataProtectionScope.CurrentUser));
+            var protectedBytes = Convert.FromBase64String(encryptedText);
+            try
+            {
+                return Encoding.UTF8.GetString(
+                    ProtectedData.Unprotect(protectedBytes, null, DataProtectionScope.LocalMachine));
+            }
+            catch (CryptographicException)
+            {
+                return Encoding.UTF8.GetString(
+                    ProtectedData.Unprotect(protectedBytes, null, DataProtectionScope.CurrentUser));
+            }
         }
         catch
         {
