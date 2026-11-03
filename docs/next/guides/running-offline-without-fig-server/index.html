@@ -10,7 +10,7 @@
 
 
 <link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.0a8cb4c2.css">
-<script src="/assets/js/runtime~main.5c277629.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.bc6102b4.js" defer="defer"></script>
 <script src="/assets/js/main.e0d30d76.js" defer="defer"></script>
 </head>
 <body>
@@ -30,7 +30,7 @@
 <li class="">Windows machine (DPAPI encryption is Windows-only)</li>
 <li class="">The application must use Fig.Client and pass <code>CommandLineArgs</code> in <code>FigOptions</code></li>
 <li class="">The <code>Fig.Client.SecretProvider.Dpapi</code> NuGet package must be referenced and <code>DpapiSecretProvider</code> added to <code>ClientSecretProviders</code></li>
-<li class="">The same Windows user account must be used both to generate the file and to run the application</li>
+<li class="">Generate and run on the <strong>same Windows machine</strong> (DPAPI LocalMachine scope); any local account that can read the file can decrypt</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="step-1-configure-your-application">Step 1: Configure Your Application<a href="#step-1-configure-your-application" class="hash-link" aria-label="Direct link to Step 1: Configure Your Application" title="Direct link to Step 1: Configure Your Application" translate="no">​</a></h2>
 <p>Ensure your <code>Program.cs</code> (or equivalent startup code) passes the command line arguments to Fig. If you add a <code>DpapiSecretProvider</code> to <code>ClientSecretProviders</code>, DPAPI encryption is enabled automatically for both client secrets and appsettings generation — no extra property is needed:</p>
@@ -41,7 +41,7 @@
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="step-2-generate-the-appsettingsjson">Step 2: Generate the appsettings.json<a href="#step-2-generate-the-appsettingsjson" class="hash-link" aria-label="Direct link to Step 2: Generate the appsettings.json" title="Direct link to Step 2: Generate the appsettings.json" translate="no">​</a></h2>
 <p>Run your application with <code>--printappsettings</code>, providing values for any settings you want to override (including secrets):</p>
 <div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">myapp.exe --printappsettings ApiUrl=https://api.company.com Password=MySecretPass123</span><br></div></code></pre></div></div>
-<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>You must run this command <strong>as the same Windows user account</strong> that will run the application in production. DPAPI encryption is tied to the user identity.</p></div></div>
+<div class="theme-admonition theme-admonition-tip admonition_xJq3 alert alert--success"><div class="admonitionHeading_Gvgb"><span class="admonitionIcon_Rf37"><svg viewBox="0 0 12 16"><path fill-rule="evenodd" d="M6.5 0C3.48 0 1 2.19 1 5c0 .92.55 2.25 1 3 1.34 2.25 1.78 2.78 2 4v1h5v-1c.22-1.22.66-1.75 2-4 .45-.75 1-2.08 1-3 0-2.81-2.48-5-5.5-5zm3.64 7.48c-.25.44-.47.8-.67 1.11-.86 1.41-1.25 2.06-1.45 3.23-.02.05-.02.11-.02.17H5c0-.06 0-.13-.02-.17-.2-1.17-.59-1.83-1.45-3.23-.2-.31-.42-.67-.67-1.11C2.44 6.78 2 5.65 2 5c0-2.2 2.02-4 4.5-4 1.22 0 2.36.42 3.22 1.19C10.55 2.94 11 3.94 11 5c0 .66-.44 1.78-.86 2.48zM4 14h5c-.23 1.14-1.3 2-2.5 2s-2.27-.86-2.5-2z"></path></svg></span>tip</div><div class="admonitionContent_BuS1"><p>You must run this command <strong>on the same Windows machine</strong> that will run the application in production. DPAPI encryption uses LocalMachine scope and is tied to that machine (any local account that can read the file can decrypt).</p></div></div>
 <p>The command will:</p>
 <ol>
 <li class="">Create <code>appsettings.fig.json</code> in the <strong>current working directory</strong></li>
@@ -50,7 +50,7 @@
 </ol>
 <h3 class="anchor anchorTargetStickyNavbar_Vzrq" id="example-output">Example Output<a href="#example-output" class="hash-link" aria-label="Direct link to Example Output" title="Direct link to Example Output" translate="no">​</a></h3>
 <div class="language-json codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-json codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token punctuation" style="color:rgb(248, 248, 242)">{</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token property">&quot;ApiUrl&quot;</span><span class="token operator">:</span><span class="token plain"> </span><span class="token string" style="color:rgb(255, 121, 198)">&quot;https://api.company.com&quot;</span><span class="token punctuation" style="color:rgb(248, 248, 242)">,</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token property">&quot;MaxRetries&quot;</span><span class="token operator">:</span><span class="token plain"> </span><span class="token string" style="color:rgb(255, 121, 198)">&quot;3&quot;</span><span class="token punctuation" style="color:rgb(248, 248, 242)">,</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">  </span><span class="token property">&quot;Password_FigEncrypted&quot;</span><span class="token operator">:</span><span class="token plain"> </span><span class="token string" style="color:rgb(255, 121, 198)">&quot;AQAAANCMnd8BFdERjH...&quot;</span><span class="token plain"></span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain"></span><span class="token punctuation" style="color:rgb(248, 248, 242)">}</span><br></div></code></pre></div></div>
-<p>Notice that <code>Password</code> appears as <code>Password_FigEncrypted</code> — the value is DPAPI-encrypted and tied to the Windows user who generated it (unreadable by others). <strong>Do not commit production secrets to source control</strong>, even in encrypted form. For production environments, use file system permissions, an external secret manager, or environment variables to distribute this file securely.</p>
+<p>Notice that <code>Password</code> appears as <code>Password_FigEncrypted</code> — the value is DPAPI-encrypted for this machine (LocalMachine scope). <strong>Do not commit production secrets to source control</strong>, even in encrypted form. For production environments, use file system permissions, an external secret manager, or environment variables to distribute this file securely.</p>
 <p>Settings marked <code>[Secret]</code> are always stored encrypted. Other settings use their default values unless overridden.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="step-3-run-the-application-offline">Step 3: Run the Application Offline<a href="#step-3-run-the-application-offline" class="hash-link" aria-label="Direct link to Step 3: Run the Application Offline" title="Direct link to Step 3: Run the Application Offline" translate="no">​</a></h2>
 <p>Rename the generated <code>appsettings.fig.json</code> to <code>appsettings.json</code> and place it next to your application and start it with <code>--figoffline</code>:</p>
@@ -69,18 +69,20 @@
 <p>Use <code>--figoffline</code> when you have encrypted settings in <code>appsettings.json</code>. Use <code>--disable-fig=true</code> when you want to use standard configuration entirely without any Fig involvement.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="security-considerations">Security Considerations<a href="#security-considerations" class="hash-link" aria-label="Direct link to Security Considerations" title="Direct link to Security Considerations" translate="no">​</a></h2>
 <ul>
-<li class="">DPAPI-encrypted values are tied to the <strong>user account</strong> on the <strong>machine</strong> where they were created</li>
-<li class="">The encrypted value <strong>cannot</strong> be used on a different machine or by a different user</li>
+<li class="">DPAPI-encrypted values are tied to the <strong>machine</strong> where they were created (LocalMachine scope)</li>
+<li class="">The encrypted value <strong>cannot</strong> be used on a different machine</li>
+<li class="">Any process on that machine that can read the file can decrypt LocalMachine DPAPI values — protect the file with ACLs</li>
 <li class="">If you need to rotate the encrypted values (e.g., password changed), regenerate the <code>appsettings.json</code> using <code>--printappsettings</code> with the new value</li>
-<li class="">Encrypted <code>appsettings.json</code> files are safer than plain text but should still be protected with appropriate file system permissions</li>
+<li class="">After upgrading from CurrentUser DPAPI, regenerate <code>_FigEncrypted</code> values on the target machine</li>
 </ul>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="troubleshooting">Troubleshooting<a href="#troubleshooting" class="hash-link" aria-label="Direct link to Troubleshooting" title="Direct link to Troubleshooting" translate="no">​</a></h2>
 <p><strong>Secret setting shows the default value instead of the configured one</strong><br>
 <!-- -->Ensure that:</p>
 <ul>
-<li class="">The application is running as the same Windows user who generated the file</li>
+<li class="">The application is running on the same Windows machine that generated the file</li>
 <li class="">The <code>_FigEncrypted</code> key in <code>appsettings.json</code> is properly formed (no typos in the suffix)</li>
 <li class="">The <code>appsettings.json</code> is in a location that the application reads from</li>
+<li class="">After a Fig upgrade from CurrentUser DPAPI, regenerate the file with <code>--printappsettings</code></li>
 </ul>
 <p><strong>Settings are not being read from appsettings.json</strong><br>
 <!-- -->The application&#x27;s startup must add <code>appsettings.json</code> as a configuration source before calling <code>AddFig&lt;T&gt;()</code>. Example:</p>

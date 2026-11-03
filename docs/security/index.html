@@ -10,7 +10,7 @@
 
 
 <link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.0a8cb4c2.css">
-<script src="/assets/js/runtime~main.5c277629.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.bc6102b4.js" defer="defer"></script>
 <script src="/assets/js/main.e0d30d76.js" defer="defer"></script>
 </head>
 <body>
@@ -184,9 +184,9 @@
 <li class=""><strong>SQL Server Security</strong> - Fig uses SQLite out of the box but should be changed to SQL Server for production deployments. All setting values are encrypted in the database but it is still important that the database itself is secured.</li>
 <li class=""><strong>Disabling new registrations</strong> - The Fig registration endpoint is unsecured. This means any client is able to register with Fig. It is possible to turn off new client registrations and this should be done in production once all known clients have registered with Fig.</li>
 <li class=""><strong>Rolling API Secret</strong> - The API secret is used to sign login tokens as well as encrypt all settings in the database. It can be changed at any time, however the old client secret must be retained to decrypt existing values in the database. See <a href="http://www.figsettings.com/docs/guides/api-secret-migration" target="_blank" rel="noopener noreferrer" class="">the guide</a> for steps.</li>
-<li class=""><strong>Protect API Secret</strong> - If the API secret is compromised then it will be possible to decrypt values in the database (assuming that they can access the database). It is important that it be protected either by storing it in DPAPI (Windows only) or as a docker secret.</li>
+<li class=""><strong>Protect API Secret</strong> - If the API secret is compromised then it will be possible to decrypt values in the database (assuming that they can access the database). It is important that it be protected either by storing it in DPAPI (Windows only, LocalMachine scope when <code>SecretsDpapiEncrypted</code> is enabled — restrict ACLs on the config file) or as a docker secret.</li>
 <li class=""><strong>Changing client secrets</strong> - Client secrets can be changed during runtime using the web client. Clients need to be updated within the grace period. See <a href="http://www.figsettings.com/docs/guides/client-secret-migration" target="_blank" rel="noopener noreferrer" class="">the guide</a> for steps.</li>
-<li class=""><strong>Protect client secrets</strong> - Client secrets protect the values for that client and as a result, they should be kept secret. Fig supports five built-in secret providers (Docker, DPAPI, Azure, AWS, Google) plus <code>ClientSecretOverride</code> for development. Prefer a GUID. On Windows, DPAPI is the recommended store. See <a class="" href="/docs/features/client-secrets/client-secret-providers">Client Secrets</a>.</li>
+<li class=""><strong>Protect client secrets</strong> - Client secrets protect the values for that client and as a result, they should be kept secret. Fig supports five built-in secret providers (Docker, DPAPI, Azure, AWS, Google) plus <code>ClientSecretOverride</code> for development. Prefer a GUID. On Windows, DPAPI (LocalMachine + Machine environment variable) is the recommended store for services including Local System. See <a class="" href="/docs/features/client-secrets/client-secret-providers">Client Secrets</a> and <a class="" href="/docs/guides/encrypting-secrets-dpapi">Encrypting Secrets DPAPI</a>.</li>
 <li class=""><strong>Web Hook Alerts</strong> - Setting up web hook alerts will ensure you are kept informed if settings are changed.</li>
 <li class=""><strong>Disable Client Overrides</strong> - If client overrides are not being used, disable this feature or at least limit it to the clients that should have access. This can avoid unwanted consequences.</li>
 <li class=""><strong>Enable TLS</strong> - Fig supports TLS for both the Web and Api instances. See <a href="http://www.figsettings.com/docs/guides/configuring-tls" target="_blank" rel="noopener noreferrer" class="">the guide</a> for steps and example config.</li>
