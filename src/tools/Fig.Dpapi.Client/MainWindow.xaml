@@ -62,7 +62,7 @@
                     
                     <TextBlock Style="{StaticResource DescriptionTextStyle}" 
                               Margin="0,0,0,6">
-                        • Use as environment variable: FIG_[YOURAPPNAME]_SECRET
+                        • Set as a Machine environment variable: FIG_[YOURAPPNAME]_SECRET
                     </TextBlock>
                     
                     <TextBlock Style="{StaticResource DescriptionTextStyle}">
@@ -104,14 +104,15 @@
                           VerticalAlignment="Center"/>
                 
                 <StackPanel Grid.Column="1">
-                    <TextBlock Text="Important: User Context Required" 
+                    <TextBlock Text="Important: Machine Scope" 
                               Style="{StaticResource WarningTextStyle}"
                               FontSize="13"
                               Margin="0,0,0,4"/>
                     <TextBlock Style="{StaticResource DescriptionTextStyle}"
-                              Foreground="#FDB022">
-                        <Run Text="Must be run as the same user as your application."/>
-                        <Run Text="{Binding CurrentUserExplanation, StringFormat='Current user: {0}', Mode=OneWay}" 
+                              Foreground="#FDB022"
+                              TextWrapping="Wrap">
+                        <Run Text="Must be run on the same machine that will decrypt the secret. Any local account can encrypt; Local System and other accounts on this machine can decrypt. Any process on this machine can also decrypt LocalMachine DPAPI values."/>
+                        <Run Text="{Binding MachineExplanation, StringFormat=' Current machine: {0}', Mode=OneWay}" 
                              FontWeight="Bold"/>
                     </TextBlock>
                 </StackPanel>

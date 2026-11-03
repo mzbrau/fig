@@ -201,7 +201,15 @@ null,
             "Change dialog exclude and revert",
             "In the save/change dialog, right-click pending rows to revert values, exclude them from this save, or keep only the selected changes. Useful when reviewing a large batch and you do not want to commit every edit yet.",
             "images/release-highlights/4.0/change-dialog-context-menu.png",
-            90)
+            90),
+        new(
+            "4.0",
+            "4.0-dpapi-localmachine",
+            "DPAPI LocalMachine secrets",
+            "Windows DPAPI encryption now uses LocalMachine scope with Machine environment variables as the primary store, so secrets encrypted by an admin work for services running as Local System. Legacy CurrentUser ciphertext still decrypts with a client warning — re-encrypt with the updated DPAPI tool when you can.",
+            null,
+            100,
+            "https://www.figsettings.com/docs/guides/encrypting-secrets-dpapi")
     };
 
     public IReadOnlyList<ReleaseHighlightItem> GetAll()

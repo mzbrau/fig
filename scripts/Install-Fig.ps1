@@ -363,7 +363,7 @@ function Set-ClientSecret {
         $encryptedGuid = [System.Security.Cryptography.ProtectedData]::Protect(
             [System.Text.Encoding]::UTF8.GetBytes($guidString),
             $null,
-            [System.Security.Cryptography.DataProtectionScope]::CurrentUser)
+            [System.Security.Cryptography.DataProtectionScope]::LocalMachine)
         $envVarName = "FIG_${clientName}_SECRET"
         $encryptedGuidBase64 = [System.Convert]::ToBase64String($encryptedGuid)
 

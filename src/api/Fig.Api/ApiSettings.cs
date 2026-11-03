@@ -1,5 +1,6 @@
 // ReSharper disable CollectionNeverUpdated.Global Set by appSettings.json
 
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
@@ -78,9 +79,7 @@ public class ApiSettings
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             throw new ApplicationException("DPAPI secret resolution is only available on Windows");
 
-        return _decryptedSecret ??= Encoding.UTF8
-            .GetString(ProtectedData.Unprotect(Convert.FromBase64String(Secret), null,
-                DataProtectionScope.CurrentUser));
+        return _decryptedSecret ??= UnprotectWithFallback(Secret);
     }
 
     public string? GetDecryptedPreviousSecret()
@@ -122,13 +121,28 @@ public class ApiSettings
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             throw new ApplicationException("DPAPI secret resolution is only available on Windows");
 
-        var result = Encoding.UTF8
-            .GetString(ProtectedData.Unprotect(Convert.FromBase64String(secret), null,
-                DataProtectionScope.CurrentUser));
-
+        var result = UnprotectWithFallback(secret);
         _encryptionCache.Add(secret, result);
-
         return result;
+    }
+
+    /// <summary>
+    /// Decrypts DPAPI ciphertext preferring LocalMachine, then falling back to CurrentUser for legacy secrets.
+    /// </summary>
+    [SuppressMessage("Interoperability", "CA1416:Validate platform compatibility")]
+    private static string UnprotectWithFallback(string encryptedSecret)
+    {
+        var protectedBytes = Convert.FromBase64String(encryptedSecret);
+        try
+        {
+            return Encoding.UTF8.GetString(
+                ProtectedData.Unprotect(protectedBytes, null, DataProtectionScope.LocalMachine));
+        }
+        catch (CryptographicException)
+        {
+            return Encoding.UTF8.GetString(
+                ProtectedData.Unprotect(protectedBytes, null, DataProtectionScope.CurrentUser));
+        }
     }
 }
 
