@@ -39,13 +39,13 @@ namespace Fig.Client.SecretProvider.Dpapi
             Logger?.LogDebug("Attempting to retrieve DPAPI secret for key {SecretKey} (client: {ClientName})",
                 secretKey, clientName);
 
-            var machineScopedSecret = GetMachineScopedEncryptedSecret(secretKey);
-            if (machineScopedSecret is { Length: > 0 })
+            var machineLookup = TryReadMachineScopedSecret(clientName, secretKey);
+            if (machineLookup.Status == MachineLookupStatus.Decrypted)
             {
-                return Task.FromResult(ReadStoredSecret(clientName, secretKey, machineScopedSecret, "machine-scoped"));
+                return Task.FromResult(machineLookup.Secret!);
             }
 
-            var userScopedSecret = GetUserScopedEncryptedSecret(secretKey);
+            var userScopedSecret = TryGetUserScopedEncryptedSecret(secretKey);
             if (userScopedSecret is { Length: > 0 })
             {
                 var secret = ReadStoredSecret(clientName, secretKey, userScopedSecret, "user-scoped");
@@ -57,22 +57,30 @@ namespace Fig.Client.SecretProvider.Dpapi
                     secretKey,
                     clientName);
 
-                try
+                // Only migrate when Machine is absent. If Machine holds unreadable ciphertext
+                // (e.g. another account's CurrentUser blob), leave it untouched.
+                if (machineLookup.Status == MachineLookupStatus.Absent)
                 {
-                    SetMachineScopedEncryptedSecret(secretKey, userScopedSecret);
-                    Logger?.LogInformation(
-                        "Migrated DPAPI secret for key {SecretKey} from user-scoped to machine-scoped environment variable (client: {ClientName})",
-                        secretKey,
-                        clientName);
-                }
-                catch (Exception ex)
-                {
-                    Logger?.LogWarning(
-                        "Unable to persist user-scoped DPAPI secret to machine scope for key {SecretKey} (client: {ClientName}). " +
-                        "Continuing with user-scoped secret. Machine writes typically require elevation. Error: {Error}",
-                        secretKey,
-                        clientName,
-                        ex.Message);
+                    try
+                    {
+                        // Re-protect with LocalMachine before writing Machine env — copying CurrentUser
+                        // ciphertext would leave Local System unable to decrypt it.
+                        var machineProtected = Protect(secret, DataProtectionScope.LocalMachine);
+                        SetMachineScopedEncryptedSecret(secretKey, machineProtected);
+                        Logger?.LogInformation(
+                            "Migrated DPAPI secret for key {SecretKey} from user-scoped to machine-scoped environment variable (client: {ClientName})",
+                            secretKey,
+                            clientName);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger?.LogWarning(
+                            "Unable to persist user-scoped DPAPI secret to machine scope for key {SecretKey} (client: {ClientName}). " +
+                            "Continuing with user-scoped secret. Machine writes typically require elevation. Error: {Error}",
+                            secretKey,
+                            clientName,
+                            ex.Message);
+                    }
                 }
 
                 return Task.FromResult(secret);
@@ -139,6 +147,82 @@ namespace Fig.Client.SecretProvider.Dpapi
             }
         }
 
+        private enum MachineLookupStatus
+        {
+            Absent,
+            Decrypted,
+            Unreadable
+        }
+
+        private sealed class MachineLookupResult
+        {
+            public MachineLookupResult(MachineLookupStatus status, string? secret)
+            {
+                Status = status;
+                Secret = secret;
+            }
+
+            public MachineLookupStatus Status { get; }
+
+            public string? Secret { get; }
+        }
+
+        private MachineLookupResult TryReadMachineScopedSecret(string clientName, string secretKey)
+        {
+            string? machineScopedSecret;
+            try
+            {
+                machineScopedSecret = GetMachineScopedEncryptedSecret(secretKey);
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogWarning(
+                    "Failed to read machine-scoped DPAPI secret for key {SecretKey} (client: {ClientName}). " +
+                    "Falling back to user-scoped lookup. Error: {Error}",
+                    secretKey,
+                    clientName,
+                    ex.Message);
+                return new MachineLookupResult(MachineLookupStatus.Unreadable, null);
+            }
+
+            if (machineScopedSecret is not { Length: > 0 })
+                return new MachineLookupResult(MachineLookupStatus.Absent, null);
+
+            try
+            {
+                var secret = ReadStoredSecret(clientName, secretKey, machineScopedSecret, "machine-scoped");
+                return new MachineLookupResult(MachineLookupStatus.Decrypted, secret);
+            }
+            catch (Exception ex)
+            {
+                // Leave the unreadable Machine value untouched so we do not overwrite another
+                // account's ciphertext or auto-create a replacement while a User value may exist.
+                Logger?.LogWarning(
+                    "Failed to decrypt machine-scoped DPAPI secret for key {SecretKey} (client: {ClientName}). " +
+                    "Falling back to user-scoped lookup without modifying the Machine value. Error: {Error}",
+                    secretKey,
+                    clientName,
+                    ex.Message);
+                return new MachineLookupResult(MachineLookupStatus.Unreadable, null);
+            }
+        }
+
+        private string? TryGetUserScopedEncryptedSecret(string secretKey)
+        {
+            try
+            {
+                return GetUserScopedEncryptedSecret(secretKey);
+            }
+            catch (Exception ex)
+            {
+                Logger?.LogWarning(
+                    "Failed to read user-scoped DPAPI secret for key {SecretKey}. Error: {Error}",
+                    secretKey,
+                    ex.Message);
+                return null;
+            }
+        }
+
         private EnvironmentVariableTarget PersistNewSecret(string secretKey, string protectedSecret, string clientName)
         {
             try
@@ -181,6 +265,18 @@ namespace Fig.Client.SecretProvider.Dpapi
             Environment.SetEnvironmentVariable(secretKey, encryptedSecret, EnvironmentVariableTarget.Machine);
         }
 
+        [Obsolete("Use GetUserScopedEncryptedSecret instead. Will be removed in a future release.")]
+        protected virtual string? GetStoredEncryptedSecret(string secretKey) =>
+            GetUserScopedEncryptedSecret(secretKey);
+
+        [Obsolete("Use GetMachineScopedEncryptedSecret instead. Will be removed in a future release.")]
+        protected virtual string? GetCurrentProcessEncryptedSecret(string secretKey) =>
+            GetMachineScopedEncryptedSecret(secretKey);
+
+        [Obsolete("Use SetUserScopedEncryptedSecret instead. Will be removed in a future release.")]
+        protected virtual void SetStoredEncryptedSecret(string secretKey, string encryptedSecret) =>
+            SetUserScopedEncryptedSecret(secretKey, encryptedSecret);
+
         private string ReadStoredSecret(string clientName, string secretKey, string encryptedSecret, string scopeDescription)
         {
             try
@@ -209,6 +305,10 @@ namespace Fig.Client.SecretProvider.Dpapi
 
         private string UnprotectWithFallback(string encryptedString)
         {
+            // Note: on Windows, CryptUnprotectData ignores CRYPTPROTECT_LOCAL_MACHINE during
+            // unprotect, so CurrentUser ciphertext owned by the running account may succeed on
+            // the LocalMachine attempt and this catch may not run. User-env warnings plus
+            // LocalMachine re-protect on User→Machine migration are the primary migration signals.
             try
             {
                 return Unprotect(encryptedString, DataProtectionScope.LocalMachine);

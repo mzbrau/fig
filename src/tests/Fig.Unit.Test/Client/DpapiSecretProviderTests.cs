@@ -76,7 +76,7 @@ public class DpapiSecretProviderTests
     }
 
     [Test]
-    public async Task GetSecret_WhenOnlyUserScopedSecretExists_UsesUserScopedSecretAndWarns()
+    public async Task GetSecret_WhenOnlyUserScopedSecretExists_ReprotectsWithLocalMachineAndWarns()
     {
         var logger = new Mock<ILogger<DpapiSecretProvider>>();
         var loggerFactory = new Mock<ILoggerFactory>();
@@ -84,7 +84,7 @@ public class DpapiSecretProviderTests
 
         var userScopedSecrets = new Dictionary<string, string>
         {
-            ["FIG_TESTCLIENT_SECRET"] = "protected::user-secret"
+            ["FIG_TESTCLIENT_SECRET"] = "userprotected::user-secret"
         };
         var machineScopedSecrets = new Dictionary<string, string>();
         var provider = new TestDpapiSecretProvider(true, userScopedSecrets, machineScopedSecrets);
@@ -96,7 +96,7 @@ public class DpapiSecretProviderTests
         Assert.That(machineScopedSecrets, Contains.Key("FIG_TESTCLIENT_SECRET"));
         Assert.That(machineScopedSecrets["FIG_TESTCLIENT_SECRET"], Is.EqualTo("protected::user-secret"));
         Assert.That(provider.MachineWriteCalls, Is.EqualTo(1));
-        Assert.That(provider.ProtectCalls, Is.EqualTo(0));
+        Assert.That(provider.ProtectScopes, Is.EqualTo(new[] { DataProtectionScope.LocalMachine }));
         AssertWarningLogged(logger, "user-scoped environment variable");
     }
 
@@ -121,7 +121,57 @@ public class DpapiSecretProviderTests
 
         Assert.That(secret, Is.EqualTo("user-secret"));
         Assert.That(provider.MachineWriteCalls, Is.EqualTo(0));
+        Assert.That(provider.ProtectScopes, Is.EqualTo(new[] { DataProtectionScope.LocalMachine }));
         AssertWarningLogged(logger, "Unable to persist user-scoped DPAPI secret to machine scope");
+    }
+
+    [Test]
+    public async Task GetSecret_WhenUnreadableMachineSecretAndValidUserSecret_FallsBackToUserWithoutOverwritingMachine()
+    {
+        var logger = new Mock<ILogger<DpapiSecretProvider>>();
+        var loggerFactory = new Mock<ILoggerFactory>();
+        loggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns(logger.Object);
+
+        var userScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = "protected::user-secret"
+        };
+        var machineScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = "unreadable::foreign-account-secret"
+        };
+        var provider = new TestDpapiSecretProvider(true, userScopedSecrets, machineScopedSecrets);
+        provider.AddLogger(loggerFactory.Object);
+
+        var secret = await provider.GetSecret("Test Client");
+
+        Assert.That(secret, Is.EqualTo("user-secret"));
+        Assert.That(machineScopedSecrets["FIG_TESTCLIENT_SECRET"], Is.EqualTo("unreadable::foreign-account-secret"));
+        Assert.That(provider.MachineWriteCalls, Is.EqualTo(0));
+        AssertWarningLogged(logger, "Falling back to user-scoped lookup without modifying the Machine value");
+    }
+
+    [Test]
+    public async Task GetSecret_WhenMachineReadThrows_FallsBackToUserScopedSecret()
+    {
+        var logger = new Mock<ILogger<DpapiSecretProvider>>();
+        var loggerFactory = new Mock<ILoggerFactory>();
+        loggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns(logger.Object);
+
+        var userScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = "protected::user-secret"
+        };
+        var provider = new TestDpapiSecretProvider(true, userScopedSecrets)
+        {
+            FailMachineReads = true
+        };
+        provider.AddLogger(loggerFactory.Object);
+
+        var secret = await provider.GetSecret("Test Client");
+
+        Assert.That(secret, Is.EqualTo("user-secret"));
+        AssertWarningLogged(logger, "Failed to read machine-scoped DPAPI secret");
     }
 
     [Test]
@@ -143,6 +193,7 @@ public class DpapiSecretProviderTests
         Assert.That(userScopedSecrets, Contains.Key("FIG_TESTCLIENT_SECRET"));
         Assert.That(provider.UserWriteCalls, Is.EqualTo(1));
         Assert.That(provider.MachineWriteCalls, Is.EqualTo(0));
+        Assert.That(provider.ProtectScopes, Is.EqualTo(new[] { DataProtectionScope.LocalMachine }));
         Assert.That(secret, Is.Not.Null.And.Not.Empty);
         AssertWarningLogged(logger, "Falling back to user scope");
     }
@@ -256,6 +307,32 @@ public class DpapiSecretProviderTests
         Assert.That(settings.GetDecryptedSecret(), Is.EqualTo(plainText));
     }
 
+    [Test]
+    public void UnprotectWithFallback_RealDpapi_CurrentUserCiphertextDecryptsWithoutRequiringScopeMatch()
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            Assert.Ignore("DPAPI is Windows-only");
+
+        // Documents Windows CryptUnprotectData behavior: scope is ignored on unprotect, so
+        // CurrentUser ciphertext owned by this account decrypts even when LocalMachine is requested.
+        // The catch-based migration warning may therefore not fire for same-user CurrentUser blobs.
+        var plainText = Guid.NewGuid().ToString("N");
+        var encrypted = Convert.ToBase64String(
+            ProtectedData.Protect(Encoding.UTF8.GetBytes(plainText), null, DataProtectionScope.CurrentUser));
+
+        var logger = new Mock<ILogger<DpapiSecretProvider>>();
+        var loggerFactory = new Mock<ILoggerFactory>();
+        loggerFactory.Setup(f => f.CreateLogger(It.IsAny<string>())).Returns(logger.Object);
+
+        var provider = new RealDpapiSecretProvider();
+        provider.AddLogger(loggerFactory.Object);
+        var encryptionProvider = (IAppSettingsEncryptionProvider)provider;
+
+        var decrypted = encryptionProvider.Decrypt(encrypted);
+
+        Assert.That(decrypted, Is.EqualTo(plainText));
+    }
+
     private static void AssertWarningLogged(Mock<ILogger<DpapiSecretProvider>> logger, string messageFragment)
     {
         Assert.That(
@@ -266,6 +343,14 @@ public class DpapiSecretProviderTests
                 invocation.Arguments[2]?.ToString()?.Contains(messageFragment) == true),
             Is.True,
             $"Expected a warning containing '{messageFragment}'");
+    }
+
+    private sealed class RealDpapiSecretProvider : DpapiSecretProvider
+    {
+        public RealDpapiSecretProvider()
+            : base(false)
+        {
+        }
     }
 
     private sealed class TestDpapiSecretProvider : DpapiSecretProvider
@@ -291,6 +376,8 @@ public class DpapiSecretProviderTests
 
         public bool FailMachineWrites { get; set; }
 
+        public bool FailMachineReads { get; set; }
+
         public List<DataProtectionScope> ProtectScopes { get; } = new();
 
         public List<DataProtectionScope> UnprotectScopes { get; } = new();
@@ -302,6 +389,9 @@ public class DpapiSecretProviderTests
 
         protected override string? GetMachineScopedEncryptedSecret(string secretKey)
         {
+            if (FailMachineReads)
+                throw new UnauthorizedAccessException("Access denied reading machine environment");
+
             return _machineScopedSecrets.TryGetValue(secretKey, out var value) ? value : null;
         }
 
@@ -323,6 +413,9 @@ public class DpapiSecretProviderTests
         protected override string Unprotect(string encryptedString, DataProtectionScope scope)
         {
             UnprotectScopes.Add(scope);
+
+            if (encryptedString.StartsWith("unreadable::", StringComparison.Ordinal))
+                throw new SecretNotFoundException("Ciphertext cannot be decrypted by this account");
 
             if (encryptedString.StartsWith("userprotected::", StringComparison.Ordinal))
             {

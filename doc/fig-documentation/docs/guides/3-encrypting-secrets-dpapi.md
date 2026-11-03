@@ -25,7 +25,7 @@ Earlier Fig versions encrypted with `DataProtectionScope.CurrentUser`. After upg
 1. Upgrade Fig.Client, Fig.Api (if using `SecretsDpapiEncrypted`), and the DPAPI tool together where possible
 2. Re-encrypt each client secret with the updated tool or PowerShell using `LocalMachine`
 3. Store the ciphertext in the **Machine** environment variable (move any User-only values)
-4. If using offline mode, regenerate `appsettings.fig.json` on the target machine with `--printappsettings`
+4. If using offline mode, regenerate `appsettings.fig.json` on the target machine with `--printappsettings`, passing each current secret as an override (for example `Password=MyCurrentSecret`) so the file keeps live values instead of code defaults
 5. If using `SecretsDpapiEncrypted`, re-Protect `Secret` / `PreviousSecret` with LocalMachine and replace the config values
 6. Confirm Fig.Client warnings about CurrentUser crypto or User-scoped env vars disappear after migration
 

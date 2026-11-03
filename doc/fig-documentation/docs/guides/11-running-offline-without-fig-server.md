@@ -18,7 +18,7 @@ The offline workflow has two phases:
 - Windows machine (DPAPI encryption is Windows-only)
 - The application must use Fig.Client and pass `CommandLineArgs` in `FigOptions`
 - The `Fig.Client.SecretProvider.Dpapi` NuGet package must be referenced and `DpapiSecretProvider` added to `ClientSecretProviders`
-- The same Windows user account must be used both to generate the file and to run the application
+- Generate and run on the **same Windows machine** (DPAPI LocalMachine scope); any local account that can read the file can decrypt
 
 ## Step 1: Configure Your Application
 
