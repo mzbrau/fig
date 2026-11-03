@@ -25,6 +25,10 @@ jobs:
   deploy:
     name: 'Deploy Fig NuGet Packages'
     runs-on: ubuntu-latest
+    environment: nuget
+    permissions:
+      contents: read
+      id-token: write
     if: ${{ github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'v') && !contains(github.event.workflow_run.head_branch, '-alpha') }}
     steps:
     - name: 'Checkout'
@@ -84,5 +88,11 @@ jobs:
         dotnet pack ${{ env.WEBHOOKS_CONTRACTS_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
         dotnet pack ${{ env.ASPIRE_PROJECT_PATH }} --no-restore --configuration Release --include-symbols -p:PackageVersion=${{ steps.version.outputs.version-without-v }} --output ${{ env.PACKAGE_OUTPUT_DIRECTORY }}
 
+    - name: 'NuGet login (OIDC)'
+      uses: NuGet/login@v1
+      id: login
+      with:
+        user: ${{ secrets.NUGET_USER }}
+
     - name: 'Push packages'
-      run: dotnet nuget push "${{ env.PACKAGE_OUTPUT_DIRECTORY }}"/*.nupkg -k ${{ secrets.NUGET_AUTH_TOKEN }} -s ${{ env.NUGET_SOURCE_URL }} --skip-duplicate
+      run: dotnet nuget push "${{ env.PACKAGE_OUTPUT_DIRECTORY }}"/*.nupkg -k ${{ steps.login.outputs.NUGET_API_KEY }} -s ${{ env.NUGET_SOURCE_URL }} --skip-duplicate
