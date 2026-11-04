@@ -5,7 +5,7 @@ $serviceName = "Fig.Api"
 $logPath = "C:\ProgramData\fig"
 $webPort = 7148
 $apiPort = 7281
-$figDbPassword = "495472f157684ab1a38fGGGPPP6f54e4aba64e"
+$figDbPassword = [System.Guid]::NewGuid().ToString("N")
 
 # Downloads the latest release, deletes current installation and unzipts it to the install directory.
 function Get-GitHubCredentials {
@@ -125,7 +125,6 @@ Function Install-Service {
     Write-Host "NSSM path"+$NSSMPath
     Write-Host $serviceName
     Write-Host $serviceExecutable
-    Write-Host $serviceAppDirectory
     Write-Host $serviceErrorLogFile
     Write-Host $serviceOutputLogFile
     Write-Host $arguments
@@ -153,7 +152,7 @@ Function Install-Service {
     &.\nssm.exe set $serviceName AppStdout $serviceOutputLogFile
 
     Write-Host "Setting fig to run as local system"
-    &.\nssm.exe set UT2003 ObjectName LocalSystem
+    &.\nssm.exe set $serviceName ObjectName LocalSystem
     &.\nssm.exe set $serviceName AppStdoutCreationDisposition 2
     &.\nssm.exe set $serviceName AppStderrCreationDisposition 2
     &.\nssm.exe start $serviceName
@@ -171,16 +170,24 @@ function Test-Administrator {
 }
 
 function Stop-ExistingService {
-    $existingService = Get-Service $serviceName
+    $existingService = Get-Service $serviceName -ErrorAction SilentlyContinue
     
     if ($null -ne $existingService) {
         Stop-Service $serviceName
     }
 }
 
+function Start-ExistingService {
+    $existingService = Get-Service $serviceName -ErrorAction SilentlyContinue
+    
+    if ($null -ne $existingService) {
+        Start-Service $serviceName
+    }
+}
+
 Function Get-IsFigServiceInstalled {
     Write-Host "Checking if Fig API is installed"
-    $service = Get-Service $serviceName
+    $service = Get-Service $serviceName -ErrorAction SilentlyContinue
     return $service -ne $null
 }
 
@@ -204,17 +211,6 @@ function Get-CheckDependencies {
         Exit
     }
 
-	if (($software -notmatch '.NET AppHost Pack') -and ($software -notlike '*Microsoft .NET Host - 9*')) {
-        Write-Host "Install app hosting bundle before continuing. https://dotnet.microsoft.com/en-us/download/dotnet/9.0" -ForegroundColor Yellow
-        Exit
-    }
-
-    $WebSocketFeature = Get-ItemProperty -Path "HKLM:\SOFTWARE\Microsoft\InetStp\Components" -ErrorAction SilentlyContinue
-    if ($null -eq $WebSocketFeature -or $WebSocketFeature."WebSockets" -ne 1) {
-        Write-Host "WebSocket Protocol feature is not installed or enabled in IIS." -ForegroundColor Yellow
-        Exit
-    }
-
     Write-Host "Dependencies already installed." -ForegroundColor Green
 }
 
@@ -234,7 +230,7 @@ function Set-ApiSettings {
     Write-Host "Setting API Settings"
     $filePath = "$FigBaseInstallLocation\Api\appsettings.json"	
     $appSettingsJson = Get-Content -Raw $filePath | ConvertFrom-Json
-    $newConnectionString = "Server=$dbServer;User Id=fig_login;Password=$figDbPassword;Initial Catalog=fig"
+    $newConnectionString = "Server=$dbServer;User Id=fig_login;Password=$figDbPassword;Initial Catalog=fig;TrustServerCertificate=True"
     $appSettingsJson.ApiSettings.DbConnectionString = $newConnectionString
     $computer = $env:computername
     $webClientUrl = "http://${computer}:${webPort}"
@@ -262,7 +258,7 @@ function Set-Settings {
 }
 
 function New-LogDir {
-    if (-not (TestPath $logPath)) {
+    if (-not (Test-Path $logPath)) {
         New-Item -Path $logPath -ItemType Directory
     }
 }
@@ -279,17 +275,19 @@ function Install-FigApi {
             }
     
             $exePath = Join-Path $nssmPath "nssm.exe"
-            if ((-not (Test-Path $nssmPath)) -and (-not (Test-Path $exePath))) {
+            if (-not (Test-Path $exePath)) {
                 Write-Host "A valid path for NSSM is required"
             } else {
                 $success = $true
             }
         }
 
+        New-LogDir
         Install-Service $nssmPath $serviceName "$FigBaseInstallLocation\Api\Fig.Api.exe" "$logPath\fig.api.error.log" "$logPath\fig.api.log" "--urls http://0.0.0.0:$apiPort"
     }
     else {
-        Stop-ExistingService
+        Write-Host "Starting existing Fig API service after update"
+        Start-ExistingService
     }
 }
 
@@ -409,6 +407,9 @@ if (-not $isAdmin) {
 Get-CheckDependencies
 Install-RequiredModules
 Setup-Database
+
+# Stop a running API before replacing binaries on upgrade
+Stop-ExistingService
 
 if (Get-IsInternetConnected) {
     $downloadSuccess = Get-LatestFigRelease
