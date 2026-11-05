@@ -21,4 +21,11 @@ public class Migration_007_EnableMigrateFromMigrationsByDefault : IDatabaseMigra
         SET allow_migrate_from_migrations = 1
         WHERE allow_migrate_from_migrations IS NULL OR allow_migrate_from_migrations = 0;
         """;
+
+    public string PostgresScript =>
+        """
+        UPDATE configuration
+        SET allow_migrate_from_migrations = TRUE
+        WHERE allow_migrate_from_migrations IS NULL OR allow_migrate_from_migrations = FALSE;
+        """;
 }

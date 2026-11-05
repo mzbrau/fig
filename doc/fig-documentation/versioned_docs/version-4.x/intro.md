@@ -20,15 +20,23 @@ Pick the path that matches how you want to run Fig:
 
 1. **Fastest** — clone the [fig-quick-start](https://github.com/mzbrau/fig-quick-start) repository. It is an Aspire host with Fig API, Fig Web, and a sample application.
 2. **Already using Aspire** — add Fig to your AppHost with the [Aspire integration](./guides/9-aspire-integration.md).
-3. **Docker Compose** — the compose file in the Fig repository deploys Fig API, Fig Web, and Fig MCP against SQL Server. It is a full deployment, not a one-command local demo.
+3. **Docker Compose** — the compose files in the Fig repository deploy Fig API, Fig Web, and Fig MCP. **SQL Server is recommended for production**; PostgreSQL is also supported. Compose is a full deployment, not a one-command local demo.
 
-### Docker Compose
+### Docker Compose (SQL Server)
 
 1. Copy [`.env.example`](https://github.com/mzbrau/fig/blob/main/.env.example) to `.env` in the repository root and set `fqdn`, `SA_PWD`, `FIG_DB_PWD`, and the other required values. Optionally set `FIG_MCP_PASSWORD` if you want the MCP container to start authenticated.
 2. From the repository root, run `docker compose up`.
 3. Open Fig Web at `http://localhost:7148` and log in with user `admin` / password `admin`. Change that password before exposing Fig Web beyond a local machine.
 
 The API listens on `http://localhost:7281`. Compose maps API `7281:8080` and Web `7148:80`.
+
+### Docker Compose (PostgreSQL)
+
+1. Copy [`.env.postgres.example`](https://github.com/mzbrau/fig/blob/main/.env.postgres.example) to `.env.postgres` and set `POSTGRES_PASSWORD`, `FIG_DB_PWD`, and related values.
+2. From the repository root: `docker compose -f docker-compose.postgres.yml --env-file .env.postgres up`.
+3. Open Fig Web at `http://localhost:7148` (same default credentials as above).
+
+See [Database](./database.md) for connection-string details.
 
 ## Integrate a client
 

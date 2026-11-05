@@ -25,6 +25,11 @@ public interface IDatabaseMigration
     /// The SQL script to execute for SQLite databases.
     /// </summary>
     string SqliteScript { get; }
+
+    /// <summary>
+    /// The SQL script to execute for PostgreSQL databases.
+    /// </summary>
+    string PostgresScript { get; }
     
     /// <summary>
     /// Optional: Execute code-based migration logic instead of or in addition to SQL scripts.

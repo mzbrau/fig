@@ -18,6 +18,8 @@ public class Migration_003_MigrateCodeHashes : IDatabaseMigration
     
     public string SqliteScript => string.Empty; // No SQL needed, using code execution
 
+    public string PostgresScript => string.Empty; // No SQL needed, using code execution
+
     public async Task? ExecuteCode(IServiceProvider serviceProvider)
     {
         var logger = serviceProvider.GetRequiredService<ILogger<Migration_003_MigrateCodeHashes>>();

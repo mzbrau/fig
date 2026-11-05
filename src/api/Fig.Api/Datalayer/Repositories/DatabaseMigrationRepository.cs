@@ -1,6 +1,7 @@
 using Fig.Api.DatabaseMigrations;
 using Fig.Api.ExtensionMethods;
 using Fig.Datalayer.BusinessEntities;
+using Microsoft.Extensions.Options;
 using NHibernate;
 using ISession = NHibernate.ISession;
 
@@ -13,12 +14,18 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
     private const int LockTimeoutMs = 0; // NOWAIT equivalent
     private readonly ISession _session;
     private readonly ISessionFactory _sessionFactory;
+    private readonly IOptions<ApiSettings> _settings;
     private readonly ILogger<DatabaseMigrationRepository> _logger;
 
-    public DatabaseMigrationRepository(ISession session, ISessionFactory sessionFactory, ILogger<DatabaseMigrationRepository> logger)
+    public DatabaseMigrationRepository(
+        ISession session,
+        ISessionFactory sessionFactory,
+        IOptions<ApiSettings> settings,
+        ILogger<DatabaseMigrationRepository> logger)
     {
         _session = session;
         _sessionFactory = sessionFactory;
+        _settings = settings;
         _logger = logger;
     }
 
@@ -60,13 +67,17 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
 
     public async Task<string> GetScriptForDatabase(IDatabaseMigration migration)
     {
-        var connection = _session.Connection;
-        var isSqlServer = IsSqlServer(connection.ConnectionString);
+        var provider = ResolveProvider();
 
-        var script = isSqlServer ? migration.SqlServerScript : migration.SqliteScript;
+        var script = provider switch
+        {
+            DatabaseProvider.SqlServer => migration.SqlServerScript,
+            DatabaseProvider.PostgreSql => migration.PostgresScript,
+            _ => migration.SqliteScript
+        };
 
         _logger.LogDebug("Using {DatabaseType} script for migration {ExecutionNumber}",
-            isSqlServer ? "SQL Server" : "SQLite", migration.ExecutionNumber);
+            provider, migration.ExecutionNumber);
 
         return await Task.FromResult(script);
     }
@@ -78,14 +89,15 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
 
         try
         {
-            var connection = _session.Connection;
-            var isSqlServer = IsSqlServer(connection.ConnectionString);
-            _logger.LogTrace("Migration {ExecutionNumber}: using {DbType} strategy", executionNumber,
-                isSqlServer ? "SQL Server" : "SQLite");
+            var provider = ResolveProvider();
+            _logger.LogTrace("Migration {ExecutionNumber}: using {DbType} strategy", executionNumber, provider);
 
-            return isSqlServer
-                ? await TryBeginMigrationSqlServer(executionNumber, description)
-                : await TryBeginMigrationSqlite(executionNumber, description);
+            return provider switch
+            {
+                DatabaseProvider.SqlServer => await TryBeginMigrationSqlServer(executionNumber, description),
+                DatabaseProvider.PostgreSql => await TryBeginMigrationPostgres(executionNumber, description),
+                _ => await TryBeginMigrationSqlite(executionNumber, description)
+            };
         }
         catch (Exception ex)
         {
@@ -148,11 +160,11 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
         }
     }
 
-    private static bool IsSqlServer(string connectionString)
+    private DatabaseProvider ResolveProvider()
     {
-        return !connectionString.Contains(".sqlite", StringComparison.OrdinalIgnoreCase) &&
-               !connectionString.Contains(".db", StringComparison.OrdinalIgnoreCase) &&
-               !connectionString.Contains(":memory:", StringComparison.OrdinalIgnoreCase);
+        return DatabaseProviderDetector.Detect(
+            _session.Connection.ConnectionString,
+            _settings.Value.DatabaseProvider);
     }
 
     private async Task<bool> TryBeginMigrationSqlServer(int executionNumber, string description)
@@ -204,6 +216,48 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
         // No explicit release is needed.
     }
 
+    private async Task<bool> TryBeginMigrationPostgres(int executionNumber, string description)
+    {
+        using var gateSession = _sessionFactory.OpenSession();
+        using var gateTx = gateSession.BeginTransaction();
+
+        try
+        {
+            var lockAcquired = await AcquirePostgresAdvisoryLock(gateSession);
+
+            if (!lockAcquired)
+            {
+                _logger.LogInformation(
+                    "Migration {ExecutionNumber} lock contention detected (another instance). Skipping",
+                    executionNumber);
+                await gateTx.RollbackAsync();
+                return false;
+            }
+
+            if (await MigrationRowExists(gateSession, executionNumber))
+            {
+                _logger.LogInformation("Migration {ExecutionNumber} already present. Skipping", executionNumber);
+                await gateTx.CommitAsync();
+                return false;
+            }
+
+            await InsertPendingMigrationRow(gateSession, executionNumber, description);
+            await gateTx.CommitAsync();
+
+            _logger.LogDebug("Migration {ExecutionNumber} pending row inserted (PostgreSQL)", executionNumber);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            if (gateTx.IsActive)
+                await gateTx.RollbackAsync();
+
+            _logger.LogError(ex, "Failed to start migration {ExecutionNumber}", executionNumber);
+            throw;
+        }
+        // Note: pg_try_advisory_xact_lock is released automatically when the transaction ends.
+    }
+
     private async Task<bool> TryBeginMigrationSqlite(int executionNumber, string description)
     {
         if (await MigrationRowExists(_session, executionNumber))
@@ -249,6 +303,31 @@ public class DatabaseMigrationRepository : IDatabaseMigrationRepository
         }
         
         _logger.LogDebug("Failed to acquire application lock '{LockName}' (result: {Result})", MigrationLockName, result);
+        return false;
+    }
+
+    private async Task<bool> AcquirePostgresAdvisoryLock(ISession session)
+    {
+        _logger.LogTrace("Acquiring PostgreSQL advisory lock '{LockName}'", MigrationLockName);
+
+        var lockQuery = session.CreateSQLQuery(
+            "SELECT pg_try_advisory_xact_lock(hashtext(:lockName))");
+        lockQuery.SetParameter("lockName", MigrationLockName);
+
+        var result = await lockQuery.UniqueResultAsync<object>();
+        var acquired = result switch
+        {
+            bool b => b,
+            _ => Convert.ToBoolean(result)
+        };
+
+        if (acquired)
+        {
+            _logger.LogTrace("PostgreSQL advisory lock '{LockName}' acquired", MigrationLockName);
+            return true;
+        }
+
+        _logger.LogDebug("Failed to acquire PostgreSQL advisory lock '{LockName}'", MigrationLockName);
         return false;
     }
 

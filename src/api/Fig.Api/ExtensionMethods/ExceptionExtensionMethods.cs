@@ -1,5 +1,6 @@
 using Microsoft.Data.SqlClient;
 using NHibernate.Exceptions;
+using Npgsql;
 using System.Data.Common;
 using System.Data.SQLite;
 
@@ -37,6 +38,13 @@ public static class ExceptionExtensionMethods
         {
             // SQLite error code 1: SQLITE_ERROR - "no such table"
             return sqliteException.ErrorCode == 1;
+        }
+
+        // Handle PostgreSQL exceptions
+        if (ex is PostgresException postgresException)
+        {
+            // 42P01: undefined_table
+            return postgresException.SqlState == PostgresErrorCodes.UndefinedTable;
         }
 
         // Handle generic database exceptions that might wrap the specific ones
@@ -88,6 +96,12 @@ public static class ExceptionExtensionMethods
         if (ex is SQLiteException sqliteException)
         {
             return sqliteException.IsSqliteLockContention();
+        }
+
+        // Handle PostgreSQL exceptions
+        if (ex is PostgresException postgresException)
+        {
+            return postgresException.IsPostgresLockContention();
         }
 
         // Handle generic database exceptions that might wrap the specific ones
@@ -185,6 +199,21 @@ public static class ExceptionExtensionMethods
     }
 
     /// <summary>
+    /// Detects PostgreSQL lock contention using SQLSTATE codes.
+    /// Supported codes:
+    /// - 40P01: deadlock_detected
+    /// - 40001: serialization_failure
+    /// - 55P03: lock_not_available
+    /// </summary>
+    private static bool IsPostgresLockContention(this PostgresException postgresException)
+    {
+        return postgresException.SqlState is
+            PostgresErrorCodes.DeadlockDetected or
+            PostgresErrorCodes.SerializationFailure or
+            PostgresErrorCodes.LockNotAvailable;
+    }
+
+    /// <summary>
     /// Detects lock contention in generic DbException by examining vendor-specific error codes.
     /// This method handles cases where database-specific exceptions are wrapped in DbException.
     /// </summary>
@@ -205,6 +234,7 @@ public static class ExceptionExtensionMethods
     /// Currently supported providers via exception types and error codes:
     /// - SQL Server (Microsoft.Data.SqlClient and System.Data.SqlClient)
     /// - SQLite (System.Data.SQLite)
+    /// - PostgreSQL (Npgsql)
     /// 
     /// Message-based fallback patterns for:
     /// - Generic lock timeout patterns
@@ -224,6 +254,8 @@ public static class ExceptionExtensionMethods
                msg.Contains("resource busy") ||
                msg.Contains("database is locked") ||
                msg.Contains("sqlite_busy") ||
-               msg.Contains("sqlite busy");
+               msg.Contains("sqlite busy") ||
+               msg.Contains("lock_not_available") ||
+               msg.Contains("could not obtain lock on row");
     }
 }

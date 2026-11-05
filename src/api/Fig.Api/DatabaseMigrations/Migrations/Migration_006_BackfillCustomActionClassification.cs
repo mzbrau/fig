@@ -21,4 +21,11 @@ public class Migration_006_BackfillCustomActionClassification : IDatabaseMigrati
         SET classification = 0
         WHERE classification IS NULL;
         """;
+
+    public string PostgresScript =>
+        """
+        UPDATE custom_actions
+        SET classification = 0
+        WHERE classification IS NULL;
+        """;
 }

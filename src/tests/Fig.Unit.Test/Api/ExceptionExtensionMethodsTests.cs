@@ -4,6 +4,7 @@ using System.Reflection;
 using Fig.Api.ExtensionMethods;
 using Microsoft.Data.SqlClient;
 using NHibernate.Exceptions;
+using Npgsql;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Api;
@@ -48,6 +49,17 @@ public class ExceptionExtensionMethodsTests
 
         yield return new TestCaseData(new GenericADOException("wrapped", new SQLiteException(SQLiteErrorCode.Busy, "busy")), true)
             .SetName("NHibernate_Wraps_Sqlite_Busy");
+
+        yield return new TestCaseData(CreatePostgresException(PostgresErrorCodes.DeadlockDetected), true)
+            .SetName("Postgres_Deadlock_40P01");
+        yield return new TestCaseData(CreatePostgresException(PostgresErrorCodes.SerializationFailure), true)
+            .SetName("Postgres_SerializationFailure_40001");
+        yield return new TestCaseData(CreatePostgresException(PostgresErrorCodes.LockNotAvailable), true)
+            .SetName("Postgres_LockNotAvailable_55P03");
+        yield return new TestCaseData(CreatePostgresException(PostgresErrorCodes.UndefinedTable), false)
+            .SetName("Postgres_UndefinedTable_NotLock");
+        yield return new TestCaseData(new GenericADOException("wrapped", CreatePostgresException(PostgresErrorCodes.DeadlockDetected)), true)
+            .SetName("NHibernate_Wraps_Postgres_Deadlock");
 
         yield return new TestCaseData(new Exception("deadlock victim"), true)
             .SetName("MessageBased_Deadlock");
@@ -95,12 +107,24 @@ public class ExceptionExtensionMethodsTests
         yield return new TestCaseData(new GenericADOException("wrapped", new SQLiteException(SQLiteErrorCode.Error, "no such table")), true)
             .SetName("NHibernate_Wraps_Sqlite_MissingTable");
 
+        yield return new TestCaseData(CreatePostgresException(PostgresErrorCodes.UndefinedTable), true)
+            .SetName("Postgres_UndefinedTable_42P01");
+        yield return new TestCaseData(CreatePostgresException(PostgresErrorCodes.DeadlockDetected), false)
+            .SetName("Postgres_Deadlock_NotMissingTable");
+        yield return new TestCaseData(new GenericADOException("wrapped", CreatePostgresException(PostgresErrorCodes.UndefinedTable)), true)
+            .SetName("NHibernate_Wraps_Postgres_MissingTable");
+
         yield return new TestCaseData(new Exception("outer", CreateSqlException(208)), true)
             .SetName("Nested_SqlServer_MissingTable");
         yield return new TestCaseData(new TestDbException("db", new SQLiteException(SQLiteErrorCode.Error, "no such table")), true)
             .SetName("DbException_Inner_Sqlite_MissingTable");
         yield return new TestCaseData(new Exception("plain failure"), false)
             .SetName("Unrelated_Exception");
+    }
+
+    private static PostgresException CreatePostgresException(string sqlState)
+    {
+        return new PostgresException("test", "ERROR", "ERROR", sqlState);
     }
 
     private static SqlException CreateSqlException(int number)

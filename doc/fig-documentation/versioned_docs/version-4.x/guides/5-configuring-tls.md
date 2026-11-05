@@ -24,7 +24,9 @@ fig-api:
     fig-setup:
       condition: service_completed_successfully
   environment:
-    - ApiSettings:DbConnectionString=Server=${fqdn};User Id=${FIG_USER_NAME};Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
+    # SQL Server (recommended). For PostgreSQL use Host=...;Port=5432;Database=...;Username=...;Password=...
+    # and set ApiSettings__DatabaseProvider=PostgreSql when the connection string is ambiguous.
+    - ApiSettings__DbConnectionString=Server=${fqdn};User Id=${FIG_USER_NAME};Password=${FIG_DB_PWD};Initial Catalog=${FIG_DB_NAME}
     - ASPNETCORE_Kestrel__Endpoints__Https__Url=https://*:7281
     - ASPNETCORE_Kestrel__Certificates__Default__Path=/usr/bin/certs/fig_https.pfx
     - ASPNETCORE_Kestrel__Certificates__Default__Password=${SECRET_PFX_PASSWORD}

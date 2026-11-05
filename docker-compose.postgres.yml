@@ -1,0 +1,103 @@
+# Fig stack against PostgreSQL.
+# SQL Server remains the recommended production database; use this compose file
+# when you prefer PostgreSQL.
+#
+# Setup:
+#   cp .env.postgres.example .env.postgres
+#   docker compose -f docker-compose.postgres.yml --env-file .env.postgres up
+
+services:
+  fig-db:
+    image: postgres:16
+    container_name: fig-db
+    environment:
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - fig-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  fig-setup:
+    image: postgres:16
+    container_name: fig-setup-postgres
+    depends_on:
+      fig-db:
+        condition: service_healthy
+    environment:
+      - DB_HOST=fig-db
+      - DB_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - FIG_DB_NAME=${FIG_DB_NAME}
+      - FIG_USER_NAME=${FIG_USER_NAME}
+      - FIG_DB_PASSWORD=${FIG_DB_PWD}
+      - CONNECTION_ENV_FILE=/fig-config/connection.env
+    volumes:
+      - ./scripts/setup_fig_db_postgres.sh:/usr/local/bin/setup_fig_db_postgres.sh
+      - ./.fig-postgres-config:/fig-config
+    entrypoint: ["/bin/bash", "-c", "chmod +x /usr/local/bin/setup_fig_db_postgres.sh && /usr/local/bin/setup_fig_db_postgres.sh"]
+
+  fig-api:
+    image: mzbrau/fig-api:latest
+    container_name: fig-api
+    ports:
+      - "7281:8080"
+    depends_on:
+      fig-setup:
+        condition: service_completed_successfully
+    environment:
+      - ApiSettings__DatabaseProvider=PostgreSql
+    volumes:
+      - ./.fig-postgres-config:/fig-config:ro
+    # Source the Npgsql connection string written by fig-setup (shell-safe + password-escaped).
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -euo pipefail
+        . /fig-config/connection.env
+        exec dotnet Fig.Api.dll
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/_health"]
+      start_period: 30s
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+  fig-web:
+    image: mzbrau/fig-web:latest
+    container_name: fig-web
+    ports:
+      - "7148:80"
+    depends_on:
+      fig-api:
+        condition: service_healthy
+    environment:
+      - FIG_API_URI=http://localhost:7281
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      start_period: 30s
+      interval: 5s
+      timeout: 10s
+      retries: 3
+
+  fig-mcp:
+    image: mzbrau/fig-mcp:latest
+    container_name: fig-mcp
+    ports:
+      - "3001:8080"
+    depends_on:
+      fig-api:
+        condition: service_healthy
+    environment:
+      - McpSettings__FigApiBaseUrl=http://fig-api:8080
+      - McpSettings__Username=${FIG_MCP_USERNAME:-admin}
+      - McpSettings__Password=${FIG_MCP_PASSWORD:?Set FIG_MCP_PASSWORD in .env.postgres}
+      - McpSettings__Transport=http
+
+volumes:
+  fig-postgres-data:

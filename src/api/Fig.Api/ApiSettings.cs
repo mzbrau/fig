@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.RateLimiting;
+using Fig.Api.Datalayer;
 using Fig.Contracts.Authentication;
 
 namespace Fig.Api;
@@ -27,6 +28,12 @@ public class ApiSettings
     public bool ForceAdminDefaultPasswordChange { get; set; }
     
     public required string DbConnectionString { get; set; }
+
+    /// <summary>
+    /// Optional explicit database provider. When unset, Fig detects SQLite, PostgreSQL, or SQL Server
+    /// from the connection string. Use this when the connection string is ambiguous.
+    /// </summary>
+    public DatabaseProvider? DatabaseProvider { get; set; }
     
     public long SchedulingCheckIntervalMs { get; set; }
     

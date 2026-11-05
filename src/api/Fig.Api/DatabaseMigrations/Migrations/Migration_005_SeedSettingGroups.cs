@@ -23,6 +23,8 @@ public class Migration_005_SeedSettingGroups : IDatabaseMigration
 
     public string SqliteScript => "SELECT 'Setting groups table created by NHibernate SchemaUpdate' as result;";
 
+    public string PostgresScript => "SELECT 'Setting groups table created by NHibernate SchemaUpdate' as result;";
+
     public async Task? ExecuteCode(IServiceProvider serviceProvider)
     {
         var logger = serviceProvider.GetRequiredService<ILogger<Migration_005_SeedSettingGroups>>();
