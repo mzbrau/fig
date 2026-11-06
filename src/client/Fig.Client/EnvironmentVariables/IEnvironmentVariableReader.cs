@@ -13,5 +13,14 @@ internal interface IEnvironmentVariableReader
         IList<SettingDefinitionDataContract> settings,
         Dictionary<string, List<CustomConfigurationSection>> configurationSections);
     
-    void ApplyConfigurationOverrides(List<SettingDefinitionDataContract> settings, ILogger? logger = null);
+    /// <summary>
+    /// Applies setting-configuration environment variable overrides (group, validation, lookup key, classification).
+    /// </summary>
+    /// <param name="settings">Setting definitions to update.</param>
+    /// <param name="clientName">Client name included in diagnostic logs.</param>
+    /// <param name="logger">Optional logger for match, mismatch, and invalid-value diagnostics.</param>
+    void ApplyConfigurationOverrides(
+        List<SettingDefinitionDataContract> settings,
+        string? clientName = null,
+        ILogger? logger = null);
 }

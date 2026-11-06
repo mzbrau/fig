@@ -91,7 +91,7 @@ public abstract class SettingsBase
 
         var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(clientName, settings!, configurationSections);
 
-        _environmentVariableReader.ApplyConfigurationOverrides(settings!, logger);
+        _environmentVariableReader.ApplyConfigurationOverrides(settings!, clientName, logger);
 
         var description = _descriptionProvider.GetDescription(ClientDescription);
         if (string.IsNullOrWhiteSpace(description))

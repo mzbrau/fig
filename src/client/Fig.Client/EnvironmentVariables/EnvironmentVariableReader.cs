@@ -397,9 +397,17 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
         ("_GROUP", "Group")
     ];
 
-    public void ApplyConfigurationOverrides(List<SettingDefinitionDataContract> settings, ILogger? logger = null)
+    /// <summary>
+    /// Applies setting-configuration environment variable overrides (group, validation, lookup key, classification).
+    /// Nested setting paths use <c>__</c> in place of <c>-&gt;</c>. Ambiguous matches are logged and skipped.
+    /// </summary>
+    public void ApplyConfigurationOverrides(
+        List<SettingDefinitionDataContract> settings,
+        string? clientName = null,
+        ILogger? logger = null)
     {
         logger ??= NullLogger.Instance;
+        var clientLabel = string.IsNullOrWhiteSpace(clientName) ? "(unknown client)" : clientName;
 
         foreach (DictionaryEntry variable in _allEnvironmentVariables)
         {
@@ -415,28 +423,44 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
             if (value == "null")
                 value = string.Empty;
 
-            var match = settings.FirstOrDefault(setting =>
-                BuildConfigurationOverrideKey(setting.Name, kind) == key);
+            var matches = settings
+                .Where(setting => BuildConfigurationOverrideKey(setting.Name, kind) == key)
+                .ToList();
 
-            if (match is not null)
+            if (matches.Count == 1)
             {
-                ApplyConfigurationOverride(match, kind, value);
+                var match = matches[0];
+                ApplyConfigurationOverride(match, kind, value, key, logger);
                 logger.LogInformation(
-                    "Environment variable {EnvVar} matched setting {SettingName} ({OverrideKind} override)",
+                    "Environment variable {EnvVar} for client {ClientName} matched setting {SettingName} ({OverrideKind} override)",
                     key,
+                    clientLabel,
                     match.Name,
+                    kind);
+            }
+            else if (matches.Count > 1)
+            {
+                logger.LogWarning(
+                    "Environment variable {EnvVar} for client {ClientName} matched multiple settings ({SettingNames}) ({OverrideKind} override); not applied",
+                    key,
+                    clientLabel,
+                    string.Join(", ", matches.Select(setting => setting.Name)),
                     kind);
             }
             else
             {
                 logger.LogInformation(
-                    "Environment variable {EnvVar} did not match any setting ({OverrideKind} override)",
+                    "Environment variable {EnvVar} for client {ClientName} did not match any setting ({OverrideKind} override)",
                     key,
+                    clientLabel,
                     kind);
             }
         }
     }
 
+    /// <summary>
+    /// Determines whether an environment variable key is a known setting-configuration override and returns its kind.
+    /// </summary>
     private static bool TryGetConfigurationOverrideKind(string environmentVariableKey, out string kind)
     {
         foreach (var (suffix, overrideKind) in ConfigurationOverrideSuffixes)
@@ -452,6 +476,9 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
         return false;
     }
 
+    /// <summary>
+    /// Builds the expected <c>FIG_*</c> environment variable key for a setting and override kind.
+    /// </summary>
     private static string BuildConfigurationOverrideKey(string settingName, string kind)
     {
         var normalizedName = settingName
@@ -469,10 +496,15 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
         };
     }
 
+    /// <summary>
+    /// Applies a single configuration override to a setting. Invalid classification values are logged and ignored.
+    /// </summary>
     private static void ApplyConfigurationOverride(
         SettingDefinitionDataContract setting,
         string kind,
-        string? value)
+        string? value,
+        string environmentVariableKey,
+        ILogger logger)
     {
         switch (kind)
         {
@@ -492,6 +524,14 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
                 if (Enum.TryParse<Classification>(value, true, out var classification))
                 {
                     setting.Classification = classification;
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Environment variable {EnvVar} has invalid classification value '{Value}'; leaving classification as {Classification}",
+                        environmentVariableKey,
+                        value,
+                        setting.Classification);
                 }
                 break;
         }

@@ -61,8 +61,8 @@ Deeper nesting follows the same rule. For example, `Connection->Auth->Username` 
 FIG_CONNECTION__AUTH__USERNAME_GROUP=Auth
 ```
 
-Use a value of `null` to clear the current attribute value (for example `FIG_USERNAME_GROUP=null`).
+Use a value of `null` to clear nullable attribute values such as group, validation regex, validation explanation, and lookup table key (for example `FIG_USERNAME_GROUP=null`). Classification cannot be cleared with `null` because it is required; an invalid or empty classification value is ignored and the existing classification is kept.
 
-At startup, the client logs each of these `FIG_*` configuration overrides and whether it matched a registered setting. That makes it easier to spot typos in the environment variable name.
+At startup, the client logs each of these `FIG_*` configuration overrides for the client and whether it matched a registered setting. That makes it easier to spot typos in the environment variable name.
 
 To override a **setting value** (rather than attributes like group or validation), see [Client Settings Overrides](./23-client-settings-override.md). Those also use `__` for nested paths (for example `School__Name=Oxford`).
