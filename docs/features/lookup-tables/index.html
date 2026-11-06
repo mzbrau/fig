@@ -10,7 +10,7 @@
 
 
 <link rel="search" type="application/opensearchdescription+xml" title="Fig" href="/opensearch.xml"><link rel="stylesheet" href="/assets/css/styles.0a8cb4c2.css">
-<script src="/assets/js/runtime~main.bc6102b4.js" defer="defer"></script>
+<script src="/assets/js/runtime~main.707d8da7.js" defer="defer"></script>
 <script src="/assets/js/main.e0d30d76.js" defer="defer"></script>
 </head>
 <body>
@@ -55,8 +55,11 @@
 <p>If there is no alias, just separate them by new lines.</p>
 <p>You will need to reload the page for this change to take effect.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="overriding-via-environment-variable">Overriding via Environment Variable<a href="#overriding-via-environment-variable" class="hash-link" aria-label="Direct link to Overriding via Environment Variable" title="Direct link to Overriding via Environment Variable" translate="no">​</a></h2>
-<p>The lookup table key can be overridden using an environment variable. It should be in the format <code>FIG_SettingName_LOOKUPTABLEKEY</code></p>
-<p>Use a value of &#x27;null&#x27; to clear the current value.</p>
+<p>The lookup table key can be overridden using an environment variable in the format <code>FIG_[SettingName]_LOOKUPTABLEKEY</code>, with the setting name in uppercase. For nested settings, replace each <code>-&gt;</code> with <code>__</code>.</p>
+<p>Use a value of <code>null</code> to clear the current value.</p>
+<p>Examples:</p>
+<div class="language-bash codeBlockContainer_Ckt0 theme-code-block" style="--prism-color:#F8F8F2;--prism-background-color:#282A36"><div class="codeBlockContent_QJqH"><pre tabindex="0" class="prism-code language-bash codeBlock_bY9V thin-scrollbar" style="color:#F8F8F2;background-color:#282A36"><code class="codeBlockLines_e6Vv"><div class="token-line" style="color:#F8F8F2"><span class="token plain">FIG_COUNTRY_LOOKUPTABLEKEY=Countries</span><br></div><div class="token-line" style="color:#F8F8F2"><span class="token plain">FIG_SCHOOL__NAME_LOOKUPTABLEKEY=Schools</span><br></div></code></pre></div></div>
+<p>See <a class="" href="/docs/features/environment-variables">Environment Variables</a> for the full naming rules.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="lookup-table-api">Lookup Table API<a href="#lookup-table-api" class="hash-link" aria-label="Direct link to Lookup Table API" title="Direct link to Lookup Table API" translate="no">​</a></h2>
 <p>Lookup tables can also be created, updated, and deleted through the Fig REST API. Prefer <a class="" href="/docs/features/provider-defined-lookup-tables">provider-defined lookup tables</a> (<code>ILookupProvider</code> / <code>IKeyedLookupProvider</code>) so the application owns the data.</p>
 <h2 class="anchor anchorTargetStickyNavbar_Vzrq" id="provider-defined-lookup-tables">Provider Defined Lookup Tables<a href="#provider-defined-lookup-tables" class="hash-link" aria-label="Direct link to Provider Defined Lookup Tables" title="Direct link to Provider Defined Lookup Tables" translate="no">​</a></h2>
