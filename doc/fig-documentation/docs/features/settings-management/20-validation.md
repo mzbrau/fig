@@ -56,9 +56,20 @@ public class ApplicationSettings
 
 ## Overriding via Environment Variable
 
-The validation value can be overridden using an environment variable. It should be in the format `FIG_SettingName_VALIDATIONREGEX` and `FIG_SettingName_VALIDATIONEXPLANATION`
+Validation can be overridden using environment variables in the format `FIG_[SettingName]_VALIDATIONREGEX` and `FIG_[SettingName]_VALIDATIONEXPLANATION`, with the setting name in uppercase. For nested settings, replace each `->` with `__`.
 
-Use a value of 'null' to clear the current value.
+Use a value of `null` to clear the current value.
+
+Examples:
+
+```bash
+FIG_USERNAME_VALIDATIONREGEX=\d+
+FIG_USERNAME_VALIDATIONEXPLANATION=Must be numeric
+FIG_SCHOOL__NAME_VALIDATIONREGEX=.+
+FIG_SCHOOL__NAME_VALIDATIONEXPLANATION=School name is required
+```
+
+See [Environment Variables](../24-environment-variables.md) for the full naming rules.
 
 ## Excluding Validation from Health Checks
 

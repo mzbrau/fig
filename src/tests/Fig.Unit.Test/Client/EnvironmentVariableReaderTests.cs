@@ -5,6 +5,8 @@ using Fig.Client.Configuration;
 using Fig.Client.EnvironmentVariables;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Microsoft.Extensions.Logging;
+using Moq;
 using NUnit.Framework;
 
 namespace Fig.Unit.Test.Client;
@@ -972,6 +974,197 @@ public class EnvironmentVariableReaderTests
         // Assert
         var overrides = result.ToList();
         Assert.That(overrides.Count, Is.EqualTo(0), "Should not return override when no env vars match");
+    }
+
+    #endregion
+
+    #region ApplyConfigurationOverrides
+
+    [Test]
+    public void ApplyConfigurationOverrides_WithNestedSettingPath_AppliesGroupUsingDoubleUnderscore()
+    {
+        var uniquePrefix = $"School_{Guid.NewGuid():N}";
+        var settingName = $"{uniquePrefix}->Name";
+        var envVarName = $"FIG_{uniquePrefix.ToUpperInvariant()}__NAME_GROUP";
+        SetEnvironmentVariable(envVarName, "NestedGroup");
+        var reader = new EnvironmentVariableReader();
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(settingName, "Description", valueType: typeof(string), @group: "Original")
+        };
+
+        reader.ApplyConfigurationOverrides(settings, "TestClient");
+
+        Assert.That(settings[0].Group, Is.EqualTo("NestedGroup"));
+    }
+
+    [Test]
+    public void ApplyConfigurationOverrides_WithNestedSettingPath_DoesNotMatchArrowInEnvVarName()
+    {
+        var uniquePrefix = $"School_{Guid.NewGuid():N}";
+        var settingName = $"{uniquePrefix}->Name";
+        var envVarName = $"FIG_{uniquePrefix.ToUpperInvariant()}->NAME_GROUP";
+        SetEnvironmentVariable(envVarName, "ShouldNotApply");
+        var reader = new EnvironmentVariableReader();
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(settingName, "Description", valueType: typeof(string), @group: "Original")
+        };
+
+        reader.ApplyConfigurationOverrides(settings, "TestClient");
+
+        Assert.That(settings[0].Group, Is.EqualTo("Original"));
+    }
+
+    [Test]
+    public void ApplyConfigurationOverrides_WhenEnvVarMatches_LogsMatched()
+    {
+        var uniqueSettingName = $"MySetting_{Guid.NewGuid():N}";
+        var envVarName = $"FIG_{uniqueSettingName.ToUpperInvariant()}_GROUP";
+        SetEnvironmentVariable(envVarName, "OverriddenGroup");
+        var reader = new EnvironmentVariableReader();
+        var logger = new Mock<ILogger>();
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string))
+        };
+
+        reader.ApplyConfigurationOverrides(settings, "TestClient", logger.Object);
+
+        Assert.That(settings[0].Group, Is.EqualTo("OverriddenGroup"));
+        AssertInformationLogged(logger, envVarName);
+        AssertInformationLogged(logger, "matched setting");
+        AssertInformationLogged(logger, uniqueSettingName);
+        AssertInformationLogged(logger, "TestClient");
+    }
+
+    [Test]
+    public void ApplyConfigurationOverrides_WhenEnvVarDoesNotMatch_LogsUnmatched()
+    {
+        var envVarName = $"FIG_UNKNOWNSETTING_{Guid.NewGuid():N}_GROUP";
+        SetEnvironmentVariable(envVarName, "SomeGroup");
+        var reader = new EnvironmentVariableReader();
+        var logger = new Mock<ILogger>();
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new($"OtherSetting_{Guid.NewGuid():N}", "Description", valueType: typeof(string))
+        };
+
+        reader.ApplyConfigurationOverrides(settings, "TestClient", logger.Object);
+
+        AssertInformationLogged(logger, envVarName);
+        AssertInformationLogged(logger, "did not match any setting");
+        AssertInformationLogged(logger, "TestClient");
+    }
+
+    [Test]
+    public void ApplyConfigurationOverrides_WithNonConfigurationFigEnvVar_DoesNotLog()
+    {
+        var envVarName = $"FIG_{Guid.NewGuid():N}_INSTANCE";
+        SetEnvironmentVariable(envVarName, "MyInstance");
+        var reader = new EnvironmentVariableReader();
+        var logger = new Mock<ILogger>();
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new($"Setting_{Guid.NewGuid():N}", "Description", valueType: typeof(string))
+        };
+
+        reader.ApplyConfigurationOverrides(settings, "TestClient", logger.Object);
+
+        Assert.That(
+            logger.Invocations.Any(invocation =>
+                invocation.Method.Name == nameof(ILogger.Log) &&
+                invocation.Arguments.Count > 2 &&
+                invocation.Arguments[2]?.ToString()?.Contains(envVarName) == true),
+            Is.False,
+            $"Did not expect logging for non-configuration env var '{envVarName}'");
+    }
+
+    [Test]
+    public void ApplyConfigurationOverrides_WithNullGroupValue_ClearsGroup()
+    {
+        var uniqueSettingName = $"GroupedSetting_{Guid.NewGuid():N}";
+        var envVarName = $"FIG_{uniqueSettingName.ToUpperInvariant()}_GROUP";
+        SetEnvironmentVariable(envVarName, "null");
+        var reader = new EnvironmentVariableReader();
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string), @group: "Auth")
+        };
+
+        reader.ApplyConfigurationOverrides(settings, "TestClient");
+
+        Assert.That(settings[0].Group, Is.EqualTo(string.Empty));
+    }
+
+    [Test]
+    public void ApplyConfigurationOverrides_WhenMultipleSettingsMatch_DoesNotApplyAndLogsWarning()
+    {
+        var suffix = Guid.NewGuid().ToString("N");
+        var settingNameA = $"MySetting_{suffix}";
+        var settingNameB = $"mysetting_{suffix}";
+        var envVarName = $"FIG_MYSETTING_{suffix.ToUpperInvariant()}_GROUP";
+        SetEnvironmentVariable(envVarName, "AmbiguousGroup");
+        var reader = new EnvironmentVariableReader();
+        var logger = new Mock<ILogger>();
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(settingNameA, "Description", valueType: typeof(string), @group: "OriginalA"),
+            new(settingNameB, "Description", valueType: typeof(string), @group: "OriginalB")
+        };
+
+        reader.ApplyConfigurationOverrides(settings, "TestClient", logger.Object);
+
+        Assert.That(settings[0].Group, Is.EqualTo("OriginalA"));
+        Assert.That(settings[1].Group, Is.EqualTo("OriginalB"));
+        AssertWarningLogged(logger, envVarName);
+        AssertWarningLogged(logger, "matched multiple settings");
+        AssertWarningLogged(logger, "TestClient");
+    }
+
+    [Test]
+    public void ApplyConfigurationOverrides_WithInvalidClassification_LeavesExistingAndLogsWarning()
+    {
+        var uniqueSettingName = $"ClassifiedSetting_{Guid.NewGuid():N}";
+        var envVarName = $"FIG_{uniqueSettingName.ToUpperInvariant()}_CLASSIFICATION";
+        SetEnvironmentVariable(envVarName, "NotARealClassification");
+        var reader = new EnvironmentVariableReader();
+        var logger = new Mock<ILogger>();
+        var settings = new List<SettingDefinitionDataContract>
+        {
+            new(uniqueSettingName, "Description", valueType: typeof(string),
+                classification: Fig.Client.Abstractions.Data.Classification.Functional)
+        };
+
+        reader.ApplyConfigurationOverrides(settings, "TestClient", logger.Object);
+
+        Assert.That(settings[0].Classification, Is.EqualTo(Fig.Client.Abstractions.Data.Classification.Functional));
+        AssertWarningLogged(logger, envVarName);
+        AssertWarningLogged(logger, "invalid classification value");
+    }
+
+    private static void AssertInformationLogged(Mock<ILogger> logger, string messageFragment)
+    {
+        Assert.That(
+            logger.Invocations.Any(invocation =>
+                invocation.Method.Name == nameof(ILogger.Log) &&
+                invocation.Arguments.Count > 2 &&
+                Equals(invocation.Arguments[0], LogLevel.Information) &&
+                invocation.Arguments[2]?.ToString()?.Contains(messageFragment) == true),
+            Is.True,
+            $"Expected an information log containing '{messageFragment}'");
+    }
+
+    private static void AssertWarningLogged(Mock<ILogger> logger, string messageFragment)
+    {
+        Assert.That(
+            logger.Invocations.Any(invocation =>
+                invocation.Method.Name == nameof(ILogger.Log) &&
+                invocation.Arguments.Count > 2 &&
+                Equals(invocation.Arguments[0], LogLevel.Warning) &&
+                invocation.Arguments[2]?.ToString()?.Contains(messageFragment) == true),
+            Is.True,
+            $"Expected a warning log containing '{messageFragment}'");
     }
 
     #endregion

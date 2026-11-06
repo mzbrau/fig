@@ -10,6 +10,8 @@ using Fig.Contracts;
 using Fig.Contracts.ExtensionMethods;
 using Fig.Contracts.SettingDefinitions;
 using Fig.Contracts.Settings;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 using Newtonsoft.Json;
 
 namespace Fig.Client.EnvironmentVariables;
@@ -385,48 +387,153 @@ internal class EnvironmentVariableReader : IEnvironmentVariableReader
         return envVarNames;
     }
 
-    public void ApplyConfigurationOverrides(List<SettingDefinitionDataContract> settings)
+    // Longest suffixes first so VALIDATIONEXPLANATION is not misclassified as a shorter match.
+    private static readonly (string Suffix, string Kind)[] ConfigurationOverrideSuffixes =
+    [
+        ("_VALIDATIONEXPLANATION", "ValidationExplanation"),
+        ("_VALIDATIONREGEX", "ValidationRegex"),
+        ("_LOOKUPTABLEKEY", "LookupTableKey"),
+        ("_CLASSIFICATION", "Classification"),
+        ("_GROUP", "Group")
+    ];
+
+    /// <summary>
+    /// Applies setting-configuration environment variable overrides (group, validation, lookup key, classification).
+    /// Nested setting paths use <c>__</c> in place of <c>-&gt;</c>. Ambiguous matches are logged and skipped.
+    /// </summary>
+    public void ApplyConfigurationOverrides(
+        List<SettingDefinitionDataContract> settings,
+        string? clientName = null,
+        ILogger? logger = null)
     {
+        logger ??= NullLogger.Instance;
+        var clientLabel = string.IsNullOrWhiteSpace(clientName) ? "(unknown client)" : clientName;
+
         foreach (DictionaryEntry variable in _allEnvironmentVariables)
         {
+            var key = variable.Key?.ToString();
+            if (key is null ||
+                !key.StartsWith("FIG_", StringComparison.Ordinal) ||
+                !TryGetConfigurationOverrideKind(key, out var kind))
+            {
+                continue;
+            }
+
             var value = Convert.ToString(variable.Value, CultureInfo.InvariantCulture);
             if (value == "null")
                 value = string.Empty;
-            
-            UpdateMatchingSettings(variable.Key, 
-                setting => $"FIG_{setting.Name.ToUpper()}_GROUP",
-                setting => setting.Group = value);
-            
-            UpdateMatchingSettings(variable.Key, 
-                setting => $"FIG_{setting.Name.ToUpper()}_VALIDATIONREGEX",
-                setting => setting.ValidationRegex = value);
-            
-            UpdateMatchingSettings(variable.Key, 
-                setting => $"FIG_{setting.Name.ToUpper()}_VALIDATIONEXPLANATION",
-                setting => setting.ValidationExplanation = value);
-            
-            UpdateMatchingSettings(variable.Key, 
-                setting => $"FIG_{setting.Name.ToUpper()}_LOOKUPTABLEKEY",
-                setting => setting.LookupTableKey = value);
-            
-            UpdateMatchingSettings(variable.Key, 
-                setting => $"FIG_{setting.Name.ToUpper()}_CLASSIFICATION",
-                setting =>
-                {
-                    if (Enum.TryParse<Classification>(value, true, out var classification))
-                    {
-                        setting.Classification = classification;
-                    }
-                });
+
+            var matches = settings
+                .Where(setting => BuildConfigurationOverrideKey(setting.Name, kind) == key)
+                .ToList();
+
+            if (matches.Count == 1)
+            {
+                var match = matches[0];
+                ApplyConfigurationOverride(match, kind, value, key, logger);
+                logger.LogInformation(
+                    "Environment variable {EnvVar} for client {ClientName} matched setting {SettingName} ({OverrideKind} override)",
+                    key,
+                    clientLabel,
+                    match.Name,
+                    kind);
+            }
+            else if (matches.Count > 1)
+            {
+                logger.LogWarning(
+                    "Environment variable {EnvVar} for client {ClientName} matched multiple settings ({SettingNames}) ({OverrideKind} override); not applied",
+                    key,
+                    clientLabel,
+                    string.Join(", ", matches.Select(setting => setting.Name)),
+                    kind);
+            }
+            else
+            {
+                logger.LogInformation(
+                    "Environment variable {EnvVar} for client {ClientName} did not match any setting ({OverrideKind} override)",
+                    key,
+                    clientLabel,
+                    kind);
+            }
         }
-        
-        void UpdateMatchingSettings(object environmentVariableKey, 
-            Func<SettingDefinitionDataContract, string> expectedKey, 
-            Action<SettingDefinitionDataContract> updateSetting)
+    }
+
+    /// <summary>
+    /// Determines whether an environment variable key is a known setting-configuration override and returns its kind.
+    /// </summary>
+    private static bool TryGetConfigurationOverrideKind(string environmentVariableKey, out string kind)
+    {
+        foreach (var (suffix, overrideKind) in ConfigurationOverrideSuffixes)
         {
-            var match = settings.FirstOrDefault(a => expectedKey(a) == environmentVariableKey.ToString());
-            if (match is not null)
-                updateSetting(match);
+            if (environmentVariableKey.EndsWith(suffix, StringComparison.Ordinal))
+            {
+                kind = overrideKind;
+                return true;
+            }
+        }
+
+        kind = string.Empty;
+        return false;
+    }
+
+    /// <summary>
+    /// Builds the expected <c>FIG_*</c> environment variable key for a setting and override kind.
+    /// </summary>
+    private static string BuildConfigurationOverrideKey(string settingName, string kind)
+    {
+        var normalizedName = settingName
+            .Replace(Constants.SettingPathSeparator, EnvironmentVariableDelimiter)
+            .ToUpperInvariant();
+
+        return kind switch
+        {
+            "Group" => $"FIG_{normalizedName}_GROUP",
+            "ValidationRegex" => $"FIG_{normalizedName}_VALIDATIONREGEX",
+            "ValidationExplanation" => $"FIG_{normalizedName}_VALIDATIONEXPLANATION",
+            "LookupTableKey" => $"FIG_{normalizedName}_LOOKUPTABLEKEY",
+            "Classification" => $"FIG_{normalizedName}_CLASSIFICATION",
+            _ => $"FIG_{normalizedName}_{kind.ToUpperInvariant()}"
+        };
+    }
+
+    /// <summary>
+    /// Applies a single configuration override to a setting. Invalid classification values are logged and ignored.
+    /// </summary>
+    private static void ApplyConfigurationOverride(
+        SettingDefinitionDataContract setting,
+        string kind,
+        string? value,
+        string environmentVariableKey,
+        ILogger logger)
+    {
+        switch (kind)
+        {
+            case "Group":
+                setting.Group = value;
+                break;
+            case "ValidationRegex":
+                setting.ValidationRegex = value;
+                break;
+            case "ValidationExplanation":
+                setting.ValidationExplanation = value;
+                break;
+            case "LookupTableKey":
+                setting.LookupTableKey = value;
+                break;
+            case "Classification":
+                if (Enum.TryParse<Classification>(value, true, out var classification))
+                {
+                    setting.Classification = classification;
+                }
+                else
+                {
+                    logger.LogWarning(
+                        "Environment variable {EnvVar} has invalid classification value '{Value}'; leaving classification as {Classification}",
+                        environmentVariableKey,
+                        value,
+                        setting.Classification);
+                }
+                break;
         }
     }
 }

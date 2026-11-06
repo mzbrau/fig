@@ -57,8 +57,20 @@ Starting in Fig version 3.4, the groups will show if there are any misaligned me
 
 ## Overriding via Environment Variable
 
-The group value can be overridden using an environment variable. It should be in the format `FIG_SettingName_GROUP`
+The group value can be overridden using an environment variable in the format `FIG_[SettingName]_GROUP`, with the setting name in uppercase. For nested settings, replace each `->` with `__`.
 
-Use a value of 'null' to clear the current value.
+Use a value of `null` to clear the current value.
 
-For example, if a setting Username was in a group "Auth" but you wanted to un-group it. You could do so by setting an environment variable `FIG_USERNAME_GROUP=null`
+For example, if a setting `Username` was in a group "Auth" but you wanted to un-group it:
+
+```bash
+FIG_USERNAME_GROUP=null
+```
+
+For a nested setting such as `School->Name`:
+
+```bash
+FIG_SCHOOL__NAME_GROUP=SchoolDetails
+```
+
+See [Environment Variables](../24-environment-variables.md) for the full naming rules.

@@ -155,7 +155,8 @@ public class FigConfigurationBuilder : IConfigurationBuilder
                 VersionType = _figOptions.VersionType
             });
             var clientVersion = versionProvider.GetHostVersion();
-            var dataContract = settings.CreateDataContract(_figOptions.ClientName, _figOptions.AutomaticallyGenerateHeadings, clientVersion: clientVersion);
+            var logger = (_figOptions.LoggerFactory ?? new NullLoggerFactory()).CreateLogger<FigConfigurationBuilder>();
+            var dataContract = settings.CreateDataContract(_figOptions.ClientName, _figOptions.AutomaticallyGenerateHeadings, clientVersion: clientVersion, logger: logger);
             
             var exporter = new SettingDefinitionsExporter();
             exporter.Export(dataContract);
@@ -167,7 +168,8 @@ public class FigConfigurationBuilder : IConfigurationBuilder
                            ?? throw new InvalidOperationException(
                                $"Could not create settings instance for type '{settingsType.FullName}'. " +
                                $"The type must inherit from {nameof(SettingsBase)} and have a public parameterless constructor.");
-            var dataContract = settings.CreateDataContract(_figOptions.ClientName, _figOptions.AutomaticallyGenerateHeadings);
+            var logger = (_figOptions.LoggerFactory ?? new NullLoggerFactory()).CreateLogger<FigConfigurationBuilder>();
+            var dataContract = settings.CreateDataContract(_figOptions.ClientName, _figOptions.AutomaticallyGenerateHeadings, logger: logger);
             var overrides = FigCommandLine.ParseAppSettingsOverrides(_figOptions.CommandLineArgs);
 
             var generator = new AppSettingsGenerator(ResolveEncryptionProvider());
