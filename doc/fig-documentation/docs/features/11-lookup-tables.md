@@ -82,9 +82,18 @@ You will need to reload the page for this change to take effect.
 
 ## Overriding via Environment Variable
 
-The lookup table key can be overridden using an environment variable. It should be in the format `FIG_SettingName_LOOKUPTABLEKEY`
+The lookup table key can be overridden using an environment variable in the format `FIG_[SettingName]_LOOKUPTABLEKEY`, with the setting name in uppercase. For nested settings, replace each `->` with `__`.
 
-Use a value of 'null' to clear the current value.
+Use a value of `null` to clear the current value.
+
+Examples:
+
+```bash
+FIG_COUNTRY_LOOKUPTABLEKEY=Countries
+FIG_SCHOOL__NAME_LOOKUPTABLEKEY=Schools
+```
+
+See [Environment Variables](./24-environment-variables.md) for the full naming rules.
 
 ## Lookup Table API
 

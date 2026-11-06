@@ -11,6 +11,7 @@ using Fig.Client.EnvironmentVariables;
 using Fig.Client.Exceptions;
 using Fig.Client.Validation;
 using Fig.Contracts.SettingDefinitions;
+using Microsoft.Extensions.Logging;
 
 namespace Fig.Client;
 
@@ -61,7 +62,7 @@ public abstract class SettingsBase
     
     public LoadType FigSettingLoadType { get; set; } = LoadType.None;
 
-    public SettingsClientDefinitionDataContract CreateDataContract(string clientName, bool automaticallyGenerateHeadings = true, string? instance = null, string? clientVersion = null)
+    public SettingsClientDefinitionDataContract CreateDataContract(string clientName, bool automaticallyGenerateHeadings = true, string? instance = null, string? clientVersion = null, ILogger? logger = null)
     {
         var displayOrder = 1;
         var exceptions = new List<Exception>();
@@ -90,7 +91,7 @@ public abstract class SettingsBase
 
         var clientSettingOverrides = _environmentVariableReader.ReadSettingOverrides(clientName, settings!, configurationSections);
 
-        _environmentVariableReader.ApplyConfigurationOverrides(settings!);
+        _environmentVariableReader.ApplyConfigurationOverrides(settings!, logger);
 
         var description = _descriptionProvider.GetDescription(ClientDescription);
         if (string.IsNullOrWhiteSpace(description))

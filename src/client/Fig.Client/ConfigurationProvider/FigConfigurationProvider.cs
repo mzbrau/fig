@@ -173,7 +173,7 @@ public class FigConfigurationProvider : Microsoft.Extensions.Configuration.Confi
 
     private SettingsClientDefinitionDataContract BuildSettingsDefinition()
     {
-        var settingsDataContract = _settings.CreateDataContract(_source.ClientName, _source.AutomaticallyGenerateHeadings);
+        var settingsDataContract = _settings.CreateDataContract(_source.ClientName, _source.AutomaticallyGenerateHeadings, logger: _logger);
 
         foreach (var warning in SettingDefinitionWarnings.GetHiddenCategoryHeadingWarnings(settingsDataContract.Settings))
         {
