@@ -17,6 +17,106 @@ namespace Fig.Unit.Test.Client;
 [TestFixture]
 public class DpapiSecretProviderTests
 {
+    [TestCase("protected::process-secret")]
+    [TestCase("userprotected::process-secret")]
+    public async Task GetSecret_WhenProcessScopedSecretExists_PrefersItWithoutPersisting(string encryptedSecret)
+    {
+        var userScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = "protected::user-secret"
+        };
+        var machineScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = "protected::machine-secret"
+        };
+        var processScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = encryptedSecret
+        };
+        var provider = new TestDpapiSecretProvider(false, userScopedSecrets, machineScopedSecrets, processScopedSecrets);
+
+        var secret = await provider.GetSecret("Test Client");
+
+        Assert.That(secret, Is.EqualTo("process-secret"));
+        Assert.That(provider.ProtectCalls, Is.Zero);
+        Assert.That(provider.MachineWriteCalls, Is.Zero);
+        Assert.That(provider.UserWriteCalls, Is.Zero);
+        Assert.That(machineScopedSecrets["FIG_TESTCLIENT_SECRET"], Is.EqualTo("protected::machine-secret"));
+        Assert.That(userScopedSecrets["FIG_TESTCLIENT_SECRET"], Is.EqualTo("protected::user-secret"));
+    }
+
+    [Test]
+    public async Task GetSecret_WhenProcessScopedSecretIsEmpty_FallsBackToMachineScope()
+    {
+        var machineScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = "protected::machine-secret"
+        };
+        var processScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = string.Empty
+        };
+        var provider = new TestDpapiSecretProvider(false, new Dictionary<string, string>(),
+            machineScopedSecrets, processScopedSecrets);
+
+        var secret = await provider.GetSecret("Test Client");
+
+        Assert.That(secret, Is.EqualTo("machine-secret"));
+    }
+
+    [TestCase(true)]
+    [TestCase(false)]
+    public async Task GetSecret_WhenProcessScopedSecretIsUnreadable_ThrowsWithoutUsingOrCreatingAnotherSecret(bool persistedSecretExists)
+    {
+        var persistedSecrets = new Dictionary<string, string>();
+        if (persistedSecretExists)
+            persistedSecrets["FIG_TESTCLIENT_SECRET"] = "protected::persisted-secret";
+
+        var processScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = "unreadable::process-secret"
+        };
+        var provider = new TestDpapiSecretProvider(true, persistedSecrets, persistedSecrets, processScopedSecrets);
+
+        var ex = await Assert.ThrowsAsync<SecretNotFoundException>(async () => await provider.GetSecret("Test Client"));
+
+        Assert.That(ex!.Message, Does.Contain("process-scoped environment variable"));
+        Assert.That(provider.ProtectCalls, Is.Zero);
+        Assert.That(provider.MachineWriteCalls, Is.Zero);
+        Assert.That(provider.UserWriteCalls, Is.Zero);
+    }
+
+    [TestCase(DataProtectionScope.LocalMachine)]
+    [TestCase(DataProtectionScope.CurrentUser)]
+    public async Task GetSecret_WithRealProcessEnvironment_DecryptsAspireProvidedSecret(DataProtectionScope scope)
+    {
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            Assert.Ignore("DPAPI is Windows-only");
+
+        var clientName = $"ProcessSecretTest{Guid.NewGuid():N}";
+        var secretKey = $"FIG_{clientName.ToUpperInvariant()}_SECRET";
+        var plainText = Guid.NewGuid().ToString("N");
+        var encrypted = Convert.ToBase64String(
+            ProtectedData.Protect(Encoding.UTF8.GetBytes(plainText), null, scope));
+        var previousValue = Environment.GetEnvironmentVariable(secretKey, EnvironmentVariableTarget.Process);
+
+        try
+        {
+            Environment.SetEnvironmentVariable(secretKey, encrypted, EnvironmentVariableTarget.Process);
+            using var provider = new RealDpapiSecretProvider();
+
+            var secret = await provider.GetSecret(clientName);
+
+            Assert.That(secret, Is.EqualTo(plainText));
+            Assert.That(Environment.GetEnvironmentVariable(secretKey, EnvironmentVariableTarget.User), Is.Null);
+            Assert.That(Environment.GetEnvironmentVariable(secretKey, EnvironmentVariableTarget.Machine), Is.Null);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable(secretKey, previousValue, EnvironmentVariableTarget.Process);
+        }
+    }
+
     [Test]
     public async Task GetSecret_WhenMachineScopedSecretExists_ReusesPersistedSecret()
     {
@@ -205,7 +305,7 @@ public class DpapiSecretProviderTests
 
         var ex = await Assert.ThrowsAsync<SecretNotFoundException>(async () => await provider.GetSecret("Test Client"));
 
-        Assert.That(ex!.Message, Does.Contain("machine or user environment variable"));
+        Assert.That(ex!.Message, Does.Contain("process, machine or user environment variable"));
     }
 
     [Test]
@@ -357,15 +457,18 @@ public class DpapiSecretProviderTests
     {
         private readonly IDictionary<string, string> _userScopedSecrets;
         private readonly IDictionary<string, string> _machineScopedSecrets;
+        private readonly IDictionary<string, string> _processScopedSecrets;
 
         public TestDpapiSecretProvider(
             bool autoCreate,
             IDictionary<string, string> userScopedSecrets,
-            IDictionary<string, string>? machineScopedSecrets = null)
+            IDictionary<string, string>? machineScopedSecrets = null,
+            IDictionary<string, string>? processScopedSecrets = null)
             : base(autoCreate)
         {
             _userScopedSecrets = userScopedSecrets;
             _machineScopedSecrets = machineScopedSecrets ?? new Dictionary<string, string>();
+            _processScopedSecrets = processScopedSecrets ?? new Dictionary<string, string>();
         }
 
         public int ProtectCalls { get; private set; }
@@ -381,6 +484,11 @@ public class DpapiSecretProviderTests
         public List<DataProtectionScope> ProtectScopes { get; } = new();
 
         public List<DataProtectionScope> UnprotectScopes { get; } = new();
+
+        protected override string? GetCurrentProcessEncryptedSecret(string secretKey)
+        {
+            return _processScopedSecrets.TryGetValue(secretKey, out var value) ? value : null;
+        }
 
         protected override string? GetUserScopedEncryptedSecret(string secretKey)
         {
