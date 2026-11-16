@@ -39,13 +39,25 @@ namespace Fig.Client.SecretProvider.Dpapi
             Logger?.LogDebug("Attempting to retrieve DPAPI secret for key {SecretKey} (client: {ClientName})",
                 secretKey, clientName);
 
+            // Windows copies User/Machine env vars into the process block at start, so an
+            // inherited User value looks like a process value. Only treat process as an
+            // explicit override when it differs from the User-scoped ciphertext; otherwise
+            // fall through so User→Machine migration still runs for Local System services.
+            var processScopedSecret = GetCurrentProcessEncryptedSecret(secretKey);
+            var userScopedSecret = TryGetUserScopedEncryptedSecret(secretKey);
+            if (processScopedSecret is { Length: > 0 } &&
+                !string.Equals(processScopedSecret, userScopedSecret, StringComparison.Ordinal))
+            {
+                var secret = ReadStoredSecret(clientName, secretKey, processScopedSecret, "process-scoped");
+                return Task.FromResult(secret);
+            }
+
             var machineLookup = TryReadMachineScopedSecret(clientName, secretKey);
             if (machineLookup.Status == MachineLookupStatus.Decrypted)
             {
                 return Task.FromResult(machineLookup.Secret!);
             }
 
-            var userScopedSecret = TryGetUserScopedEncryptedSecret(secretKey);
             if (userScopedSecret is { Length: > 0 })
             {
                 var secret = ReadStoredSecret(clientName, secretKey, userScopedSecret, "user-scoped");
@@ -89,10 +101,10 @@ namespace Fig.Client.SecretProvider.Dpapi
             if (!AutoCreate)
             {
                 Logger?.LogError(
-                    "Encrypted client secret must be set in a machine or user environment variable called {SecretKey} (client: {ClientName})",
+                    "Encrypted client secret must be set in a process, machine or user environment variable called {SecretKey} (client: {ClientName})",
                     secretKey, clientName);
                 throw new SecretNotFoundException(
-                    $"Encrypted client secret must be set in a machine or user environment variable called {secretKey}");
+                    $"Encrypted client secret must be set in a process, machine or user environment variable called {secretKey}");
             }
 
             var newSecret = Guid.NewGuid().ToString();
@@ -269,9 +281,8 @@ namespace Fig.Client.SecretProvider.Dpapi
         protected virtual string? GetStoredEncryptedSecret(string secretKey) =>
             GetUserScopedEncryptedSecret(secretKey);
 
-        [Obsolete("Use GetMachineScopedEncryptedSecret instead. Will be removed in a future release.")]
         protected virtual string? GetCurrentProcessEncryptedSecret(string secretKey) =>
-            GetMachineScopedEncryptedSecret(secretKey);
+            Environment.GetEnvironmentVariable(secretKey, EnvironmentVariableTarget.Process);
 
         [Obsolete("Use SetUserScopedEncryptedSecret instead. Will be removed in a future release.")]
         protected virtual void SetStoredEncryptedSecret(string secretKey, string encryptedSecret) =>
