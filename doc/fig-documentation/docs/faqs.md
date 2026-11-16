@@ -42,3 +42,5 @@ Or use the Aspire AppHost under `src/hosting/Fig.AppHost`.
 ## How do I install Fig as a Windows service?
 
 [`scripts/Install-Fig.ps1`](https://github.com/mzbrau/fig/blob/main/scripts/Install-Fig.ps1) downloads the latest GitHub release zip and installs Fig API (Windows service) and Fig Web. Review the script before running it; it is intended for Windows hosts, not containers.
+
+Database setup defaults to `Server=localhost;Initial Catalog=master;Integrated Security=true;TrustServerCertificate=true`. The account must be able to create databases and logins. Setup creates the database before configuring its user and stops the installation if a SQL batch fails. For production, provide a connection string with certificate validation enabled and a trusted SQL Server certificate.
