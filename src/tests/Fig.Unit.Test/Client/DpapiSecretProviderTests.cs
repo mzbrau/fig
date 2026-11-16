@@ -64,6 +64,32 @@ public class DpapiSecretProviderTests
         Assert.That(secret, Is.EqualTo("machine-secret"));
     }
 
+    [Test]
+    public async Task GetSecret_WhenProcessScopedSecretMatchesUserScoped_MigratesToMachineScope()
+    {
+        // Simulates Windows inheriting a User env var into the process block with no Machine value.
+        var ciphertext = "protected::user-secret";
+        var userScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = ciphertext
+        };
+        var machineScopedSecrets = new Dictionary<string, string>();
+        var processScopedSecrets = new Dictionary<string, string>
+        {
+            ["FIG_TESTCLIENT_SECRET"] = ciphertext
+        };
+        var provider = new TestDpapiSecretProvider(false, userScopedSecrets, machineScopedSecrets, processScopedSecrets);
+
+        var secret = await provider.GetSecret("Test Client");
+
+        Assert.That(secret, Is.EqualTo("user-secret"));
+        Assert.That(machineScopedSecrets, Contains.Key("FIG_TESTCLIENT_SECRET"));
+        Assert.That(machineScopedSecrets["FIG_TESTCLIENT_SECRET"], Is.EqualTo("protected::user-secret"));
+        Assert.That(provider.MachineWriteCalls, Is.EqualTo(1));
+        Assert.That(provider.ProtectScopes, Is.EqualTo(new[] { DataProtectionScope.LocalMachine }));
+        Assert.That(provider.UserWriteCalls, Is.Zero);
+    }
+
     [TestCase(true)]
     [TestCase(false)]
     public async Task GetSecret_WhenProcessScopedSecretIsUnreadable_ThrowsWithoutUsingOrCreatingAnotherSecret(bool persistedSecretExists)

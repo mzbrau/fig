@@ -39,8 +39,14 @@ namespace Fig.Client.SecretProvider.Dpapi
             Logger?.LogDebug("Attempting to retrieve DPAPI secret for key {SecretKey} (client: {ClientName})",
                 secretKey, clientName);
 
+            // Windows copies User/Machine env vars into the process block at start, so an
+            // inherited User value looks like a process value. Only treat process as an
+            // explicit override when it differs from the User-scoped ciphertext; otherwise
+            // fall through so User→Machine migration still runs for Local System services.
             var processScopedSecret = GetCurrentProcessEncryptedSecret(secretKey);
-            if (processScopedSecret is { Length: > 0 })
+            var userScopedSecret = TryGetUserScopedEncryptedSecret(secretKey);
+            if (processScopedSecret is { Length: > 0 } &&
+                !string.Equals(processScopedSecret, userScopedSecret, StringComparison.Ordinal))
             {
                 var secret = ReadStoredSecret(clientName, secretKey, processScopedSecret, "process-scoped");
                 return Task.FromResult(secret);
@@ -52,7 +58,6 @@ namespace Fig.Client.SecretProvider.Dpapi
                 return Task.FromResult(machineLookup.Secret!);
             }
 
-            var userScopedSecret = TryGetUserScopedEncryptedSecret(secretKey);
             if (userScopedSecret is { Length: > 0 })
             {
                 var secret = ReadStoredSecret(clientName, secretKey, userScopedSecret, "user-scoped");
