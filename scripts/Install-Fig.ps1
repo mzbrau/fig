@@ -294,10 +294,10 @@ function Install-FigApi {
 function Setup-Database {
 
     Write-Host "In order to set up the database for Fig, the script needs to make a connection to your database. This connection string should be to the master database, and should be able to create a new database and user."
-    $connectionString = Get-UserInput "Enter a connection string to the database where the Fig database should exist (leave blank for Server=localhost;Integrated Security=true)"
+    $connectionString = Get-UserInput "Enter a connection string to the database where the Fig database should exist (leave blank for Server=localhost;Initial Catalog=master;Integrated Security=true;TrustServerCertificate=true)"
     
     if (-not($connectionString)) {
-        $connectionString = "Server=localhost;Integrated Security=true"
+        $connectionString = "Server=localhost;Initial Catalog=master;Integrated Security=true;TrustServerCertificate=true"
     }
 
     $sqlFilePath = Join-Path $PSScriptRoot 'create-fig-database.sql'
@@ -311,22 +311,28 @@ function Setup-Database {
         Write-Host $eventArgs.Message
     })
 
-    Write-Host "Query Was:"
-    Write-Host $sqlQuery
-    
+    $command = $null
     try {
         $sqlConnection.Open()
         $command = New-Object System.Data.SqlClient.SqlCommand 
-        $command.CommandText = $sqlQuery
         $command.Connection = $sqlConnection
-        $result = $command.ExecuteNonQuery()
+        $result = 0
+        # GO is a client-side batch separator, not a SQL Server statement.
+        foreach ($batch in [regex]::Split($sqlQuery, '(?im)^\s*GO\s*$')) {
+            if (-not [string]::IsNullOrWhiteSpace($batch)) {
+                $command.CommandText = $batch
+                $result += $command.ExecuteNonQuery()
+            }
+        }
 
         Write-Host "Fig database created / updated successfullly. Rows affected: $result"
     } catch {
-        Write-Host "Error executing SQL query: $_" -ForegroundColor Red
+        throw "Error executing SQL query: $_"
     } finally {
-        # Close the connection
-        $sqlConnection.Close()
+        if ($null -ne $command) {
+            $command.Dispose()
+        }
+        $sqlConnection.Dispose()
     }
 }
 

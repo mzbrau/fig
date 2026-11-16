@@ -8,6 +8,8 @@ BEGIN
     PRINT 'Database "fig" already exists.';
 END
 
+GO
+
 USE fig;
 
 IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'fig_user')
